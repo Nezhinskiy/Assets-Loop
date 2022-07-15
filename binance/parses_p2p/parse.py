@@ -1,15 +1,18 @@
-import logging
 import time
 from http import HTTPStatus
-from os import getenv
-from pprint import pprint
 from sys import getsizeof
-from typing import Dict, List
 
 import requests
 
-from binance.parses_p2p.parameters import (ASSETS, ENDPOINT, FIATS, PAGE,
-                                           PAY_TYPES, ROWS, TRADE_TYPES)
+from parses_p2p.models import ASSETS, FIATS, PAY_TYPES, TRADE_TYPES, UpdateP2P
+# import os
+# # os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'binance.binance.settings')
+# from binance_api.parses_p2p.models import UpdateP2P
+# from binance_api.binance_api.settings import BASE_DIR
+
+ENDPOINT = 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search'
+PAGE = 1
+ROWS = 1
 
 
 def create_data(asset, trade_type, fiat, pay_types):
@@ -56,6 +59,7 @@ def parse_price(response):
 
 
 def main():
+    start_time = time.perf_counter_ns()
     for asset in ASSETS:
         asset = asset[0]
         for trade_type in TRADE_TYPES:
@@ -72,6 +76,8 @@ def main():
                     price = parse_price(response)
                     print(f'{asset}, {trade_type}, {fiat}, '
                           f'{pay_type}, {price}')
+    duration = start_time - time.perf_counter_ns()
+    UpdateP2P.objects.create(duration=duration)
 
 
 if __name__ == '__main__':

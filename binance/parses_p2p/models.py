@@ -1,9 +1,28 @@
-from django.contrib.auth import get_user_model
+# from django.contrib.auth import get_user_model
 from django.db import models
 
-from binance.parses_p2p.parameters import ASSETS, FIATS, PAY_TYPES, TRADE_TYPES
-
-User = get_user_model()
+ASSETS = (
+    ('USDT', 'USDT'),
+    ('BUSD', 'BUSD'),
+    ('BTC', 'BTC')
+)
+TRADE_TYPES = (
+    ('BUY', 'buy'),
+    ('SELL', 'sell')
+)
+FIATS = (
+    ('RUB', 'rub'),
+    ('USD', 'usd'),
+    ('EUR', 'eur')
+)
+PAY_TYPES = (
+    ('Tinkoff', 'Tinkoff'),
+    ('Wise', 'Wise'),
+    # 'TBCbank',
+    # 'BankofGeorgia',
+    ('RosBank', 'RosBank'),
+    ('RUBfiatbalance', 'RUBfiatbalance')
+)
 
 
 class UpdateP2P(models.Model):
@@ -23,7 +42,7 @@ class P2P(models.Model):
     pay_type = models.CharField(max_length=15, choices=PAY_TYPES)
     price = models.FloatField()
     update = models.ForeignKey(
-        UpdateP2P, related_name='datas', on_delete=models.CASCADE)
+         UpdateP2P, related_name='datas', on_delete=models.CASCADE)
 
     def __str__(self):
         return self.price
