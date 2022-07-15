@@ -7,6 +7,7 @@ User = get_user_model()
 PAYMENT_SYSTEMS = (
     ('', ''),
     ('Tinkoff', 'Tinkoff'),
+    ('Wise', 'Wise'),
 )
 
 
