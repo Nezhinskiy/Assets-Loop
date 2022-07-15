@@ -31,7 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'parse_p2p.apps.ParseP2PConfig',
+    'parses_p2p.apps.ParsesP2PConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class ParseP2PConfig(AppConfig):
+class ParsesP2PConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'parse_p2p'
+    name = 'parses_p2p'
