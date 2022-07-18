@@ -4,11 +4,8 @@ from sys import getsizeof
 
 import requests
 
-from parses_p2p.models import ASSETS, FIATS, PAY_TYPES, TRADE_TYPES, UpdateP2PBinance, P2PBinance
-# import os
-# # os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'binance.binance.settings')
-# from binance_api.parses_p2p.models import UpdateP2P
-# from binance_api.binance_api.settings import BASE_DIR
+from parses_p2p.models import (ASSETS, FIATS, PAY_TYPES, TRADE_TYPES,
+                               P2PBinance, UpdateP2PBinance)
 
 ENDPOINT = 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search'
 PAGE = 1
@@ -58,7 +55,7 @@ def parse_price(response):
     return price
 
 
-def main():
+def p2p_binance_bulk_update_or_create():
     start_time = datetime.now()
     records_to_create = []
     records_to_update = []
@@ -99,4 +96,4 @@ def main():
     P2PBinance.objects.bulk_create(records_to_create)
     P2PBinance.objects.bulk_update(records_to_update, ['price', 'update'])
     duration = datetime.now() - start_time
-    UpdateP2PBinance.objects.create(duration=duration)
+    new_update.update(duration=duration)
