@@ -1,12 +1,10 @@
-from parses_p2p.views import
 from django.urls import include, path
 from rest_framework import routers
 
-app_name = 'api'
+from parses_p2p.views import index
 
-router = routers.DefaultRouter()
-router.register(r'posts', PostViewSet, basename='posts')
+app_name = 'parses_p2p'
 
 urlpatterns = [
-    path('api/v1/', include(router.urls), name='post'),
+    path('', index, name="index"),
 ]

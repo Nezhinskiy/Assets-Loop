@@ -1,10 +1,10 @@
-import time
+from datetime import datetime
 from http import HTTPStatus
 from sys import getsizeof
 
 import requests
 
-from parses_p2p.models import ASSETS, FIATS, PAY_TYPES, TRADE_TYPES, UpdateP2P
+from parses_p2p.models import ASSETS, FIATS, PAY_TYPES, TRADE_TYPES, UpdateP2PBinance, P2PBinance
 # import os
 # # os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'binance.binance.settings')
 # from binance_api.parses_p2p.models import UpdateP2P
@@ -59,7 +59,11 @@ def parse_price(response):
 
 
 def main():
-    start_time = time.perf_counter_ns()
+    start_time = datetime.now()
+    records_to_create = []
+    records_to_update = []
+    UpdateP2PBinance.objects.create()
+    new_update = UpdateP2PBinance.objects.last()
     for asset in ASSETS:
         asset = asset[0]
         for trade_type in TRADE_TYPES:
@@ -74,11 +78,25 @@ def main():
                                            fiat, pay_type)
                     response = get_api_answer(new_data)
                     price = parse_price(response)
-                    print(f'{asset}, {trade_type}, {fiat}, '
-                          f'{pay_type}, {price}')
-    duration = start_time - time.perf_counter_ns()
-    UpdateP2P.objects.create(duration=duration)
-
-
-if __name__ == '__main__':
-    main()
+                    target_object = P2PBinance.objects.filter(
+                        asset=asset, trade_type=trade_type, fiat=fiat,
+                        pay_type=pay_type
+                    )
+                    if target_object.exists():
+                        updated_object = P2PBinance.objects.get(
+                            asset=asset, trade_type=trade_type, fiat=fiat,
+                            pay_type=pay_type
+                        )
+                        updated_object.price = price
+                        updated_object.update = new_update
+                        records_to_update.append(updated_object)
+                    else:
+                        created_object = P2PBinance(
+                            asset=asset, trade_type=trade_type, fiat=fiat,
+                            pay_type=pay_type, price=price, update=new_update
+                        )
+                        records_to_create.append(created_object)
+    P2PBinance.objects.bulk_create(records_to_create)
+    P2PBinance.objects.bulk_update(records_to_update, ['price', 'update'])
+    duration = datetime.now() - start_time
+    UpdateP2PBinance.objects.create(duration=duration)
