@@ -1,8 +1,5 @@
-from datetime import datetime
-from time import sleep
+import json
+from pprint import pprint
 
-start_time = datetime.now()
-sleep(3)
-duration = datetime.now() - start_time
-print(f'{type(duration)}, {duration}')
-
+x = (1,2,3)
+print(range(len(x)))
