@@ -6,7 +6,8 @@ from django.db import models
 ASSETS = (
     ('USDT', 'USDT'),
     ('BUSD', 'BUSD'),
-    ('BTC', 'BTC')
+    ('BTC', 'BTC'),
+    ('ETH', 'ETH'),
 )
 TRADE_TYPES = (
     ('BUY', 'buy'),
@@ -15,7 +16,8 @@ TRADE_TYPES = (
 FIATS = (
     ('RUB', 'rub'),
     ('USD', 'usd'),
-    ('EUR', 'eur')
+    ('EUR', 'eur'),
+    ('GBP', 'gbp'),
 )
 PAY_TYPES = (
     ('Tinkoff', 'Tinkoff'),
@@ -23,7 +25,7 @@ PAY_TYPES = (
     # 'TBCbank',
     # 'BankofGeorgia',
     ('RosBank', 'RosBank'),
-    ('RUBfiatbalance', 'RUBfiatbalance')
+    # ('RUBfiatbalance', 'RUBfiatbalance')
 )
 
 

@@ -23,7 +23,7 @@ def get_api_answer(params):
     Яндекс.Практикума.
     """
     try:
-        response = requests.get(ENDPOINT, params=params)
+        response = requests.get(ENDPOINT, params)
     except Exception as error:
         message = f'Ошибка при запросе к основному API: {error}'
         raise Exception(message)
@@ -44,3 +44,5 @@ def parce_price(response) -> dict:
 
 for params in generate_params():
     print(parce_price(get_api_answer(params)))
+
+print(generate_params())
