@@ -33,13 +33,18 @@ def get_api_answer(params):
     return response.json()
 
 
-def parce_price(response) -> dict:
+def parce_premium(response) -> dict:
     """Iterates through all dictionaries until 'Premium' is found."""
     payload = response['payload']
     rates = payload['rates']
     for category in rates:
         if category['category'] == 'CUTransfersPremium':
             return category
+
+
+def parce_price(premium):
+    price = premium.get('buy')
+    return price
 
 
 for params in generate_params():
