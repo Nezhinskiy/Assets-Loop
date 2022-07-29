@@ -1,5 +1,5 @@
-# from django.contrib.auth import get_user_model
 from datetime import timedelta
+from binance.models import ExchangeUpdates, P2PExchanges
 
 from django.db import models
 
@@ -29,22 +29,15 @@ PAY_TYPES = (
 )
 
 
-class UpdateP2PBinance(models.Model):
-    updated = models.DateTimeField(
-        'Update date', auto_now_add=True, db_index=True
-    )
-    duration = models.DurationField(default=timedelta())
-
-    def __str__(self):
-        return self.pk
+class UpdateP2PBinance(ExchangeUpdates):
+    pass
 
 
-class P2PBinance(models.Model):
-    asset = models.CharField(max_length=4, choices=ASSETS)
-    trade_type = models.CharField(max_length=4, choices=TRADE_TYPES)
-    fiat = models.CharField(max_length=3, choices=FIATS)
-    pay_type = models.CharField(max_length=15, choices=PAY_TYPES)
-    price = models.FloatField(null=True, blank=True, default=None)
+class P2PBinance(P2PExchanges):
+    ASSETS = ASSETS
+    TRADE_TYPES = TRADE_TYPES
+    FIATS = FIATS
+    PAY_TYPES = PAY_TYPES
     update = models.ForeignKey(
          UpdateP2PBinance, related_name='datas', on_delete=models.CASCADE
     )
