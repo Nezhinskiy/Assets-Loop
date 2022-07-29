@@ -6,26 +6,23 @@ import requests
 
 
 class BankParser(object):
-    FIATS = None
-    ENDPOINT = None
-    MODEL = None
-    ROUND = 6
+    fiats = None
+    endpoint = None
+    model = None
+    round_to = 6
 
     def generate_unique_params(self) -> List[dict[str]]:
-        fiats = [fiat[0] for fiat in self.FIATS]  # repackaging choices into a list
+        fiats = [fiat[0] for fiat in self.fiats]  # repackaging choices into a list
         fiats_combinations = tuple(combinations(fiats, 2))  # 2: currency pair
         params_list = [dict([('from', params[0]), ('to', params[-1])])
                        for params in fiats_combinations]
         # repackaging a list with tuples into a list with dicts
         return params_list
 
-
     def get_api_answer(self, params):
-        """Делает запрос к единственному эндпоинту API.
-        Яндекс.Практикума.
-        """
+        """Делает запрос к эндпоинту API Tinfoff."""
         try:
-            response = requests.get(self.ENDPOINT, params)
+            response = requests.get(self.endpoint, params)
         except Exception as error:
             message = f'Ошибка при запросе к основному API: {error}'
             raise Exception(message)
@@ -41,12 +38,11 @@ class BankParser(object):
         buy_and_sell = self.extract_buy_and_sell_from_json(
             self.get_api_answer(params))
         buy_data = list(params.values())
-        buy_data.append(round(buy_and_sell[0], self.ROUND))
+        buy_data.append(round(buy_and_sell[0], self.round_to))
         sell_data = list(params.values())
         sell_data.reverse()
-        sell_data.append(round(1.0 / buy_and_sell[1], self.ROUND))
+        sell_data.append(round(1.0 / buy_and_sell[1], self.round_to))
         return [buy_data, sell_data]
-
 
     def get_all_api_answers(self):
         for params in self.generate_unique_params():
