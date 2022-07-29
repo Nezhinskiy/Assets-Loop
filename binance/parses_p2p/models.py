@@ -1,5 +1,4 @@
-from datetime import timedelta
-from binance.models import ExchangeUpdates, P2PExchanges
+from binance.models import ExchangeUpdatesModel, P2PExchangesModel
 
 from django.db import models
 
@@ -29,11 +28,11 @@ PAY_TYPES = (
 )
 
 
-class UpdateP2PBinance(ExchangeUpdates):
+class UpdateP2PBinance(ExchangeUpdatesModel):
     pass
 
 
-class P2PBinance(P2PExchanges):
+class P2PBinance(P2PExchangesModel):
     ASSETS = ASSETS
     TRADE_TYPES = TRADE_TYPES
     FIATS = FIATS

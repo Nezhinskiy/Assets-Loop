@@ -3,7 +3,7 @@ from datetime import timedelta
 from django.db import models
 
 
-class ExchangeUpdates(models.Model):
+class ExchangeUpdatesModel(models.Model):
     updated = models.DateTimeField(
         'Update date', auto_now_add=True, db_index=True
     )
@@ -16,9 +16,8 @@ class ExchangeUpdates(models.Model):
         abstract = True
 
 
-class BankExchanges(models.Model):
+class BankExchangesModel(models.Model):
     FIATS = None
-    ModelUpdates = ExchangeUpdates
 
     from_fiats = models.CharField(max_length=3, choices=FIATS)
     to_fiats = models.CharField(max_length=3, choices=FIATS)
@@ -31,7 +30,7 @@ class BankExchanges(models.Model):
         abstract = True
 
 
-class P2PExchanges(models.Model):
+class P2PExchangesModel(models.Model):
     ASSETS = None
     TRADE_TYPES = None
     FIATS = None
