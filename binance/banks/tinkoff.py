@@ -14,18 +14,18 @@ class Tinkoff(BankParser):
     FIATS = FIATS
     ENDPOINT = ENDPOINT
 
-    def extract_buy_and_sell_from_json(self, json_data):
+    def extract_buy_and_sell_from_json(self, json_data: dict) -> list[float]:
         payload = json_data['payload']
         rates = payload['rates']
         for category in rates:
             if category['category'] == 'CUTransfersPremium':
-                buy = category.get('buy')
-                sell = category.get('sell')
-                return buy, sell
+                buy: float = category.get('buy')
+                sell: float = category.get('sell')
+                return [buy, sell]
 
 
-Tin = Tinkoff()
-message = Tin.get_all_api_answers()
+tinkoff_bank = Tinkoff()
+message = tinkoff_bank.get_all_api_answers()
 print(message)
 
 # def generate_params() -> List[dict[str]]:

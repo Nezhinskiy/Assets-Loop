@@ -9,6 +9,7 @@ class BankParser(object):
     FIATS = None
     ENDPOINT = None
     MODEL = None
+    ROUND = 6
 
     def generate_unique_params(self) -> List[dict[str]]:
         fiats = [fiat[0] for fiat in self.FIATS]  # repackaging choices into a list
@@ -33,12 +34,23 @@ class BankParser(object):
             raise Exception(message)
         return response.json()
 
-    def extract_buy_and_sell_from_json(self, json_data):
+    def extract_buy_and_sell_from_json(self, json_data: dict) -> list[float]:
         pass
+
+    def calculates_buy_and_sell_data(self, params):
+        buy_and_sell = self.extract_buy_and_sell_from_json(
+            self.get_api_answer(params))
+        buy_data = list(params.values())
+        buy_data.append(round(buy_and_sell[0], self.ROUND))
+        sell_data = list(params.values())
+        sell_data.reverse()
+        sell_data.append(round(1.0 / buy_and_sell[1], self.ROUND))
+        return [buy_data, sell_data]
+
 
     def get_all_api_answers(self):
         for params in self.generate_unique_params():
-            print(self.extract_buy_and_sell_from_json(self.get_api_answer(params)))
+            q = self.calculates_buy_and_sell_data(params)
 
-
+            print(q)
 
