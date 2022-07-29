@@ -1,6 +1,6 @@
-from binance.models import ExchangeUpdatesModel, BankExchangesModel
 from django.db import models
 
+from binance.models import BankExchangesModel, ExchangeUpdatesModel
 
 FIATS_TINKOFF = (
     ('RUB', 'Rub'),

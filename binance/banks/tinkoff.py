@@ -1,5 +1,4 @@
 from binance.banks.BankParser import BankParser
-
 from binance.banks.models import FIATS
 
 ENDPOINT = 'https://api.tinkoff.ru/v1/currency_rates?'

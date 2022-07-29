@@ -1,6 +1,6 @@
-from binance.models import ExchangeUpdatesModel, P2PExchangesModel
-
 from django.db import models
+
+from binance.models import ExchangeUpdatesModel, P2PExchangesModel
 
 ASSETS = (
     ('USDT', 'USDT'),
