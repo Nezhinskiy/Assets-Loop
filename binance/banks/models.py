@@ -1,4 +1,4 @@
-from django.db import models
+from binance.models import ExchangeUpdates, BankExchanges
 
 FIATS = (
     ('RUB', 'Rub'),
@@ -6,3 +6,9 @@ FIATS = (
     ('EUR', 'Eur'),
     ('ILS', 'Ils'),
 )
+
+class TinkoffUpdates(ExchangeUpdates):
+
+class TinkoffExchanges(BankExchanges):
+    FIATS = FIATS
+    ExchangeUpdates = TinkoffUpdates
