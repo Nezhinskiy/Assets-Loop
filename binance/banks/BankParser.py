@@ -2,7 +2,7 @@ import random
 from datetime import datetime
 from http import HTTPStatus
 from itertools import combinations
-from typing import List, Tuple, Dict, Any
+from typing import List
 
 import requests
 
@@ -15,7 +15,8 @@ class BankParser(object):
     round_to = 6
 
     def generate_unique_params(self) -> List[dict[str]]:
-        fiats = [fiat[0] for fiat in self.fiats]  # repackaging choices into a list
+        fiats = [fiat[0] for fiat in self.fiats]
+        # repackaging choices into a list
         fiats_combinations = tuple(combinations(fiats, 2))  # 2: currency pair
         params_list = [dict([('from', params[0]), ('to', params[-1])])
                        for params in fiats_combinations]
