@@ -1,4 +1,4 @@
-from banks.BankParser import BankParser
+from core.parsers import BankParser
 from banks.models import FIATS_TINKOFF
 from banks.models import TinkoffExchanges, TinkoffUpdates
 
