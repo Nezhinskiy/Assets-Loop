@@ -1,3 +1,4 @@
+import random
 from datetime import datetime
 from http import HTTPStatus
 from itertools import combinations
@@ -19,6 +20,7 @@ class BankParser(object):
         params_list = [dict([('from', params[0]), ('to', params[-1])])
                        for params in fiats_combinations]
         # repackaging a list with tuples into a list with dicts
+        random.shuffle(params_list)
         return params_list
 
     def get_api_answer(self, params):
@@ -78,8 +80,10 @@ class BankParser(object):
                 )
                 records_to_create.append(created_object)
         self.Exchanges.objects.bulk_create(records_to_create)
-        self.Exchanges.objects.bulk_update(records_to_update,
-                                             ['price', 'update'])
+        self.Exchanges.objects.bulk_update(
+            records_to_update,
+            ['price', 'update']
+        )
 
     def get_all_api_answers(self):
         start_time = datetime.now()
