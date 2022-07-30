@@ -1,8 +1,6 @@
-from itertools import product
 from datetime import datetime
 from http import HTTPStatus
-from itertools import combinations
-from typing import List
+from itertools import combinations, product
 
 import requests
 
@@ -35,7 +33,7 @@ class BasicParser(object):
 class BankParser(BasicParser):
     fiats = None
 
-    def generate_unique_params(self) -> List[dict[str]]:
+    def generate_unique_params(self) -> list[dict[str]]:
         """Repackaging a tuple with tuples into a list with params."""
         fiats = self.converts_choices_to_set(self.fiats)
         fiats_combinations = tuple(combinations(fiats, 2))  # 2: currency pair

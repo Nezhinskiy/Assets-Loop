@@ -3,11 +3,9 @@ from http import HTTPStatus
 from sys import getsizeof
 
 import requests
-
+from core.parsers import P2PParser
 from parses_p2p.models import (ASSETS, FIATS, PAY_TYPES, TRADE_TYPES,
                                P2PBinance, UpdateP2PBinance)
-
-from core.parsers import P2PParser
 
 
 class BinanceParser(P2PParser):

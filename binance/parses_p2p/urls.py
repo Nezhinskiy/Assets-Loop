@@ -1,7 +1,6 @@
 from django.urls import include, path
-from rest_framework import routers
-
 from parses_p2p.views import index
+from rest_framework import routers
 
 app_name = 'parses_p2p'
 

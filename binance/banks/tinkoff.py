@@ -1,13 +1,10 @@
+from banks.models import FIATS_TINKOFF, TinkoffExchanges, TinkoffUpdates
 from core.parsers import BankParser
-from banks.models import FIATS_TINKOFF
-from banks.models import TinkoffExchanges, TinkoffUpdates
-
-ENDPOINT = 'https://api.tinkoff.ru/v1/currency_rates?'
 
 
 class Tinkoff(BankParser):
     fiats = FIATS_TINKOFF
-    endpoint = ENDPOINT
+    endpoint = 'https://api.tinkoff.ru/v1/currency_rates?'
     Exchanges = TinkoffExchanges
     Updates = TinkoffUpdates
 
