@@ -1,3 +1,5 @@
-from django.shortcuts import render
+from banks.tinkoff import get_all
 
-# Create your views here.
+
+def tinkoff(request):
+    return get_all()

@@ -19,12 +19,12 @@ class ExchangeUpdatesModel(models.Model):
 class BankExchangesModel(models.Model):
     FIATS = None
 
-    from_fiats = models.CharField(max_length=3, choices=FIATS)
-    to_fiats = models.CharField(max_length=3, choices=FIATS)
+    from_fiat = models.CharField(max_length=3, choices=FIATS)
+    to_fiat = models.CharField(max_length=3, choices=FIATS)
     price = models.FloatField(null=True, blank=True, default=None)
 
-    def __str__(self):
-        return self.price
+    # def __str__(self):
+    #     return str(self.price)
 
     class Meta:
         abstract = True

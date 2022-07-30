@@ -1,6 +1,7 @@
+from datetime import datetime
 from http import HTTPStatus
 from itertools import combinations
-from typing import List
+from typing import List, Tuple, Dict, Any
 
 import requests
 
@@ -8,7 +9,8 @@ import requests
 class BankParser(object):
     fiats = None
     endpoint = None
-    model = None
+    Exchanges = None
+    Updates = None
     round_to = 6
 
     def generate_unique_params(self) -> List[dict[str]]:
@@ -31,22 +33,59 @@ class BankParser(object):
             raise Exception(message)
         return response.json()
 
-    def extract_buy_and_sell_from_json(self, json_data: dict) -> list[float]:
+    def extract_buy_and_sell_from_json(self, json_data: dict) -> tuple[float]:
         pass
 
-    def calculates_buy_and_sell_data(self, params):
+    def calculates_buy_and_sell_data(
+            self, params) -> tuple[dict[str, float], dict[str, float]]:
         buy_and_sell = self.extract_buy_and_sell_from_json(
             self.get_api_answer(params))
-        buy_data = list(params.values())
-        buy_data.append(round(buy_and_sell[0], self.round_to))
-        sell_data = list(params.values())
-        sell_data.reverse()
-        sell_data.append(round(1.0 / buy_and_sell[1], self.round_to))
-        return [buy_data, sell_data]
+        buy_data = {
+            'from_fiat': params['from'],
+            'to_fiat': params['to'],
+            'price': round(buy_and_sell[0], self.round_to)
+        }
+        sell_data = {
+            'from_fiat': params['to'],
+            'to_fiat': params['from'],
+            'price': round(1.0 / buy_and_sell[1], self.round_to)
+        }
+        return buy_data, sell_data
+
+    def bulk_update_or_create(self, params, new_update):
+        records_to_update = []
+        records_to_create = []
+        for value_dict in self.calculates_buy_and_sell_data(params):
+            price = value_dict.pop('price')
+            target_object = self.Exchanges.objects.filter(
+                from_fiat=value_dict['from_fiat'],
+                to_fiat=value_dict['to_fiat']
+            )
+            if target_object.exists():
+                update_object = self.Exchanges.objects.get(
+                    from_fiat=value_dict['from_fiat'],
+                    to_fiat=value_dict['to_fiat']
+                )
+                update_object.price = price
+                update_object.update = new_update
+                records_to_update.append(update_object)
+            else:
+                created_object = self.Exchanges(
+                    from_fiat=value_dict['from_fiat'],
+                    to_fiat=value_dict['to_fiat'],
+                    price=price,
+                    update=new_update
+                )
+                records_to_create.append(created_object)
+        self.Exchanges.objects.bulk_create(records_to_create)
+        self.Exchanges.objects.bulk_update(records_to_update,
+                                             ['price', 'update'])
 
     def get_all_api_answers(self):
+        start_time = datetime.now()
+        new_update = self.Updates.objects.create()
         for params in self.generate_unique_params():
-            q = self.calculates_buy_and_sell_data(params)
-
-            print(q)
-
+            self.bulk_update_or_create(params, new_update)
+        duration = datetime.now() - start_time
+        new_update.duration = duration
+        new_update.save()

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from http import HTTPStatus
 from sys import getsizeof
 
@@ -59,8 +59,7 @@ def p2p_binance_bulk_update_or_create():
     start_time = datetime.now()
     records_to_create = []
     records_to_update = []
-    UpdateP2PBinance.objects.create()
-    new_update = UpdateP2PBinance.objects.last()
+    new_update = UpdateP2PBinance.objects.create()
     for asset in ASSETS:
         asset = asset[0]
         for trade_type in TRADE_TYPES:
@@ -96,4 +95,5 @@ def p2p_binance_bulk_update_or_create():
     P2PBinance.objects.bulk_create(records_to_create)
     P2PBinance.objects.bulk_update(records_to_update, ['price', 'update'])
     duration = datetime.now() - start_time
-    new_update.update(duration=duration)
+    new_update.duration = duration
+    new_update.save()
