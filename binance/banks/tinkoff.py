@@ -19,7 +19,7 @@ class Tinkoff(BankParser):
                 return buy, sell
 
 
-def get_all():
+def get_all_tinkoff():
     tinkoff_parser = Tinkoff()
     message = tinkoff_parser.get_all_api_answers()
     return message

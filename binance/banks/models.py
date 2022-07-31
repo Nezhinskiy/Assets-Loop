@@ -1,6 +1,6 @@
 from django.db import models
 
-from binance.models import BankExchangesModel, ExchangeUpdatesModel
+from core.models import BankExchangesModel, ExchangeUpdatesModel
 
 FIATS_TINKOFF = (
     ('RUB', 'Rub'),
@@ -17,5 +17,5 @@ class TinkoffUpdates(ExchangeUpdatesModel):
 class TinkoffExchanges(BankExchangesModel):
     FIATS = FIATS_TINKOFF
     update = models.ForeignKey(
-        TinkoffUpdates, related_name='%(class)s', on_delete=models.CASCADE
+        TinkoffUpdates, related_name='datas', on_delete=models.CASCADE
     )

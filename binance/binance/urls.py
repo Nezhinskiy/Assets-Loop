@@ -18,6 +18,7 @@ from django.urls import include, path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', include('core.urls', namespace='index')),
     path('', include('parses_p2p.urls', namespace='parses_p2p')),
     path('', include('banks.urls', namespace='banks'))
 ]
