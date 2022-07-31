@@ -19,6 +19,7 @@ class ExchangeUpdatesModel(models.Model):
 class BankExchangesModel(models.Model):
     FIATS = None
 
+    # updated = models.DateTimeField('Update date', null=True, blank=True)
     from_fiat = models.CharField(max_length=3, choices=FIATS)
     to_fiat = models.CharField(max_length=3, choices=FIATS)
     price = models.FloatField(null=True, blank=True, default=None)

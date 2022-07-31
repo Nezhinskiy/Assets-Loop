@@ -36,7 +36,7 @@ class BinanceParser(P2PParser):
             "Content-Length": str(getsizeof(body)),
         }
 
-    def extract_price_from_json(self, json_data: dict) -> int:
+    def extract_price_from_json(self, json_data: dict) -> [int | None]:
         data = json_data.get('data')
         if len(data) == 0:
             price = None
@@ -45,6 +45,7 @@ class BinanceParser(P2PParser):
         adv = internal_data.get('adv')
         price = adv.get('price')
         return price
+
 
 def get_all_p2p_binance():
     binance_parser = BinanceParser()

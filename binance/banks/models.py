@@ -12,6 +12,7 @@ FIATS_WISE = (
     ('USD', 'Usd'),
     ('EUR', 'Eur'),
     ('ILS', 'Ils'),
+    ('PLN', 'Pln'),
 )
 
 

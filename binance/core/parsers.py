@@ -1,6 +1,7 @@
 from datetime import datetime
 from http import HTTPStatus
-from itertools import combinations, product
+from itertools import combinations, product, permutations
+from typing import Tuple
 
 import requests
 
@@ -12,6 +13,7 @@ class BasicParser(object):
     round_to = 6
     records_to_update = []
     records_to_create = []
+    CURRENCY_PAIR = 2
 
     def converts_choices_to_set(self, choices: tuple[tuple[str, str]]
                                 ) -> set[str]:
@@ -33,13 +35,24 @@ class BasicParser(object):
 class BankParser(BasicParser):
     fiats = None
     buy_and_sell = True
+    name_from = 'from'
+    name_to = 'to'
+
+    def create_params(self, fiats_combinations):
+        params = [
+            dict([(self.name_from, params[0]), (self.name_to, params[-1])])
+            for params in fiats_combinations
+        ]
+        return params
 
     def generate_unique_params(self) -> list[dict[str]]:
         """Repackaging a tuple with tuples into a list with params."""
         fiats = self.converts_choices_to_set(self.fiats)
-        fiats_combinations = tuple(combinations(fiats, 2))  # 2: currency pair
-        params_list = [dict([('from', params[0]), ('to', params[-1])])
-                       for params in fiats_combinations]
+        fiats_combinations = tuple(combinations(fiats, self.CURRENCY_PAIR)
+                                   if self.buy_and_sell
+                                   else permutations(fiats,
+                                                     self.CURRENCY_PAIR))
+        params_list = self.create_params(fiats_combinations)
         return params_list
 
     def get_api_answer(self, params):
@@ -60,37 +73,31 @@ class BankParser(BasicParser):
     def extract_price_from_json(self, json_data) -> float:
         pass
 
-    def calculates_buy_and_sell_data(
-            self, params) -> tuple[dict[str, float], dict[str, float]]:
+    def calculates_buy_and_sell_data(self, params) -> tuple[dict, dict]:
         buy_and_sell = self.extract_buy_and_sell_from_json(
             self.get_api_answer(params))
         buy_data = {
-            'from_fiat': params['from'],
-            'to_fiat': params['to'],
+            'from_fiat': params[self.name_from],
+            'to_fiat': params[self.name_to],
             'price': round(buy_and_sell[0], self.round_to)
         }
         sell_data = {
-            'from_fiat': params['to'],
-            'to_fiat': params['from'],
+            'from_fiat': params[self.name_to],
+            'to_fiat': params[self.name_from],
             'price': round(1.0 / buy_and_sell[1], self.round_to)
         }
         return buy_data, sell_data
 
-    def calculates_price_data(
-            self, params) -> tuple[dict[str, float], dict[str, float]]:
-        buy_and_sell = self.extract_buy_and_sell_from_json(
+    def calculates_price_data(self, params) -> list[dict]:
+        price = self.extract_price_from_json(
             self.get_api_answer(params))
-        buy_data = {
-            'from_fiat': params['from'],
-            'to_fiat': params['to'],
-            'price': round(buy_and_sell[0], self.round_to)
+        price_data = {
+            'from_fiat': params[self.name_from],
+            'to_fiat': params[self.name_to],
+            'price': round(price, self.round_to)
         }
-        sell_data = {
-            'from_fiat': params['to'],
-            'to_fiat': params['from'],
-            'price': round(1.0 / buy_and_sell[1], self.round_to)
-        }
-        return buy_data, sell_data
+
+        return [price_data]
 
     def choice_buy_and_sell_or_price(self, params):
         if self.buy_and_sell:
@@ -110,6 +117,8 @@ class BankParser(BasicParser):
                         from_fiat=value_dict['from_fiat'],
                         to_fiat=value_dict['to_fiat']
                     )
+                    if update_object.price == price:
+                        continue
                     update_object.price = price
                     update_object.update = new_update
                     self.records_to_update.append(update_object)
@@ -154,7 +163,7 @@ class P2PParser(BasicParser):
             raise Exception(message)
         return response.json()
 
-    def extract_price_from_json(self, json_data: dict) -> int:
+    def extract_price_from_json(self, json_data: dict) -> [int | None]:
         pass
 
     def get_exception(self, fiat, pay_type):
