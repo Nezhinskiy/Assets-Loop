@@ -32,6 +32,7 @@ class BasicParser(object):
 
 class BankParser(BasicParser):
     fiats = None
+    buy_and_sell = True
 
     def generate_unique_params(self) -> list[dict[str]]:
         """Repackaging a tuple with tuples into a list with params."""
@@ -53,7 +54,10 @@ class BankParser(BasicParser):
             raise Exception(message)
         return response.json()
 
-    def extract_buy_and_sell_from_json(self, json_data: dict) -> tuple[float]:
+    def extract_buy_and_sell_from_json(self, json_data) -> tuple[float, float]:
+        pass
+
+    def extract_price_from_json(self, json_data) -> float:
         pass
 
     def calculates_buy_and_sell_data(
@@ -72,9 +76,30 @@ class BankParser(BasicParser):
         }
         return buy_data, sell_data
 
+    def calculates_price_data(
+            self, params) -> tuple[dict[str, float], dict[str, float]]:
+        buy_and_sell = self.extract_buy_and_sell_from_json(
+            self.get_api_answer(params))
+        buy_data = {
+            'from_fiat': params['from'],
+            'to_fiat': params['to'],
+            'price': round(buy_and_sell[0], self.round_to)
+        }
+        sell_data = {
+            'from_fiat': params['to'],
+            'to_fiat': params['from'],
+            'price': round(1.0 / buy_and_sell[1], self.round_to)
+        }
+        return buy_data, sell_data
+
+    def choice_buy_and_sell_or_price(self, params):
+        if self.buy_and_sell:
+            return self.calculates_buy_and_sell_data(params)
+        return self.calculates_price_data(params)
+
     def bulk_update_or_create(self, new_update):
         for params in self.generate_unique_params():
-            for value_dict in self.calculates_buy_and_sell_data(params):
+            for value_dict in self.choice_buy_and_sell_or_price(params):
                 price = value_dict.pop('price')
                 target_object = self.Exchanges.objects.filter(
                     from_fiat=value_dict['from_fiat'],
