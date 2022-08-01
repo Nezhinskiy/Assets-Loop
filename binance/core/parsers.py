@@ -9,8 +9,6 @@ class BasicParser(object):
     endpoint = None
     Exchanges = None
     Updates = None
-    records_to_update = []
-    records_to_create = []
     ROUND_TO = 6
     CURRENCY_PAIR = 2
 
@@ -26,7 +24,7 @@ class BasicParser(object):
     def extract_buy_and_sell_from_json(self, json_data) -> tuple[float, float]:
         pass
 
-    def extract_price_from_json(self, json_data) -> [int | None]:
+    def extract_price_from_json(self, json_data) -> float:
         pass
 
     def converts_choices_to_set(self, choices: tuple[tuple[str, str]]
@@ -108,6 +106,8 @@ class BankParser(BasicParser):
         return self.calculates_price_data(params)
 
     def bulk_update_or_create(self, new_update):
+        records_to_update = []
+        records_to_create = []
         for params in self.generate_unique_params():
             for value_dict in self.choice_buy_and_sell_or_price(params):
                 price = value_dict.pop('price')
@@ -116,15 +116,15 @@ class BankParser(BasicParser):
                     to_fiat=value_dict['to_fiat']
                 )
                 if target_object.exists():
-                    update_object = self.Exchanges.objects.get(
+                    updated_object = self.Exchanges.objects.get(
                         from_fiat=value_dict['from_fiat'],
                         to_fiat=value_dict['to_fiat']
                     )
-                    if update_object.price == price:
+                    if updated_object.price == price:
                         continue
-                    update_object.price = price
-                    update_object.update = new_update
-                    self.records_to_update.append(update_object)
+                    updated_object.price = price
+                    updated_object.update = new_update
+                    records_to_update.append(updated_object)
                 else:
                     created_object = self.Exchanges(
                         from_fiat=value_dict['from_fiat'],
@@ -132,9 +132,9 @@ class BankParser(BasicParser):
                         price=price,
                         update=new_update
                     )
-                    self.records_to_create.append(created_object)
-        self.Exchanges.objects.bulk_create(self.records_to_create)
-        self.Exchanges.objects.bulk_update(self.records_to_update,
+                    records_to_create.append(created_object)
+        self.Exchanges.objects.bulk_create(records_to_create)
+        self.Exchanges.objects.bulk_update(records_to_update,
                                            ['price', 'update'])
 
 
@@ -165,6 +165,8 @@ class P2PParser(BasicParser):
             return True
 
     def bulk_update_or_create(self, new_update):
+        records_to_update = []
+        records_to_create = []
         for asset, trade_type, fiat, pay_type in product(
                 self.converts_choices_to_set(self.assets),
                 self.converts_choices_to_set(self.trade_types),
@@ -185,16 +187,18 @@ class P2PParser(BasicParser):
                     asset=asset, trade_type=trade_type, fiat=fiat,
                     pay_type=pay_type
                 )
+                if updated_object.price == price:
+                    continue
                 updated_object.price = price
                 updated_object.update = new_update
-                self.records_to_update.append(updated_object)
+                records_to_update.append(updated_object)
             else:
                 created_object = self.Exchanges(
                     asset=asset, trade_type=trade_type, fiat=fiat,
                     pay_type=pay_type, price=price,
                     update=new_update
                 )
-                self.records_to_create.append(created_object)
-        self.Exchanges.objects.bulk_create(self.records_to_create)
-        self.Exchanges.objects.bulk_update(self.records_to_update,
+                records_to_create.append(created_object)
+        self.Exchanges.objects.bulk_create(records_to_create)
+        self.Exchanges.objects.bulk_update(records_to_update,
                                            ['price', 'update'])

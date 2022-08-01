@@ -31,7 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'parses_p2p.apps.ParsesP2PConfig',
+    'p2p_exchanges.apps.P2PExchangesConfig',
     'banks.apps.BanksConfig',
     'core.apps.CoreConfig',
     'django.contrib.admin',

@@ -1,6 +1,5 @@
 from banks.views import tinkoff, wise
-from django.urls import include, path
-from rest_framework import routers
+from django.urls import path
 
 app_name = 'banks'
 

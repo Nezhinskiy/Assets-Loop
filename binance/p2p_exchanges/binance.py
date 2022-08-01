@@ -4,8 +4,8 @@ from sys import getsizeof
 
 import requests
 from core.parsers import P2PParser
-from parses_p2p.models import (ASSETS, FIATS, PAY_TYPES, TRADE_TYPES,
-                               P2PBinance, UpdateP2PBinance)
+from p2p_exchanges.models import (ASSETS, FIATS, PAY_TYPES, TRADE_TYPES,
+                               BinanceExchanges, BinanceUpdates)
 
 
 class BinanceParser(P2PParser):
@@ -16,8 +16,8 @@ class BinanceParser(P2PParser):
     endpoint = 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search'
     page = 1
     rows = 1
-    Exchanges = P2PBinance
-    Updates = UpdateP2PBinance
+    Exchanges = BinanceExchanges
+    Updates = BinanceUpdates
 
     def create_body(self, asset, trade_type, fiat, pay_types):
         return {

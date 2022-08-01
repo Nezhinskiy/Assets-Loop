@@ -9,8 +9,8 @@ class ExchangeUpdatesModel(models.Model):
     )
     duration = models.DurationField(default=timedelta())
 
-    def __str__(self):
-        return self.pk
+    # def __str__(self):
+    #     return self.pk
 
     class Meta:
         abstract = True
@@ -43,8 +43,8 @@ class P2PExchangesModel(models.Model):
     pay_type = models.CharField(max_length=16, choices=PAY_TYPES)
     price = models.FloatField(null=True, blank=True, default=None)
 
-    def __str__(self):
-        return self.price
+    # def __str__(self):
+    #     return self.price
 
     class Meta:
         abstract = True

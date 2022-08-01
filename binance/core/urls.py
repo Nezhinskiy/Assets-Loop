@@ -1,5 +1,5 @@
 from django.urls import path
-from parses_p2p.views import index
+from core.views import index
 
 app_name = 'core'
 

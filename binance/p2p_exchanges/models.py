@@ -27,18 +27,18 @@ PAY_TYPES = (
 )
 
 
-class UpdateP2PBinance(ExchangeUpdatesModel):
+class BinanceUpdates(ExchangeUpdatesModel):
     pass
 
 
-class P2PBinance(P2PExchangesModel):
+class BinanceExchanges(P2PExchangesModel):
     ASSETS = ASSETS
     TRADE_TYPES = TRADE_TYPES
     FIATS = FIATS
     PAY_TYPES = PAY_TYPES
     update = models.ForeignKey(
-         UpdateP2PBinance, related_name='datas', on_delete=models.CASCADE
+         BinanceUpdates, related_name='datas', on_delete=models.CASCADE
     )
 
-    def __str__(self):
-        return self.price
+    # def __str__(self):
+    #     return self.price
