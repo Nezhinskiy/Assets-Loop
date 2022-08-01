@@ -7,7 +7,6 @@ class Wise(BankParser):
     endpoint = 'https://wise.com/gateway/v3/price?'
     Exchanges = WiseExchanges
     Updates = WiseUpdates
-    round_to = 10
     name_from = 'sourceCurrency'
     name_to = 'targetCurrency'
     buy_and_sell = False

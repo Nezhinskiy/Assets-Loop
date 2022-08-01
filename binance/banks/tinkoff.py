@@ -8,6 +8,13 @@ class Tinkoff(BankParser):
     Exchanges = TinkoffExchanges
     Updates = TinkoffUpdates
 
+    def create_params(self, fiats_combinations):
+        params = [
+            dict([(self.name_from, params[0]), (self.name_to, params[-1])])
+            for params in fiats_combinations
+        ]
+        return params
+
     def extract_buy_and_sell_from_json(self, json_data: dict) -> tuple[float,
                                                                        float]:
         payload = json_data['payload']

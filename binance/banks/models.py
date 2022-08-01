@@ -1,6 +1,5 @@
-from django.db import models
-
 from core.models import BankExchangesModel, ExchangeUpdatesModel
+from django.db import models
 
 FIATS_TINKOFF = (
     ('RUB', 'Rub'),

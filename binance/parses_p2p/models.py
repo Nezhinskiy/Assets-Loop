@@ -1,6 +1,5 @@
-from django.db import models
-
 from core.models import ExchangeUpdatesModel, P2PExchangesModel
+from django.db import models
 
 ASSETS = (
     ('USDT', 'USDT'),
