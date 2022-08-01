@@ -1,7 +1,6 @@
 from datetime import datetime
 from http import HTTPStatus
 from itertools import combinations, product, permutations
-from typing import Tuple
 
 import requests
 
@@ -10,9 +9,9 @@ class BasicParser(object):
     endpoint = None
     Exchanges = None
     Updates = None
-    round_to = 6
     records_to_update = []
     records_to_create = []
+    ROUND_TO = 6
     CURRENCY_PAIR = 2
 
     def converts_choices_to_set(self, choices: tuple[tuple[str, str]]
@@ -79,12 +78,12 @@ class BankParser(BasicParser):
         buy_data = {
             'from_fiat': params[self.name_from],
             'to_fiat': params[self.name_to],
-            'price': round(buy_and_sell[0], self.round_to)
+            'price': round(buy_and_sell[0], self.ROUND_TO)
         }
         sell_data = {
             'from_fiat': params[self.name_to],
             'to_fiat': params[self.name_from],
-            'price': round(1.0 / buy_and_sell[1], self.round_to)
+            'price': round(1.0 / buy_and_sell[1], self.ROUND_TO)
         }
         return buy_data, sell_data
 
@@ -94,7 +93,7 @@ class BankParser(BasicParser):
         price_data = {
             'from_fiat': params[self.name_from],
             'to_fiat': params[self.name_to],
-            'price': round(price, self.round_to)
+            'price': round(price, self.ROUND_TO)
         }
 
         return [price_data]
