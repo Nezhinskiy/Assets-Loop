@@ -20,5 +20,6 @@ urlpatterns = [
      path('admin/', admin.site.urls),
      path('', include('core.urls', namespace='index')),
      path('', include('p2p_exchanges.urls', namespace='p2p_exchanges')),
-     path('', include('banks.urls', namespace='banks'))
+     path('', include('banks.urls', namespace='banks')),
+     path('', include('calculations.urls', namespace='calculations'))
  ]

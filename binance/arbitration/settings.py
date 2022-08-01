@@ -33,6 +33,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'p2p_exchanges.apps.P2PExchangesConfig',
     'banks.apps.BanksConfig',
+    'calculations.apps.CalculationsConfig',
     'core.apps.CoreConfig',
     'django.contrib.admin',
     'django.contrib.auth',
