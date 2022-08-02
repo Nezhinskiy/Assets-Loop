@@ -5,6 +5,7 @@ from itertools import permutations
 class InsideBanks(object):
     fiats: tuple = None
     Exchanges = None
+    InsideExchanges = None
     Updates = None
     percentage_round_to = 2
 

@@ -48,3 +48,13 @@ class P2PExchangesModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+class InsideBanksExchangesModel(models.Model):
+    list_of_transfers = models.JSONField()
+    marginality_percentage = models.FloatField(
+        null=True, blank=True, default=None
+    )
+
+    class Meta:
+        abstract = True

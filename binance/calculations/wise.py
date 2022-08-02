@@ -1,11 +1,13 @@
 from banks.models import FIATS_WISE, WiseExchanges, WiseUpdates
 from calculations.inside_banks import InsideBanks
+from calculations.models import InsideWiseUpdates, InsideWiseExchanges
 
 
 class Wise(InsideBanks):
     fiats = FIATS_WISE
     Exchanges = WiseExchanges
-    Updates = WiseUpdates
+    InsideExchanges = InsideWiseExchanges
+    Updates = InsideWiseUpdates
 
 
 def get_all_wise():
