@@ -37,7 +37,7 @@ class Wise(BankParser):
                     return price
 
 
-def get_all_wise():
+def get_all_wise_exchanges():
     wise_parser = Wise()
-    message = wise_parser.get_all_api_answers()
+    message = wise_parser.main()
     return message

@@ -49,5 +49,5 @@ class BinanceParser(P2PParser):
 
 def get_all_p2p_binance():
     binance_parser = BinanceParser()
-    message = binance_parser.get_all_api_answers()
+    message = binance_parser.main()
     return message

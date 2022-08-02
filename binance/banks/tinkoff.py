@@ -26,7 +26,7 @@ class Tinkoff(BankParser):
                 return buy, sell
 
 
-def get_all_tinkoff():
+def get_all_tinkoff_exchanges():
     tinkoff_parser = Tinkoff()
-    message = tinkoff_parser.get_all_api_answers()
+    message = tinkoff_parser.main()
     return message

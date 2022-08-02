@@ -35,13 +35,21 @@ class BasicParser(object):
     def get_exception(self, fiat, pay_type):
         return False
 
-    def bulk_update_or_create(self, new_update):
+    def get_all_api_answers(
+            self, new_update, records_to_update, records_to_create
+    ):
         pass
 
-    def get_all_api_answers(self):
+    def main(self):
         start_time = datetime.now()
         new_update = self.Updates.objects.create()
-        self.bulk_update_or_create(new_update)
+        records_to_update = []
+        records_to_create = []
+        self.get_all_api_answers(new_update, records_to_update,
+                                 records_to_create)
+        self.Exchanges.objects.bulk_create(records_to_create)
+        self.Exchanges.objects.bulk_update(records_to_update,
+                                           ['price', 'update'])
         duration = datetime.now() - start_time
         new_update.duration = duration
         new_update.save()
@@ -105,37 +113,43 @@ class BankParser(BasicParser):
             return self.calculates_buy_and_sell_data(params)
         return self.calculates_price_data(params)
 
-    def bulk_update_or_create(self, new_update):
-        records_to_update = []
-        records_to_create = []
+    def add_to_bulk_update_or_create(
+            self, new_update, records_to_update, records_to_create,
+            value_dict, price
+    ):
+        target_object = self.Exchanges.objects.filter(
+            from_fiat=value_dict['from_fiat'],
+            to_fiat=value_dict['to_fiat']
+        )
+        if target_object.exists():
+            updated_object = self.Exchanges.objects.get(
+                from_fiat=value_dict['from_fiat'],
+                to_fiat=value_dict['to_fiat']
+            )
+            if updated_object.price == price:
+                return
+            updated_object.price = price
+            updated_object.update = new_update
+            records_to_update.append(updated_object)
+        else:
+            created_object = self.Exchanges(
+                from_fiat=value_dict['from_fiat'],
+                to_fiat=value_dict['to_fiat'],
+                price=price,
+                update=new_update
+            )
+            records_to_create.append(created_object)
+
+    def get_all_api_answers(
+            self, new_update, records_to_update, records_to_create
+    ):
         for params in self.generate_unique_params():
             for value_dict in self.choice_buy_and_sell_or_price(params):
                 price = value_dict.pop('price')
-                target_object = self.Exchanges.objects.filter(
-                    from_fiat=value_dict['from_fiat'],
-                    to_fiat=value_dict['to_fiat']
+                self.add_to_bulk_update_or_create(
+                    new_update, records_to_update, records_to_create,
+                    value_dict, price
                 )
-                if target_object.exists():
-                    updated_object = self.Exchanges.objects.get(
-                        from_fiat=value_dict['from_fiat'],
-                        to_fiat=value_dict['to_fiat']
-                    )
-                    if updated_object.price == price:
-                        continue
-                    updated_object.price = price
-                    updated_object.update = new_update
-                    records_to_update.append(updated_object)
-                else:
-                    created_object = self.Exchanges(
-                        from_fiat=value_dict['from_fiat'],
-                        to_fiat=value_dict['to_fiat'],
-                        price=price,
-                        update=new_update
-                    )
-                    records_to_create.append(created_object)
-        self.Exchanges.objects.bulk_create(records_to_create)
-        self.Exchanges.objects.bulk_update(records_to_update,
-                                           ['price', 'update'])
 
 
 class P2PParser(BasicParser):
@@ -164,9 +178,33 @@ class P2PParser(BasicParser):
         if fiat == 'RUB' and pay_type == 'Wise':
             return True
 
-    def bulk_update_or_create(self, new_update):
-        records_to_update = []
-        records_to_create = []
+    def add_to_bulk_update_or_create(
+            self, new_update, records_to_update, records_to_create, asset,
+            trade_type, fiat, pay_type, price
+    ):
+        target_object = self.Exchanges.objects.filter(
+            asset=asset, trade_type=trade_type, fiat=fiat, pay_type=pay_type
+        )
+        if target_object.exists():
+            updated_object = self.Exchanges.objects.get(
+                asset=asset, trade_type=trade_type, fiat=fiat, pay_type=pay_type
+            )
+            if updated_object.price == price:
+                return
+            updated_object.price = price
+            updated_object.update = new_update
+            records_to_update.append(updated_object)
+        else:
+            created_object = self.Exchanges(
+                asset=asset, trade_type=trade_type, fiat=fiat,
+                pay_type=pay_type, price=price,
+                update=new_update
+            )
+            records_to_create.append(created_object)
+
+    def get_all_api_answers(
+            self, new_update, records_to_update, records_to_create
+    ):
         for asset, trade_type, fiat, pay_type in product(
                 self.converts_choices_to_set(self.assets),
                 self.converts_choices_to_set(self.trade_types),
@@ -178,27 +216,7 @@ class P2PParser(BasicParser):
             response = self.get_api_answer(asset, trade_type,
                                            fiat, pay_type)
             price = self.extract_price_from_json(response)
-            target_object = self.Exchanges.objects.filter(
-                asset=asset, trade_type=trade_type, fiat=fiat,
-                pay_type=pay_type
+            self.add_to_bulk_update_or_create(
+                new_update, records_to_update, records_to_create, asset,
+                trade_type, fiat, pay_type, price
             )
-            if target_object.exists():
-                updated_object = self.Exchanges.objects.get(
-                    asset=asset, trade_type=trade_type, fiat=fiat,
-                    pay_type=pay_type
-                )
-                if updated_object.price == price:
-                    continue
-                updated_object.price = price
-                updated_object.update = new_update
-                records_to_update.append(updated_object)
-            else:
-                created_object = self.Exchanges(
-                    asset=asset, trade_type=trade_type, fiat=fiat,
-                    pay_type=pay_type, price=price,
-                    update=new_update
-                )
-                records_to_create.append(created_object)
-        self.Exchanges.objects.bulk_create(records_to_create)
-        self.Exchanges.objects.bulk_update(records_to_update,
-                                           ['price', 'update'])
