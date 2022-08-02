@@ -1,3 +1,4 @@
+from datetime import datetime
 import math
 from itertools import permutations
 
@@ -39,17 +40,38 @@ class InsideBanks(object):
                                        self.percentage_round_to)
         return marginality_percentage
 
-    def main_loop(self):
-        transfer_combinations = []
-        all_exchanges = self.Exchanges.objects.select_related('update').all()
+    def add_to_bulk_update_or_create(
+            self, new_update, records_to_update, records_to_create,
+            combination, marginality_percentage
+    ):
+        target_object = self.InsideExchanges.objects.filter(
+            list_of_transfers=combination
+        )
+        if target_object.exists():
+            updated_object = self.InsideExchanges.objects.get(
+                list_of_transfers=combination
+            )
+            if updated_object.marginality_percentage == marginality_percentage:
+                return
+            updated_object.marginality_percentage = marginality_percentage
+            updated_object.update = new_update
+            records_to_update.append(updated_object)
+        else:
+            created_object = self.InsideExchanges(
+                list_of_transfers=combination,
+                marginality_percentage=marginality_percentage,
+                update=new_update
+            )
+            records_to_create.append(created_object)
+
+    def create_combinations(self, new_update, all_exchanges,
+                            records_to_update, records_to_create):
         all_fiats = self.converts_choices_to_list()
         for initial_end_fiat in all_fiats:
             combinable_fiats: list = self.converts_choices_to_list()
             combinable_fiats.remove(initial_end_fiat)
-            print(combinable_fiats, initial_end_fiat)
             for index in range(len(combinable_fiats)):
                 body_combinations = list(permutations(combinable_fiats, index + 1))
-                print(index, body_combinations)
                 for body_combination in body_combinations:
                     combination = list(body_combination)
                     combination.insert(0, initial_end_fiat)
@@ -57,34 +79,24 @@ class InsideBanks(object):
                     marginality_percentage = self.create_marginality_percentage(
                         combination, all_exchanges
                     )
-                    print(combination, marginality_percentage)
+                    self.add_to_bulk_update_or_create(
+                        new_update, records_to_update, records_to_create,
+                        combination, marginality_percentage
+                    )
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        # currencies: list = self.converts_choices_to_tuple()
-        # for initial_end_currency in currencies:  # валюта по одной
-        #     combinable_currencies: list = self.converts_choices_to_tuple()
-        #     # for num in range(len(combinable_currencies)):  # длины последовательностей между старт финиш
-        #         # body_combinations: list = permutations(combinable_currencies,
-        #         #                                        num + 1)
-        #         # transfer_combination1 = body_combinations.insert(
-        #         #     initial_end_currency)
-        #         # transfer_combination = transfer_combination1.append(initial_end_currency)
-        #         # transfer_combinations.append(transfer_combination)
-        #     print(currencies, initial_end_currency) # transfer_combinations
+    def main(self):
+        start_time = datetime.now()
+        new_update = self.Updates.objects.create()
+        all_exchanges = self.Exchanges.objects.select_related('update').all()
+        records_to_update = []
+        records_to_create = []
+        self.create_combinations(
+            new_update, all_exchanges, records_to_update, records_to_create
+        )
+        self.InsideExchanges.objects.bulk_create(records_to_create)
+        self.InsideExchanges.objects.bulk_update(
+            records_to_update, ['marginality_percentage', 'update']
+        )
+        duration = datetime.now() - start_time
+        new_update.duration = duration
+        new_update.save()

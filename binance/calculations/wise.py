@@ -12,5 +12,5 @@ class Wise(InsideBanks):
 
 def get_all_wise():
     wise_parser = Wise()
-    message = wise_parser.main_loop()
+    message = wise_parser.main()
     return message
