@@ -1,6 +1,7 @@
 from banks.models import FIATS_WISE, WiseExchanges, WiseUpdates
 from calculations.inside_banks import InsideBanks
 from calculations.models import InsideWiseUpdates, InsideWiseExchanges
+from banks.wise import get_all_wise_exchanges
 
 
 class Wise(InsideBanks):
@@ -11,6 +12,7 @@ class Wise(InsideBanks):
 
 
 def get_all_wise():
-    wise_parser = Wise()
-    message = wise_parser.main()
+    get_all_wise_exchanges()
+    wise_insider = Wise()
+    message = wise_insider.main()
     return message

@@ -47,7 +47,7 @@ class BinanceParser(P2PParser):
         return price
 
 
-def get_all_p2p_binance():
+def get_all_p2p_binance_exchanges():
     binance_parser = BinanceParser()
     message = binance_parser.main()
     return message
