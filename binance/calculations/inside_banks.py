@@ -71,6 +71,8 @@ class InsideBanks(object):
             combinable_fiats: list = self.converts_choices_to_list()
             combinable_fiats.remove(initial_end_fiat)
             for index in range(len(combinable_fiats)):
+                if index == 2:
+                    break
                 body_combinations = list(permutations(combinable_fiats, index + 1))
                 for body_combination in body_combinations:
                     combination = list(body_combination)
@@ -87,7 +89,7 @@ class InsideBanks(object):
     def main(self):
         start_time = datetime.now()
         new_update = self.Updates.objects.create()
-        all_exchanges = self.Exchanges.objects.select_related('update').all()
+        all_exchanges = self.Exchanges.objects.all()
         records_to_update = []
         records_to_create = []
         self.create_combinations(
