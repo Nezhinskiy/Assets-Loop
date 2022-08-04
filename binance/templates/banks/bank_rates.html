@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Записи сообщества
+{% endblock %}
+
+{% block content %}
+  <h1>ололо</h1>
+  <p>
+    Кол-во: {{ bank_rates.count }}
+  </p>
+  {% for bank_rate in bank_rates %}
+    {% include 'banks/includes/post.html' %}
+  {% endfor %}
+{% endblock %}

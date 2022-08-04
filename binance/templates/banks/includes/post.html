@@ -1,0 +1,17 @@
+  <article>
+    <ul>
+      <li>
+        from fiat: {{ bank_rate.from_fiat }}
+      </li>
+      <li>
+        to fiat: {{ bank_rate.to_fiat }}
+      </li>
+      <li>
+        price: {{ bank_rate.price }}
+      </li>
+      <li>
+      update: {{ bank_rate.update.updated|date:"d E Y" }}
+      </li>
+    </ul>
+  </article>
+  {% if not forloop.last %}<hr>{% endif %}

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Войти{% endblock %}
+{% block content %}
+{% load user_filters %}
+  <div class="row justify-content-center">
+    <div class="col-md-8 p-5">
+      <div class="card">
+        <div class="card-header">
+          Войти на сайт
+        </div>
+        <div class="card-body">
+          {% if form.errors %}
+              {% for field in form %}
+                {% for error in field.errors %}            
+                  <div class="alert alert-danger">
+                    {{ error|escape }}
+                  </div>
+                {% endfor %}
+              {% endfor %}
+              {% for error in form.non_field_errors %}
+                <div class="alert alert-danger">
+                  {{ error|escape }}
+                </div>
+              {% endfor %}
+          {% endif %}
+
+          <form method="post"
+            {% if action_url %}
+              action="{% url action_url %}"
+            {% endif %}
+          >
+          {% csrf_token %}
+
+          {% for field in form %}
+            <div class="form-group row my-3"
+              {% if field.field.required %} 
+                aria-required="true"
+              {% else %}
+                aria-required="false"
+              {% endif %}
+            >
+              <label for="{{ field.id_for_label }}">
+                {{ field.label }}
+                  {% if field.field.required %}
+                    <span class="required text-danger">*</span>
+                  {% endif %}
+              </label>
+              <div>
+              {{ field|addclass:'form-control' }}
+                {% if field.help_text %}
+                  <small id="{{ field.id_for_label }}-help" class="form-text text-muted">
+                    {{ field.help_text|safe }}
+                  </small>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+          <div class="col-md-6 offset-md-4">
+            <button type="submit" class="btn btn-primary">
+              Войти
+            </button>
+            <a href="{% url 'users:password_reset_form' %}" class="btn btn-link">
+              Забыли пароль?
+            </a>
+          </div>
+          </form>
+        </div> <!-- card body -->
+      </div> <!-- card -->
+    </div> <!-- col -->
+  </div> <!-- row -->
+{% endblock %} 
