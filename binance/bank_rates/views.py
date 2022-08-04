@@ -1,8 +1,8 @@
-from banks.tinkoff import get_all_tinkoff_exchanges
-from banks.wise import get_all_wise_exchanges
+from bank_rates.banks.tinkoff import get_all_tinkoff_exchanges
+from bank_rates.banks.wise import get_all_wise_exchanges
 from django.shortcuts import get_object_or_404
 from django.views.generic import ListView
-from banks.models import TinkoffExchanges, WiseExchanges
+from bank_rates.models import TinkoffExchanges, WiseExchanges
 
 
 BANK_MODELS = {
@@ -31,10 +31,13 @@ class BankRatesList(ListView):
 
     def get_context_data(self, **kwargs):
         context = super(BankRatesList, self).get_context_data(**kwargs)
-        select_bank_rates = self.select_model().objects.select_related('update').all()
+        select_bank_rates = self.select_model().objects.select_related('update'
+                                                                       ).all()
         context['bank_rates'] = select_bank_rates
+        context['name_of_bank'] = self.kwargs.get('name_of_bank').capitalize()
+        context['last_update'] = select_bank_rates.latest('update'
+                                                          ).update.updated
         return context
-
 
 
 def tinkoff(request):

@@ -1,7 +1,7 @@
-from banks.views import tinkoff, wise, BankRatesList
+from bank_rates.views import tinkoff, wise, BankRatesList
 from django.urls import path
 
-app_name = 'banks'
+app_name = 'bank_rates'
 
 urlpatterns = [
     path('11/', tinkoff, name="tinkoff"),

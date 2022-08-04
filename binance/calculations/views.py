@@ -1,5 +1,5 @@
-from calculations.tinkoff import get_all_tinkoff
-from calculations.wise import get_all_wise
+from calculations.banks.tinkoff import get_all_tinkoff
+from calculations.banks.wise import get_all_wise
 
 
 def tinkoff(request):

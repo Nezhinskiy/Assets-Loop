@@ -1,4 +1,4 @@
-from banks.models import FIATS_WISE, WiseExchanges, WiseUpdates
+from bank_rates.models import FIATS_WISE, WiseExchanges, WiseUpdates
 from core.parsers import BankParser
 
 

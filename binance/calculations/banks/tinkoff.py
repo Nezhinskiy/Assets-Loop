@@ -1,7 +1,7 @@
-from banks.models import TinkoffExchanges, FIATS_TINKOFF
+from bank_rates.models import TinkoffExchanges, FIATS_TINKOFF
 from calculations.inside_banks import InsideBanks
 from calculations.models import InsideTinkoffUpdates, InsideTinkoffExchanges
-from banks.tinkoff import get_all_tinkoff_exchanges
+from bank_rates.banks.tinkoff import get_all_tinkoff_exchanges
 
 
 class Tinkoff(InsideBanks):

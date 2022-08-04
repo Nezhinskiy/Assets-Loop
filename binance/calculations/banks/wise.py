@@ -1,7 +1,7 @@
-from banks.models import FIATS_WISE, WiseExchanges, WiseUpdates
+from bank_rates.models import FIATS_WISE, WiseExchanges, WiseUpdates
 from calculations.inside_banks import InsideBanks
 from calculations.models import InsideWiseUpdates, InsideWiseExchanges
-from banks.wise import get_all_wise_exchanges
+from bank_rates.banks.wise import get_all_wise_exchanges
 
 
 class Wise(InsideBanks):

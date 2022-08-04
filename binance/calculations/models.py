@@ -1,6 +1,6 @@
 from core.models import InsideBanksExchangesModel, ExchangeUpdatesModel
 from django.db import models
-from banks.models import FIATS_WISE, FIATS_TINKOFF
+from bank_rates.models import FIATS_WISE, FIATS_TINKOFF
 
 
 class InsideTinkoffUpdates(ExchangeUpdatesModel):

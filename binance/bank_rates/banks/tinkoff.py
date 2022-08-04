@@ -1,4 +1,4 @@
-from banks.models import FIATS_TINKOFF, TinkoffExchanges, TinkoffUpdates
+from bank_rates.models import FIATS_TINKOFF, TinkoffExchanges, TinkoffUpdates
 from core.parsers import BankParser
 
 
