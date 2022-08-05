@@ -1,18 +1,17 @@
-from bank_rates.models import FIATS_WISE, WiseExchanges, WiseUpdates
+from bank_rates.models import FIATS_WISE
 from core.parsers import BankParser
 
 from calculations.inside_banks import InsideBanks
-from calculations.models import InsideWiseExchanges, InsideWiseUpdates
 
 
 WISE_CURRENCIES_WITH_REQUISITES = ('RUB', 'USD', 'EUR', )
 
+BANK_NAME = 'Wise'
 
 class WiseParser(BankParser):
+    bank_name = BANK_NAME
     fiats = FIATS_WISE
     endpoint = 'https://wise.com/gateway/v3/price?'
-    Exchanges = WiseExchanges
-    Updates = WiseUpdates
     name_from = 'sourceCurrency'
     name_to = 'targetCurrency'
     buy_and_sell = False
@@ -29,7 +28,6 @@ class WiseParser(BankParser):
         return params
 
     def extract_price_from_json(self, json_data: list) -> float:
-
         if len(json_data) > 1:
             for exchange_data in json_data:
                 if (
@@ -44,10 +42,8 @@ class WiseParser(BankParser):
 
 
 class InsideWise(InsideBanks):
+    bank_name = BANK_NAME
     fiats = FIATS_WISE
-    Exchanges = WiseExchanges
-    InsideExchanges = InsideWiseExchanges
-    Updates = InsideWiseUpdates
     currencies_with_requisites = WISE_CURRENCIES_WITH_REQUISITES
 
 

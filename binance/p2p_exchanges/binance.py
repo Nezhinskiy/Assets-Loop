@@ -1,8 +1,5 @@
-from datetime import datetime, timedelta
-from http import HTTPStatus
 from sys import getsizeof
 
-import requests
 from core.parsers import P2PParser, BankParser
 from p2p_exchanges.models import (ASSETS, FIATS, PAY_TYPES, TRADE_TYPES,
                                   BinanceExchanges, BinanceUpdates,

@@ -1,18 +1,16 @@
-from bank_rates.models import FIATS_TINKOFF, TinkoffExchanges, TinkoffUpdates
+from bank_rates.models import FIATS_TINKOFF
 from core.parsers import BankParser
 
 from calculations.inside_banks import InsideBanks
 
-from calculations.models import InsideTinkoffExchanges, InsideTinkoffUpdates
-
 TINKOFF_CURRENCIES_WITH_REQUISITES = ('RUB', 'USD', 'EUR', )
 
+BANK_NAME = 'Tinkoff'
 
 class TinkoffParser(BankParser):
+    bank_name = BANK_NAME
     fiats = FIATS_TINKOFF
     endpoint = 'https://api.tinkoff.ru/v1/currency_rates?'
-    Exchanges = TinkoffExchanges
-    Updates = TinkoffUpdates
 
     def create_params(self, fiats_combinations):
         params = [
@@ -33,10 +31,8 @@ class TinkoffParser(BankParser):
 
 
 class InsideTinkoff(InsideBanks):
+    bank_name = BANK_NAME
     fiats = FIATS_TINKOFF
-    Exchanges = TinkoffExchanges
-    InsideExchanges = InsideTinkoffExchanges
-    Updates = InsideTinkoffUpdates
     currencies_with_requisites = TINKOFF_CURRENCIES_WITH_REQUISITES
 
 

@@ -1,4 +1,5 @@
-from core.models import BankExchangesModel, ExchangeUpdatesModel
+from datetime import timedelta
+
 from django.db import models
 
 FIATS_TINKOFF = (
@@ -60,23 +61,53 @@ FIATS_WISE = (
 )
 
 
-class TinkoffUpdates(ExchangeUpdatesModel):
-    pass
+class UpdatesModel(models.Model):
+    updated = models.DateTimeField(
+        'Update date', auto_now_add=True, db_index=True
+    )
+    duration = models.DurationField(default=timedelta())
+
+    class Meta:
+        abstract = True
 
 
-class TinkoffExchanges(BankExchangesModel):
-    FIATS = FIATS_TINKOFF
-    update = models.ForeignKey(
-        TinkoffUpdates, related_name='datas', on_delete=models.CASCADE
+class Banks(models.Model):
+    name = models.CharField(max_length=10, null=True, blank=True)
+
+
+class BanksExchangeRatesUpdates(UpdatesModel):
+    bank = models.ForeignKey(
+        Banks, related_name='bank_rates_update', on_delete=models.CASCADE
     )
 
 
-class WiseUpdates(ExchangeUpdatesModel):
-    pass
-
-
-class WiseExchanges(BankExchangesModel):
-    FIATS = FIATS_WISE
+class BanksExchangeRates(models.Model):
+    bank = models.ForeignKey(
+        Banks, related_name='bank_rates', on_delete=models.CASCADE
+    )
+    from_fiat = models.CharField(max_length=3)
+    to_fiat = models.CharField(max_length=3)
+    price = models.FloatField(null=True, blank=True, default=None)
     update = models.ForeignKey(
-        WiseUpdates, related_name='datas', on_delete=models.CASCADE
+        BanksExchangeRatesUpdates, related_name='datas', on_delete=models.CASCADE
+    )
+
+
+class IntraBanksExchangesUpdates(UpdatesModel):
+    bank = models.ForeignKey(
+        Banks, related_name='bank_exchanges_update', on_delete=models.CASCADE
+    )
+
+
+class IntraBanksExchanges(models.Model):
+    bank = models.ForeignKey(
+        Banks, related_name='bank_exchanges', on_delete=models.CASCADE
+    )
+    list_of_transfers = models.JSONField()
+    marginality_percentage = models.FloatField(
+        null=True, blank=True, default=None
+    )
+    update = models.ForeignKey(
+        IntraBanksExchangesUpdates, related_name='datas',
+        on_delete=models.CASCADE
     )

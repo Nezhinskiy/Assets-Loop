@@ -4,62 +4,26 @@ from itertools import combinations, permutations, product
 
 import requests
 
+from bank_rates.models import BanksExchangeRates, BanksExchangeRatesUpdates, Banks
 
-class BasicParser(object):
+
+class BankParser(object):
+    bank_name = None
     endpoint = None
-    Exchanges = None
-    Updates = None
+    fiats = None
+    buy_and_sell = True
+    name_from = 'from'
+    name_to = 'to'
     ROUND_TO = 6
     CURRENCY_PAIR = 2
-
-    def create_params(self, fiats_combinations):
-        pass
-
-    def create_body(self, asset, trade_type, fiat, pay_types):
-        pass
-
-    def create_headers(self, body):
-        pass
-
-    def extract_buy_and_sell_from_json(self, json_data) -> tuple[float, float]:
-        pass
-
-    def extract_price_from_json(self, json_data) -> float:
-        pass
 
     def converts_choices_to_set(self, choices: tuple[tuple[str, str]]
                                 ) -> set[str]:
         """repackaging choices into a set."""
         return {choice[0] for choice in choices}
 
-    def get_exception(self, fiat, pay_type):
-        return False
-
-    def get_all_api_answers(
-            self, new_update, records_to_update, records_to_create
-    ):
+    def create_params(self, fiats_combinations):
         pass
-
-    def main(self):
-        start_time = datetime.now()
-        new_update = self.Updates.objects.create()
-        records_to_update = []
-        records_to_create = []
-        self.get_all_api_answers(new_update, records_to_update,
-                                 records_to_create)
-        self.Exchanges.objects.bulk_create(records_to_create)
-        self.Exchanges.objects.bulk_update(records_to_update,
-                                           ['price', 'update'])
-        duration = datetime.now() - start_time
-        new_update.duration = duration
-        new_update.save()
-
-
-class BankParser(BasicParser):
-    fiats = None
-    buy_and_sell = True
-    name_from = 'from'
-    name_to = 'to'
 
     def generate_unique_params(self) -> list[dict[str]]:
         """Repackaging a tuple with tuples into a list with params."""
@@ -83,6 +47,10 @@ class BankParser(BasicParser):
             raise Exception(message)
         return response.json()
 
+    def extract_buy_and_sell_from_json(self, json_data: dict) -> tuple[float,
+                                                                       float]:
+        pass
+
     def calculates_buy_and_sell_data(self, params) -> tuple[dict, dict]:
         buy_and_sell = self.extract_buy_and_sell_from_json(
             self.get_api_answer(params))
@@ -97,6 +65,9 @@ class BankParser(BasicParser):
             'price': round(1.0 / buy_and_sell[1], self.ROUND_TO)
         }
         return buy_data, sell_data
+
+    def extract_price_from_json(self, json_data: list) -> float:
+        pass
 
     def calculates_price_data(self, params) -> list[dict]:
         price = self.extract_price_from_json(self.get_api_answer(params))
@@ -114,15 +85,17 @@ class BankParser(BasicParser):
         return self.calculates_price_data(params)
 
     def add_to_bulk_update_or_create(
-            self, new_update, records_to_update, records_to_create,
+            self, bank, new_update, records_to_update, records_to_create,
             value_dict, price
     ):
-        target_object = self.Exchanges.objects.filter(
+        target_object = BanksExchangeRates.objects.filter(
+            bank=bank,
             from_fiat=value_dict['from_fiat'],
             to_fiat=value_dict['to_fiat']
         )
         if target_object.exists():
-            updated_object = self.Exchanges.objects.get(
+            updated_object = BanksExchangeRates.objects.get(
+                bank=bank,
                 from_fiat=value_dict['from_fiat'],
                 to_fiat=value_dict['to_fiat']
             )
@@ -132,7 +105,8 @@ class BankParser(BasicParser):
             updated_object.update = new_update
             records_to_update.append(updated_object)
         else:
-            created_object = self.Exchanges(
+            created_object = BanksExchangeRates(
+                bank=bank,
                 from_fiat=value_dict['from_fiat'],
                 to_fiat=value_dict['to_fiat'],
                 price=price,
@@ -141,24 +115,60 @@ class BankParser(BasicParser):
             records_to_create.append(created_object)
 
     def get_all_api_answers(
-            self, new_update, records_to_update, records_to_create
+            self, bank, new_update, records_to_update, records_to_create
     ):
         for params in self.generate_unique_params():
             for value_dict in self.choice_buy_and_sell_or_price(params):
                 price = value_dict.pop('price')
                 self.add_to_bulk_update_or_create(
-                    new_update, records_to_update, records_to_create,
+                    bank, new_update, records_to_update, records_to_create,
                     value_dict, price
                 )
 
+    def main(self):
+        start_time = datetime.now()
+        if not Banks.objects.filter(name=self.bank_name).exists():
+            Banks.objects.create(name=self.bank_name)
+        bank = Banks.objects.get(name=self.bank_name)
+        new_update = BanksExchangeRatesUpdates.objects.create(bank=bank)
+        records_to_update = []
+        records_to_create = []
+        self.get_all_api_answers(bank, new_update, records_to_update,
+                                 records_to_create)
+        BanksExchangeRates.objects.bulk_create(records_to_create)
+        BanksExchangeRates.objects.bulk_update(records_to_update,
+                                           ['price', 'update'])
+        duration = datetime.now() - start_time
+        new_update.duration = duration
+        new_update.save()
 
-class P2PParser(BasicParser):
+
+class P2PParser(object):
     assets = None
     fiats = None
     pay_types = None
     trade_types = None
     page = None
     rows = None
+    endpoint = None
+    Exchanges = None
+    Updates = None
+    ROUND_TO = 6
+    CURRENCY_PAIR = 2
+
+    def converts_choices_to_set(self, choices: tuple[tuple[str, str]]
+                                ) -> set[str]:
+        """repackaging choices into a set."""
+        return {choice[0] for choice in choices}
+
+    def create_body(self, asset, trade_type, fiat, pay_types):
+        pass
+
+    def create_headers(self, body):
+        pass
+
+    def extract_price_from_json(self, json_data: dict) -> [int | None]:
+        pass
 
     def get_api_answer(self, asset, trade_type, fiat, pay_types):
         """Делает запрос к эндпоинту API Tinfoff."""
@@ -220,3 +230,17 @@ class P2PParser(BasicParser):
                 new_update, records_to_update, records_to_create, asset,
                 trade_type, fiat, pay_type, price
             )
+
+    def main(self):
+        start_time = datetime.now()
+        new_update = self.Updates.objects.create()
+        records_to_update = []
+        records_to_create = []
+        self.get_all_api_answers(new_update, records_to_update,
+                                 records_to_create)
+        self.Exchanges.objects.bulk_create(records_to_create)
+        self.Exchanges.objects.bulk_update(records_to_update,
+                                           ['price', 'update'])
+        duration = datetime.now() - start_time
+        new_update.duration = duration
+        new_update.save()

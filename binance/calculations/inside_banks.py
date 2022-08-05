@@ -1,9 +1,12 @@
 from datetime import datetime
 import math
 from itertools import permutations
+from bank_rates.models import IntraBanksExchangesUpdates, IntraBanksExchanges, Banks, BanksExchangeRates
+
 
 
 class InsideBanks(object):
+    bank_name = None
     fiats: tuple = None
     Exchanges = None
     InsideExchanges = None
@@ -42,14 +45,16 @@ class InsideBanks(object):
         return marginality_percentage
 
     def add_to_bulk_update_or_create(
-            self, new_update, records_to_update, records_to_create,
+            self, bank, new_update, records_to_update, records_to_create,
             combination, marginality_percentage
     ):
-        target_object = self.InsideExchanges.objects.filter(
+        target_object = IntraBanksExchanges.objects.filter(
+            bank=bank,
             list_of_transfers=combination
         )
         if target_object.exists():
-            updated_object = self.InsideExchanges.objects.get(
+            updated_object = IntraBanksExchanges.objects.get(
+                bank=bank,
                 list_of_transfers=combination
             )
             if updated_object.marginality_percentage == marginality_percentage:
@@ -58,14 +63,15 @@ class InsideBanks(object):
             updated_object.update = new_update
             records_to_update.append(updated_object)
         else:
-            created_object = self.InsideExchanges(
+            created_object = IntraBanksExchanges(
+                bank=bank,
                 list_of_transfers=combination,
                 marginality_percentage=marginality_percentage,
                 update=new_update
             )
             records_to_create.append(created_object)
 
-    def create_combinations(self, new_update, all_exchanges,
+    def create_combinations(self, bank, new_update, all_exchanges,
                             records_to_update, records_to_create):
         all_fiats = self.converts_choices_to_list()
         for initial_end_fiat in all_fiats:
@@ -76,7 +82,8 @@ class InsideBanks(object):
             for index in range(len(combinable_fiats)):
                 if index == 2:
                     break
-                body_combinations = list(permutations(combinable_fiats, index + 1))
+                body_combinations = list(permutations(combinable_fiats,
+                                                      index + 1))
                 for body_combination in body_combinations:
                     combination = list(body_combination)
                     combination.insert(0, initial_end_fiat)
@@ -85,21 +92,23 @@ class InsideBanks(object):
                         combination, all_exchanges
                     )
                     self.add_to_bulk_update_or_create(
-                        new_update, records_to_update, records_to_create,
+                        bank, new_update, records_to_update, records_to_create,
                         combination, marginality_percentage
                     )
 
     def main(self):
         start_time = datetime.now()
-        new_update = self.Updates.objects.create()
-        all_exchanges = self.Exchanges.objects.all()
+        bank = Banks.objects.get(name=self.bank_name)
+        new_update = IntraBanksExchangesUpdates.objects.create(bank=bank)
+        all_exchanges = BanksExchangeRates.objects.all()
         records_to_update = []
         records_to_create = []
         self.create_combinations(
-            new_update, all_exchanges, records_to_update, records_to_create
+            bank, new_update, all_exchanges, records_to_update,
+            records_to_create
         )
-        self.InsideExchanges.objects.bulk_create(records_to_create)
-        self.InsideExchanges.objects.bulk_update(
+        IntraBanksExchanges.objects.bulk_create(records_to_create)
+        IntraBanksExchanges.objects.bulk_update(
             records_to_update, ['marginality_percentage', 'update']
         )
         duration = datetime.now() - start_time
