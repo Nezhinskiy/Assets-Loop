@@ -1,8 +1,9 @@
-from datetime import datetime
 import math
+from datetime import datetime
 from itertools import permutations
-from bank_rates.models import IntraBanksExchangesUpdates, IntraBanksExchanges, Banks, BanksExchangeRates
 
+from bank_rates.models import (Banks, BanksExchangeRates, IntraBanksExchanges,
+                               IntraBanksExchangesUpdates)
 
 
 class InsideBanks(object):

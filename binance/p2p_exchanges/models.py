@@ -1,6 +1,6 @@
-from core.models import ExchangeUpdatesModel, P2PExchangesModel, BankExchangesModel
 from django.db import models
 
+from core.models import UpdatesModel
 
 ASSETS = (
     ('ETH', 'ETH'),
@@ -28,27 +28,46 @@ PAY_TYPES = (
 )
 
 
-class BinanceUpdates(ExchangeUpdatesModel):
-    pass
+class CryptoExchanges(models.Model):
+    name = models.CharField(max_length=10, null=True, blank=True)
 
 
-class BinanceExchanges(P2PExchangesModel):
-    ASSETS = ASSETS
-    TRADE_TYPES = TRADE_TYPES
-    FIATS = FIATS
-    PAY_TYPES = PAY_TYPES
-    update = models.ForeignKey(
-         BinanceUpdates, related_name='datas', on_delete=models.CASCADE
+class P2PCryptoExchangesRatesUpdates(UpdatesModel):
+    crypto_exchange = models.ForeignKey(
+        CryptoExchanges, related_name='p2p_rates_update',
+        on_delete=models.CASCADE
     )
 
 
-class BinanceCryptoUpdates(ExchangeUpdatesModel):
-    pass
+class P2PCryptoExchangesRates(models.Model):
+    crypto_exchange = models.ForeignKey(
+        CryptoExchanges, related_name='p2p_rates', on_delete=models.CASCADE
+    )
+    asset = models.CharField(max_length=4)
+    fiat = models.CharField(max_length=3)
+    trade_type = models.CharField(max_length=4)
+    pay_type = models.CharField(max_length=16)
+    price = models.FloatField(null=True, blank=True, default=None)
+    update = models.ForeignKey(P2PCryptoExchangesRatesUpdates,
+                               related_name='datas', on_delete=models.CASCADE)
 
 
-class BinanceCryptoExchanges(BankExchangesModel):
-    FIATS = ASSETS
+class IntraCryptoExchangesUpdates(UpdatesModel):
+    crypto_exchange = models.ForeignKey(
+        CryptoExchanges, related_name='crypto_exchanges_update',
+        on_delete=models.CASCADE
+    )
 
+
+class IntraCryptoExchanges(models.Model):
+    crypto_exchange = models.ForeignKey(
+        CryptoExchanges, related_name='crypto_exchanges',
+        on_delete=models.CASCADE
+    )
+    from_fiat = models.CharField(max_length=4)
+    to_fiat = models.CharField(max_length=4)
+    price = models.FloatField(null=True, blank=True, default=None)
     update = models.ForeignKey(
-        BinanceCryptoUpdates, related_name='datas', on_delete=models.CASCADE
+        IntraCryptoExchangesUpdates, related_name='datas',
+        on_delete=models.CASCADE
     )

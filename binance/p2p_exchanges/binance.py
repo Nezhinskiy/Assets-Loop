@@ -1,12 +1,14 @@
 from sys import getsizeof
 
-from core.parsers import P2PParser, BankParser
-from p2p_exchanges.models import (ASSETS, FIATS, PAY_TYPES, TRADE_TYPES,
-                                  BinanceExchanges, BinanceUpdates,
-                                  BinanceCryptoUpdates, BinanceCryptoExchanges)
+from core.parsers import (CryptoExchangesRatesParser, ExchangeRatesParser,
+                          P2PParser)
+from p2p_exchanges.models import ASSETS, FIATS, PAY_TYPES, TRADE_TYPES
+
+CRYPTO_EXCHANGES_NAME = 'Binance'
 
 
 class BinanceParser(P2PParser):
+    crypto_exchanges_name = CRYPTO_EXCHANGES_NAME
     assets = ASSETS
     fiats = FIATS
     pay_types = PAY_TYPES
@@ -14,8 +16,6 @@ class BinanceParser(P2PParser):
     endpoint = 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search'
     page = 1
     rows = 1
-    Exchanges = BinanceExchanges
-    Updates = BinanceUpdates
 
     def create_body(self, asset, trade_type, fiat, pay_types):
         return {
@@ -45,11 +45,10 @@ class BinanceParser(P2PParser):
         return price
 
 
-class BinanceCryptoParser(BankParser):
+class BinanceCryptoParser(CryptoExchangesRatesParser):
+    crypto_exchanges_name = CRYPTO_EXCHANGES_NAME
     fiats = ASSETS
     endpoint = 'https://api.binance.com/api/v3/ticker/price?'
-    Exchanges = BinanceCryptoExchanges
-    Updates = BinanceCryptoUpdates
     name_from = 'symbol'
 
     def converts_choices_to_set(self, choices: tuple[tuple[str, str]]

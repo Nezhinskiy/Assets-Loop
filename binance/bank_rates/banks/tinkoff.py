@@ -1,13 +1,12 @@
 from bank_rates.models import FIATS_TINKOFF
-from core.parsers import BankParser
-
 from calculations.inside_banks import InsideBanks
+from core.parsers import ExchangeRatesParser
 
 TINKOFF_CURRENCIES_WITH_REQUISITES = ('RUB', 'USD', 'EUR', )
 
 BANK_NAME = 'Tinkoff'
 
-class TinkoffParser(BankParser):
+class TinkoffParser(ExchangeRatesParser):
     bank_name = BANK_NAME
     fiats = FIATS_TINKOFF
     endpoint = 'https://api.tinkoff.ru/v1/currency_rates?'

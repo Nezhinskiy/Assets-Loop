@@ -1,14 +1,12 @@
 from bank_rates.models import FIATS_WISE
-from core.parsers import BankParser
-
 from calculations.inside_banks import InsideBanks
-
+from core.parsers import ExchangeRatesParser
 
 WISE_CURRENCIES_WITH_REQUISITES = ('RUB', 'USD', 'EUR', )
 
 BANK_NAME = 'Wise'
 
-class WiseParser(BankParser):
+class WiseParser(ExchangeRatesParser):
     bank_name = BANK_NAME
     fiats = FIATS_WISE
     endpoint = 'https://wise.com/gateway/v3/price?'

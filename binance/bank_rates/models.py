@@ -1,6 +1,6 @@
-from datetime import timedelta
-
 from django.db import models
+
+from core.models import UpdatesModel
 
 FIATS_TINKOFF = (
     ('RUB', 'Rub'),
@@ -59,16 +59,6 @@ FIATS_WISE = (
     ('VND', 'Vnd'),
     ('NOK', 'Nok'),
 )
-
-
-class UpdatesModel(models.Model):
-    updated = models.DateTimeField(
-        'Update date', auto_now_add=True, db_index=True
-    )
-    duration = models.DurationField(default=timedelta())
-
-    class Meta:
-        abstract = True
 
 
 class Banks(models.Model):

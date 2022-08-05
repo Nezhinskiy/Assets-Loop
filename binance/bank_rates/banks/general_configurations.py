@@ -1,7 +1,6 @@
+from bank_rates.banks.tinkoff import TINKOFF_CURRENCIES_WITH_REQUISITES
 from bank_rates.models import FIATS_TINKOFF, TinkoffExchanges, TinkoffUpdates
 from calculations.models import InsideTinkoffExchanges, InsideTinkoffUpdates
-
-from bank_rates.banks.tinkoff import TINKOFF_CURRENCIES_WITH_REQUISITES
 
 BANKING_CONFIG = {
     'Tinkoff': {

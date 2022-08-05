@@ -4,10 +4,15 @@ from itertools import combinations, permutations, product
 
 import requests
 
-from bank_rates.models import BanksExchangeRates, BanksExchangeRatesUpdates, Banks
+from bank_rates.models import (Banks, BanksExchangeRates,
+                               BanksExchangeRatesUpdates)
+from p2p_exchanges.models import (CryptoExchanges, IntraCryptoExchanges,
+                                  IntraCryptoExchangesUpdates,
+                                  P2PCryptoExchangesRates,
+                                  P2PCryptoExchangesRatesUpdates)
 
 
-class BankParser(object):
+class ExchangeRatesParser(object):
     bank_name = None
     endpoint = None
     fiats = None
@@ -137,13 +142,14 @@ class BankParser(object):
                                  records_to_create)
         BanksExchangeRates.objects.bulk_create(records_to_create)
         BanksExchangeRates.objects.bulk_update(records_to_update,
-                                           ['price', 'update'])
+                                               ['price', 'update'])
         duration = datetime.now() - start_time
         new_update.duration = duration
         new_update.save()
 
 
 class P2PParser(object):
+    crypto_exchanges_name = None
     assets = None
     fiats = None
     pay_types = None
@@ -151,8 +157,6 @@ class P2PParser(object):
     page = None
     rows = None
     endpoint = None
-    Exchanges = None
-    Updates = None
     ROUND_TO = 6
     CURRENCY_PAIR = 2
 
@@ -189,15 +193,17 @@ class P2PParser(object):
             return True
 
     def add_to_bulk_update_or_create(
-            self, new_update, records_to_update, records_to_create, asset,
-            trade_type, fiat, pay_type, price
+            self, crypto_exchange, new_update, records_to_update,
+            records_to_create, asset, trade_type, fiat, pay_type, price
     ):
-        target_object = self.Exchanges.objects.filter(
-            asset=asset, trade_type=trade_type, fiat=fiat, pay_type=pay_type
+        target_object = P2PCryptoExchangesRates.objects.filter(
+            crypto_exchange=crypto_exchange, asset=asset, trade_type=trade_type,
+            fiat=fiat, pay_type=pay_type
         )
         if target_object.exists():
-            updated_object = self.Exchanges.objects.get(
-                asset=asset, trade_type=trade_type, fiat=fiat, pay_type=pay_type
+            updated_object = P2PCryptoExchangesRates.objects.get(
+                crypto_exchange=crypto_exchange, asset=asset,
+                trade_type=trade_type, fiat=fiat, pay_type=pay_type
             )
             if updated_object.price == price:
                 return
@@ -205,15 +211,16 @@ class P2PParser(object):
             updated_object.update = new_update
             records_to_update.append(updated_object)
         else:
-            created_object = self.Exchanges(
-                asset=asset, trade_type=trade_type, fiat=fiat,
-                pay_type=pay_type, price=price,
-                update=new_update
+            created_object = P2PCryptoExchangesRates(
+                crypto_exchange=crypto_exchange, asset=asset,
+                trade_type=trade_type, fiat=fiat, pay_type=pay_type,
+                price=price, update=new_update
             )
             records_to_create.append(created_object)
 
     def get_all_api_answers(
-            self, new_update, records_to_update, records_to_create
+            self, crypto_exchange, new_update, records_to_update,
+            records_to_create
     ):
         for asset, trade_type, fiat, pay_type in product(
                 self.converts_choices_to_set(self.assets),
@@ -227,20 +234,98 @@ class P2PParser(object):
                                            fiat, pay_type)
             price = self.extract_price_from_json(response)
             self.add_to_bulk_update_or_create(
-                new_update, records_to_update, records_to_create, asset,
-                trade_type, fiat, pay_type, price
+                crypto_exchange, new_update, records_to_update,
+                records_to_create, asset, trade_type, fiat, pay_type, price
             )
 
     def main(self):
         start_time = datetime.now()
-        new_update = self.Updates.objects.create()
+        if not CryptoExchanges.objects.filter(
+                name=self.crypto_exchanges_name
+        ).exists():
+            CryptoExchanges.objects.create(name=self.crypto_exchanges_name)
+        crypto_exchange = CryptoExchanges.objects.get(
+            name=self.crypto_exchanges_name
+        )
+        new_update = P2PCryptoExchangesRatesUpdates.objects.create(
+            crypto_exchange=crypto_exchange
+        )
         records_to_update = []
         records_to_create = []
-        self.get_all_api_answers(new_update, records_to_update,
+        self.get_all_api_answers(crypto_exchange, new_update, records_to_update,
                                  records_to_create)
-        self.Exchanges.objects.bulk_create(records_to_create)
-        self.Exchanges.objects.bulk_update(records_to_update,
-                                           ['price', 'update'])
+        P2PCryptoExchangesRates.objects.bulk_create(records_to_create)
+        P2PCryptoExchangesRates.objects.bulk_update(records_to_update,
+                                                    ['price', 'update'])
+        duration = datetime.now() - start_time
+        new_update.duration = duration
+        new_update.save()
+
+
+class CryptoExchangesRatesParser(ExchangeRatesParser):
+    crypto_exchanges_name = None
+
+    def add_to_bulk_update_or_create(
+            self, crypto_exchange, new_update, records_to_update, records_to_create,
+            value_dict, price
+    ):
+        target_object = IntraCryptoExchanges.objects.filter(
+            crypto_exchange=crypto_exchange,
+            from_fiat=value_dict['from_fiat'],
+            to_fiat=value_dict['to_fiat']
+        )
+        if target_object.exists():
+            updated_object = IntraCryptoExchanges.objects.get(
+                crypto_exchange=crypto_exchange,
+                from_fiat=value_dict['from_fiat'],
+                to_fiat=value_dict['to_fiat']
+            )
+            if updated_object.price == price:
+                return
+            updated_object.price = price
+            updated_object.update = new_update
+            records_to_update.append(updated_object)
+        else:
+            created_object = IntraCryptoExchanges(
+                crypto_exchange=crypto_exchange,
+                from_fiat=value_dict['from_fiat'],
+                to_fiat=value_dict['to_fiat'],
+                price=price,
+                update=new_update
+            )
+            records_to_create.append(created_object)
+
+    def get_all_api_answers(
+            self, crypto_exchange, new_update, records_to_update,
+            records_to_create
+    ):
+        for params in self.generate_unique_params():
+            for value_dict in self.choice_buy_and_sell_or_price(params):
+                price = value_dict.pop('price')
+                self.add_to_bulk_update_or_create(
+                    crypto_exchange, new_update, records_to_update,
+                    records_to_create, value_dict, price
+                )
+
+    def main(self):
+        start_time = datetime.now()
+        if not CryptoExchanges.objects.filter(
+                name=self.crypto_exchanges_name
+        ).exists():
+            CryptoExchanges.objects.create(name=self.crypto_exchanges_name)
+        crypto_exchange = CryptoExchanges.objects.get(
+            name=self.crypto_exchanges_name
+        )
+        new_update = IntraCryptoExchangesUpdates.objects.create(
+            crypto_exchange=crypto_exchange
+        )
+        records_to_update = []
+        records_to_create = []
+        self.get_all_api_answers(crypto_exchange, new_update,
+                                 records_to_update, records_to_create)
+        IntraCryptoExchanges.objects.bulk_create(records_to_create)
+        IntraCryptoExchanges.objects.bulk_update(records_to_update,
+                                                 ['price', 'update'])
         duration = datetime.now() - start_time
         new_update.duration = duration
         new_update.save()
