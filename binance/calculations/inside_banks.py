@@ -8,6 +8,7 @@ class InsideBanks(object):
     Exchanges = None
     InsideExchanges = None
     Updates = None
+    currencies_with_requisites = None
     percentage_round_to = 2
 
     def converts_choices_to_list(self) -> list:
@@ -68,6 +69,8 @@ class InsideBanks(object):
                             records_to_update, records_to_create):
         all_fiats = self.converts_choices_to_list()
         for initial_end_fiat in all_fiats:
+            if initial_end_fiat not in self.currencies_with_requisites:
+                continue
             combinable_fiats: list = self.converts_choices_to_list()
             combinable_fiats.remove(initial_end_fiat)
             for index in range(len(combinable_fiats)):

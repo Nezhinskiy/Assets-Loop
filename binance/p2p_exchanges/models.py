@@ -1,11 +1,12 @@
-from core.models import ExchangeUpdatesModel, P2PExchangesModel
+from core.models import ExchangeUpdatesModel, P2PExchangesModel, BankExchangesModel
 from django.db import models
 
+
 ASSETS = (
+    ('ETH', 'ETH'),
+    ('BTC', 'BTC'),
+    ('BUSD', 'BUSD'),
     ('USDT', 'USDT'),
-    # ('BUSD', 'BUSD'),
-    # ('BTC', 'BTC'),
-    # ('ETH', 'ETH'),
 )
 TRADE_TYPES = (
     ('BUY', 'buy'),
@@ -40,5 +41,14 @@ class BinanceExchanges(P2PExchangesModel):
          BinanceUpdates, related_name='datas', on_delete=models.CASCADE
     )
 
-    # def __str__(self):
-    #     return self.price
+
+class BinanceCryptoUpdates(ExchangeUpdatesModel):
+    pass
+
+
+class BinanceCryptoExchanges(BankExchangesModel):
+    FIATS = ASSETS
+
+    update = models.ForeignKey(
+        BinanceCryptoUpdates, related_name='datas', on_delete=models.CASCADE
+    )

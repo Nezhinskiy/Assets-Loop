@@ -1,8 +1,14 @@
 from bank_rates.models import FIATS_WISE, WiseExchanges, WiseUpdates
 from core.parsers import BankParser
 
+from calculations.inside_banks import InsideBanks
+from calculations.models import InsideWiseExchanges, InsideWiseUpdates
 
-class Wise(BankParser):
+
+WISE_CURRENCIES_WITH_REQUISITES = ('RUB', 'USD', 'EUR', )
+
+
+class WiseParser(BankParser):
     fiats = FIATS_WISE
     endpoint = 'https://wise.com/gateway/v3/price?'
     Exchanges = WiseExchanges
@@ -37,7 +43,22 @@ class Wise(BankParser):
                     return price
 
 
+class InsideWise(InsideBanks):
+    fiats = FIATS_WISE
+    Exchanges = WiseExchanges
+    InsideExchanges = InsideWiseExchanges
+    Updates = InsideWiseUpdates
+    currencies_with_requisites = WISE_CURRENCIES_WITH_REQUISITES
+
+
 def get_all_wise_exchanges():
-    wise_parser = Wise()
+    wise_parser = WiseParser()
     message = wise_parser.main()
+    return message
+
+
+def get_all_wise():
+    get_all_wise_exchanges()
+    wise_insider = InsideWise()
+    message = wise_insider.main()
     return message

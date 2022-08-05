@@ -1,4 +1,4 @@
-from bank_rates.banks.tinkoff import get_all_tinkoff_exchanges
+from bank_rates.banks.tinkoff import get_all_tinkoff_exchanges, get_all_tinkoff
 from bank_rates.banks.wise import get_all_wise_exchanges
 from django.shortcuts import get_object_or_404
 from django.views.generic import ListView
@@ -42,6 +42,10 @@ class BankRatesList(ListView):
 
 def tinkoff(request):
     return get_all_tinkoff_exchanges()
+
+
+def tinkoff_all(request):
+    return get_all_tinkoff()
 
 
 def wise(request):
