@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class CalculationsConfig(AppConfig):
+class CryptoExchangesConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'calculations'
+    name = 'crypto_exchanges'

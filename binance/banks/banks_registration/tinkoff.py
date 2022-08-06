@@ -1,12 +1,42 @@
-from bank_rates.models import FIATS_TINKOFF
-from calculations.inside_banks import InsideBanks
-from core.parsers import ExchangeRatesParser
+from core.intra_exchanges import IntraBanks
+from core.parsers import BankParser
 
 TINKOFF_CURRENCIES_WITH_REQUISITES = ('RUB', 'USD', 'EUR', )
 
 BANK_NAME = 'Tinkoff'
 
-class TinkoffParser(ExchangeRatesParser):
+FIATS_TINKOFF = (
+    ('RUB', 'Rub'),
+    ('USD', 'Usd'),
+    ('EUR', 'Eur'),
+    ('ILS', 'Ils'),
+    ('GBP', 'Gbp'),
+    ('CHF', 'Chf'),
+    ('CAD', 'Cad'),
+    ('AUD', 'Aud'),
+    ('SGD', 'Sgd'),
+    ('BGN', 'Bgn'),
+    ('BYN', 'Byn'),
+    ('AED', 'Aed'),
+    ('PLN', 'Pln'),
+    ('TRY', 'Try'),
+    ('CNY', 'Cny'),
+    ('HKD', 'Hkd'),
+    ('SEK', 'Sek'),
+    ('CZK', 'Czk'),
+    ('THB', 'Thb'),
+    ('INR', 'Inr'),
+    ('JPY', 'Jpy'),
+    ('KZT', 'Kzt'),
+    ('AMD', 'Amd'),
+    ('KRW', 'Krw'),
+    ('IDR', 'Idr'),
+    ('VND', 'Vnd'),
+    ('NOK', 'Nok')
+)
+
+
+class TinkoffParser(BankParser):
     bank_name = BANK_NAME
     fiats = FIATS_TINKOFF
     endpoint = 'https://api.tinkoff.ru/v1/currency_rates?'
@@ -29,7 +59,7 @@ class TinkoffParser(ExchangeRatesParser):
                 return buy, sell
 
 
-class InsideTinkoff(InsideBanks):
+class IntraTinkoff(IntraBanks):
     bank_name = BANK_NAME
     fiats = FIATS_TINKOFF
     currencies_with_requisites = TINKOFF_CURRENCIES_WITH_REQUISITES
@@ -43,6 +73,6 @@ def get_all_tinkoff_exchanges():
 
 def get_all_tinkoff():
     get_all_tinkoff_exchanges()
-    tinkoff_insider = InsideTinkoff()
+    tinkoff_insider = IntraTinkoff()
     message = tinkoff_insider.main()
     return message

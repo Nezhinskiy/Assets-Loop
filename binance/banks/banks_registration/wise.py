@@ -1,12 +1,41 @@
-from bank_rates.models import FIATS_WISE
-from calculations.inside_banks import InsideBanks
-from core.parsers import ExchangeRatesParser
+from core.intra_exchanges import IntraBanks
+from core.parsers import BankParser
 
 WISE_CURRENCIES_WITH_REQUISITES = ('RUB', 'USD', 'EUR', )
 
 BANK_NAME = 'Wise'
 
-class WiseParser(ExchangeRatesParser):
+FIATS_WISE = (
+    ('USD', 'Usd'),
+    ('EUR', 'Eur'),
+    ('ILS', 'Ils'),
+    ('GBP', 'Gbp'),
+    ('CHF', 'Chf'),
+    ('CAD', 'Cad'),
+    ('AUD', 'Aud'),
+    ('SGD', 'Sgd'),
+    ('BGN', 'Bgn'),
+    ('BYN', 'Byn'),
+    ('AED', 'Aed'),
+    ('PLN', 'Pln'),
+    ('TRY', 'Try'),
+    ('CNY', 'Cny'),
+    ('HKD', 'Hkd'),
+    ('SEK', 'Sek'),
+    ('CZK', 'Czk'),
+    ('THB', 'Thb'),
+    ('INR', 'Inr'),
+    ('JPY', 'Jpy'),
+    ('KZT', 'Kzt'),
+    ('AMD', 'Amd'),
+    ('KRW', 'Krw'),
+    ('IDR', 'Idr'),
+    ('VND', 'Vnd'),
+    ('NOK', 'Nok'),
+)
+
+
+class WiseParser(BankParser):
     bank_name = BANK_NAME
     fiats = FIATS_WISE
     endpoint = 'https://wise.com/gateway/v3/price?'
@@ -39,7 +68,7 @@ class WiseParser(ExchangeRatesParser):
                     return price
 
 
-class InsideWise(InsideBanks):
+class IntraWise(IntraBanks):
     bank_name = BANK_NAME
     fiats = FIATS_WISE
     currencies_with_requisites = WISE_CURRENCIES_WITH_REQUISITES
@@ -53,6 +82,6 @@ def get_all_wise_exchanges():
 
 def get_all_wise():
     get_all_wise_exchanges()
-    wise_insider = InsideWise()
+    wise_insider = IntraWise()
     message = wise_insider.main()
     return message

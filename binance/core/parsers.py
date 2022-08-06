@@ -4,15 +4,14 @@ from itertools import combinations, permutations, product
 
 import requests
 
-from bank_rates.models import (Banks, BanksExchangeRates,
-                               BanksExchangeRatesUpdates)
-from p2p_exchanges.models import (CryptoExchanges, IntraCryptoExchanges,
-                                  IntraCryptoExchangesUpdates,
-                                  P2PCryptoExchangesRates,
-                                  P2PCryptoExchangesRatesUpdates)
+from banks.models import Banks, BanksExchangeRates, BanksExchangeRatesUpdates
+from crypto_exchanges.models import (CryptoExchanges, IntraCryptoExchanges,
+                                     IntraCryptoExchangesUpdates,
+                                     P2PCryptoExchangesRates,
+                                     P2PCryptoExchangesRatesUpdates)
 
 
-class ExchangeRatesParser(object):
+class BankParser(object):
     bank_name = None
     endpoint = None
     fiats = None
@@ -262,7 +261,7 @@ class P2PParser(object):
         new_update.save()
 
 
-class CryptoExchangesRatesParser(ExchangeRatesParser):
+class CryptoExchangesParser(BankParser):
     crypto_exchanges_name = None
 
     def add_to_bulk_update_or_create(

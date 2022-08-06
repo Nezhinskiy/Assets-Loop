@@ -1,9 +1,10 @@
 from django.shortcuts import get_object_or_404
 from django.views.generic import ListView
 
-from bank_rates.banks.tinkoff import get_all_tinkoff, get_all_tinkoff_exchanges
-from bank_rates.banks.wise import get_all_wise_exchanges
-from bank_rates.models import BanksExchangeRates
+from banks.banks_registration.tinkoff import (get_all_tinkoff,
+                                              get_all_tinkoff_exchanges)
+from banks.banks_registration.wise import get_all_wise_exchanges
+from banks.models import BanksExchangeRates
 
 
 class SelectModelListView(ListView):

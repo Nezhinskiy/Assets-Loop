@@ -2,31 +2,6 @@ from django.db import models
 
 from core.models import UpdatesModel
 
-ASSETS = (
-    ('ETH', 'ETH'),
-    ('BTC', 'BTC'),
-    ('BUSD', 'BUSD'),
-    ('USDT', 'USDT'),
-)
-TRADE_TYPES = (
-    ('BUY', 'buy'),
-    ('SELL', 'sell')
-)
-FIATS = (
-    ('RUB', 'rub'),
-    # ('USD', 'usd'),
-    # ('EUR', 'eur'),
-    # ('GBP', 'gbp'),
-)
-PAY_TYPES = (
-    ('Tinkoff', 'Tinkoff'),
-    ('Wise', 'Wise'),
-    # 'TBCbank',
-    # 'BankofGeorgia',
-    ('RosBank', 'RosBank'),
-    ('RUBfiatbalance', 'RUBfiatbalance')
-)
-
 
 class CryptoExchanges(models.Model):
     name = models.CharField(max_length=10, null=True, blank=True)

@@ -19,7 +19,6 @@ from django.urls import include, path
 urlpatterns = [
      path('admin/', admin.site.urls),
      path('', include('core.urls', namespace='index')),
-     path('', include('p2p_exchanges.urls', namespace='p2p_exchanges')),
-     path('', include('bank_rates.urls', namespace='bank_rates')),
-     # path('', include('calculations.urls', namespace='calculations'))
+     path('', include('crypto_exchanges.urls', namespace='crypto_exchanges')),
+     path('', include('banks.urls', namespace='banks')),
  ]

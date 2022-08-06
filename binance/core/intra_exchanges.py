@@ -2,16 +2,13 @@ import math
 from datetime import datetime
 from itertools import permutations
 
-from bank_rates.models import (Banks, BanksExchangeRates, IntraBanksExchanges,
-                               IntraBanksExchangesUpdates)
+from banks.models import (Banks, BanksExchangeRates, IntraBanksExchanges,
+                          IntraBanksExchangesUpdates)
 
 
-class InsideBanks(object):
+class IntraBanks(object):
     bank_name = None
     fiats: tuple = None
-    Exchanges = None
-    InsideExchanges = None
-    Updates = None
     currencies_with_requisites = None
     percentage_round_to = 2
 

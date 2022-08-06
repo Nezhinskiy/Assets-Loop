@@ -1,6 +1,6 @@
 from django.urls import path
 
-from bank_rates.views import BankRatesList, tinkoff, tinkoff_all, wise
+from banks.views import BankRatesList, tinkoff, tinkoff_all, wise
 
 app_name = 'bank_rates'
 

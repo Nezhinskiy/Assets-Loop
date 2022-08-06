@@ -1,13 +1,36 @@
 from sys import getsizeof
 
-from core.parsers import (CryptoExchangesRatesParser, ExchangeRatesParser,
-                          P2PParser)
-from p2p_exchanges.models import ASSETS, FIATS, PAY_TYPES, TRADE_TYPES
+from core.parsers import CryptoExchangesParser, P2PParser
 
 CRYPTO_EXCHANGES_NAME = 'Binance'
 
+ASSETS = (
+    ('ETH', 'ETH'),
+    ('BTC', 'BTC'),
+    ('BUSD', 'BUSD'),
+    ('USDT', 'USDT'),
+)
+TRADE_TYPES = (
+    ('BUY', 'buy'),
+    ('SELL', 'sell')
+)
+FIATS = (
+    ('RUB', 'rub'),
+    # ('USD', 'usd'),
+    # ('EUR', 'eur'),
+    # ('GBP', 'gbp'),
+)
+PAY_TYPES = (
+    ('Tinkoff', 'Tinkoff'),
+    ('Wise', 'Wise'),
+    # 'TBCbank',
+    # 'BankofGeorgia',
+    ('RosBank', 'RosBank'),
+    ('RUBfiatbalance', 'RUBfiatbalance')
+)
 
-class BinanceParser(P2PParser):
+
+class BinanceP2PParser(P2PParser):
     crypto_exchanges_name = CRYPTO_EXCHANGES_NAME
     assets = ASSETS
     fiats = FIATS
@@ -45,7 +68,7 @@ class BinanceParser(P2PParser):
         return price
 
 
-class BinanceCryptoParser(CryptoExchangesRatesParser):
+class BinanceCryptoParser(CryptoExchangesParser):
     crypto_exchanges_name = CRYPTO_EXCHANGES_NAME
     fiats = ASSETS
     endpoint = 'https://api.binance.com/api/v3/ticker/price?'
@@ -93,6 +116,6 @@ def get_all_binance_crypto_exchanges():
 
 
 def get_all_p2p_binance_exchanges():
-    binance_parser = BinanceParser()
+    binance_parser = BinanceP2PParser()
     message = binance_parser.main()
     return message
