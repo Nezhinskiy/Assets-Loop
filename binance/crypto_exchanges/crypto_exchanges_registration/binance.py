@@ -1,8 +1,14 @@
 from sys import getsizeof
 
+from banks.banks_config import BANKS_CONFIG
 from core.parsers import CryptoExchangesParser, P2PParser
 
 CRYPTO_EXCHANGES_NAME = 'Binance'
+
+BINANCE_ASSETS = ()
+BINANCE_TRADE_TYPES = ()
+BINANCE_FIATS = ()
+BINANCE_PAY_TYPES = (pay_type for pay_type in BANKS_CONFIG.values())
 
 ASSETS = (
     ('ETH', 'ETH'),

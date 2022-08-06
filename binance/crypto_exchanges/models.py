@@ -39,8 +39,8 @@ class IntraCryptoExchanges(models.Model):
         CryptoExchanges, related_name='crypto_exchanges',
         on_delete=models.CASCADE
     )
-    from_fiat = models.CharField(max_length=4)
-    to_fiat = models.CharField(max_length=4)
+    from_asset = models.CharField(max_length=4)
+    to_asset = models.CharField(max_length=4)
     price = models.FloatField(null=True, blank=True, default=None)
     update = models.ForeignKey(
         IntraCryptoExchangesUpdates, related_name='datas',

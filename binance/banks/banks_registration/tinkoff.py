@@ -1,6 +1,10 @@
 from core.intra_exchanges import IntraBanks
 from core.parsers import BankParser
 
+TINKOFF_CURRENCIES = (
+    'RUB', 'USD', 'EUR', 'ILS', 'GPB', 'CHF', 'CAD', 'AUD', 'SGD'
+)
+
 TINKOFF_CURRENCIES_WITH_REQUISITES = ('RUB', 'USD', 'EUR', )
 
 BANK_NAME = 'Tinkoff'

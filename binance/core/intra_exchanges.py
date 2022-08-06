@@ -3,7 +3,9 @@ from datetime import datetime
 from itertools import permutations
 
 from banks.models import (Banks, BanksExchangeRates, IntraBanksExchanges,
-                          IntraBanksExchangesUpdates)
+                          IntraBanksExchangesUpdates,
+                          IntraBanksNotLoopedExchanges,
+                          IntraBanksNotLoopedExchangesUpdates)
 
 
 class IntraBanks(object):
@@ -71,11 +73,13 @@ class IntraBanks(object):
 
     def create_combinations(self, bank, new_update, all_exchanges,
                             records_to_update, records_to_create):
-        all_fiats = self.converts_choices_to_list()
+        from banks.banks_config import BANKS_CONFIG
+        bank_config = BANKS_CONFIG.get(self.bank_name)
+        all_fiats = bank_config.get('currencies')
         for initial_end_fiat in all_fiats:
             if initial_end_fiat not in self.currencies_with_requisites:
                 continue
-            combinable_fiats: list = self.converts_choices_to_list()
+            combinable_fiats: list = bank_config.get('currencies')
             combinable_fiats.remove(initial_end_fiat)
             for index in range(len(combinable_fiats)):
                 if index == 2:
@@ -107,6 +111,55 @@ class IntraBanks(object):
         )
         IntraBanksExchanges.objects.bulk_create(records_to_create)
         IntraBanksExchanges.objects.bulk_update(
+            records_to_update, ['marginality_percentage', 'update']
+        )
+        duration = datetime.now() - start_time
+        new_update.duration = duration
+        new_update.save()
+
+
+class IntraBanksNotLooped(IntraBanks):
+    def add_to_bulk_update_or_create(
+            self, bank, new_update, records_to_update, records_to_create,
+            combination, marginality_percentage
+    ):
+        target_object = IntraBanksNotLoopedExchanges.objects.filter(
+            bank=bank,
+            list_of_transfers=combination
+        )
+        if target_object.exists():
+            updated_object = IntraBanksNotLoopedExchanges.objects.get(
+                bank=bank,
+                list_of_transfers=combination
+            )
+            if updated_object.marginality_percentage == marginality_percentage:
+                return
+            updated_object.marginality_percentage = marginality_percentage
+            updated_object.update = new_update
+            records_to_update.append(updated_object)
+        else:
+            created_object = IntraBanksNotLoopedExchanges(
+                bank=bank,
+                list_of_transfers=combination,
+                marginality_percentage=marginality_percentage,
+                update=new_update
+            )
+            records_to_create.append(created_object)
+
+    def main(self):
+        start_time = datetime.now()
+        bank = Banks.objects.get(name=self.bank_name)
+        new_update = IntraBanksNotLoopedExchangesUpdates.objects.create(
+            bank=bank)
+        all_exchanges = BanksExchangeRates.objects.all()
+        records_to_update = []
+        records_to_create = []
+        self.create_combinations(
+            bank, new_update, all_exchanges, records_to_update,
+            records_to_create
+        )
+        IntraBanksNotLoopedExchanges.objects.bulk_create(records_to_create)
+        IntraBanksNotLoopedExchanges.objects.bulk_update(
             records_to_update, ['marginality_percentage', 'update']
         )
         duration = datetime.now() - start_time
