@@ -5,10 +5,10 @@ from core.parsers import CryptoExchangesParser, P2PParser
 
 CRYPTO_EXCHANGES_NAME = 'Binance'
 
-BINANCE_ASSETS = ()
-BINANCE_TRADE_TYPES = ()
-BINANCE_FIATS = ()
-BINANCE_PAY_TYPES = (pay_type for pay_type in BANKS_CONFIG.values())
+BINANCE_ASSETS = ('ETH', 'BTC', 'BUSD', 'USDT')
+BINANCE_TRADE_TYPES = ('BUY', 'SELL')
+BINANCE_FIATS = ('RUB', 'USD', 'EUR')
+BINANCE_PAY_TYPES = (pay_type for pay_type in BANKS_CONFIG.keys())
 
 ASSETS = (
     ('ETH', 'ETH'),
@@ -37,7 +37,7 @@ PAY_TYPES = (
 
 
 class BinanceP2PParser(P2PParser):
-    crypto_exchanges_name = CRYPTO_EXCHANGES_NAME
+    crypto_exchange_name = CRYPTO_EXCHANGES_NAME
     assets = ASSETS
     fiats = FIATS
     pay_types = PAY_TYPES
@@ -75,7 +75,7 @@ class BinanceP2PParser(P2PParser):
 
 
 class BinanceCryptoParser(CryptoExchangesParser):
-    crypto_exchanges_name = CRYPTO_EXCHANGES_NAME
+    crypto_exchange_name = CRYPTO_EXCHANGES_NAME
     fiats = ASSETS
     endpoint = 'https://api.binance.com/api/v3/ticker/price?'
     name_from = 'symbol'
@@ -103,13 +103,13 @@ class BinanceCryptoParser(CryptoExchangesParser):
                 for to_fiat in self.converts_choices_to_set(self.fiats):
                     if to_fiat in params['symbol'][-4:]:
                         buy_data = {
-                            'from_fiat': from_fiat,
-                            'to_fiat': to_fiat,
+                            'from_asset': from_fiat,
+                            'to_asset': to_fiat,
                             'price': round(price, self.ROUND_TO)
                         }
                         sell_data = {
-                            'from_fiat': to_fiat,
-                            'to_fiat': from_fiat,
+                            'from_asset': to_fiat,
+                            'to_asset': from_fiat,
                             'price': round(1.0 / price, self.ROUND_TO)
                         }
                         return buy_data, sell_data

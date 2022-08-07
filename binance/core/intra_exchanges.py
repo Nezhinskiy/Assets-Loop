@@ -79,7 +79,7 @@ class IntraBanks(object):
         for initial_end_fiat in all_fiats:
             if initial_end_fiat not in self.currencies_with_requisites:
                 continue
-            combinable_fiats: list = bank_config.get('currencies')
+            combinable_fiats: list = list(bank_config.get('currencies'))
             combinable_fiats.remove(initial_end_fiat)
             for index in range(len(combinable_fiats)):
                 if index == 2:
@@ -138,8 +138,8 @@ class IntraBanksNotLooped(IntraBanks):
             from_fiat=input_currency, to_fiat=output_currency, bank=bank
         )
         analogous_exchange_rate_price = analogous_exchange_rate.price
-        accurate_marginality_percentage = analogous_exchange_rate_price / (
-                exchange_rate / 100) - 100
+        accurate_marginality_percentage = exchange_rate / (
+                analogous_exchange_rate_price / 100) - 100
         marginality_percentage = round(accurate_marginality_percentage,
                                        self.percentage_round_to)
         return marginality_percentage

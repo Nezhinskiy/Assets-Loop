@@ -1,14 +1,13 @@
 from core.intra_exchanges import IntraBanks, IntraBanksNotLooped
 from core.parsers import BankParser
 
+BANK_NAME = 'Tinkoff'
 
 TINKOFF_CURRENCIES = (
-    'RUB', 'USD', 'EUR', 'ILS', 'GPB', 'CHF', 'CAD', 'AUD', 'SGD'
+    'RUB', 'USD', 'EUR', 'ILS', 'GBP', 'CHF', 'CAD', 'AUD', 'SGD'
 )
 
 TINKOFF_CURRENCIES_WITH_REQUISITES = ('RUB', 'USD', 'EUR', )
-
-BANK_NAME = 'Tinkoff'
 
 FIATS_TINKOFF = (
     ('RUB', 'Rub'),

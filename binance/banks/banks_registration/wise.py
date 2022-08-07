@@ -1,9 +1,13 @@
 from core.intra_exchanges import IntraBanks
 from core.parsers import BankParser
 
-WISE_CURRENCIES_WITH_REQUISITES = ('RUB', 'USD', 'EUR', )
-
 BANK_NAME = 'Wise'
+
+WISE_CURRENCIES = (
+    'RUB', 'USD', 'EUR', 'ILS', 'GBP', 'CHF', 'CAD', 'AUD', 'SGD'
+)
+
+WISE_CURRENCIES_WITH_REQUISITES = ('RUB', 'USD', 'EUR', )
 
 FIATS_WISE = (
     ('USD', 'Usd'),
