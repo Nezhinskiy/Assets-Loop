@@ -2,7 +2,8 @@ from django.shortcuts import get_object_or_404
 from django.views.generic import ListView
 
 from banks.banks_registration.tinkoff import (get_all_tinkoff,
-                                              get_all_tinkoff_exchanges)
+                                              get_all_tinkoff_exchanges,
+                                              get_not_looped)
 from banks.banks_registration.wise import get_all_wise_exchanges
 from banks.models import BanksExchangeRates
 
@@ -35,6 +36,8 @@ class BankRatesList(ListView):
                                                           ).update.updated
         return context
 
+def tinkoff_not_looped(request):
+    return get_not_looped()
 
 def tinkoff(request):
     return get_all_tinkoff_exchanges()

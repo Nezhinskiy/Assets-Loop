@@ -1,5 +1,6 @@
-from core.intra_exchanges import IntraBanks
+from core.intra_exchanges import IntraBanks, IntraBanksNotLooped
 from core.parsers import BankParser
+
 
 TINKOFF_CURRENCIES = (
     'RUB', 'USD', 'EUR', 'ILS', 'GPB', 'CHF', 'CAD', 'AUD', 'SGD'
@@ -67,6 +68,16 @@ class IntraTinkoff(IntraBanks):
     bank_name = BANK_NAME
     fiats = FIATS_TINKOFF
     currencies_with_requisites = TINKOFF_CURRENCIES_WITH_REQUISITES
+
+
+class IntraTinkoffNotLooped(IntraBanksNotLooped):
+    bank_name = BANK_NAME
+
+
+def get_not_looped():
+    tinkoff_not_looped = IntraTinkoffNotLooped()
+    message = tinkoff_not_looped.main()
+    return message
 
 
 def get_all_tinkoff_exchanges():

@@ -21,7 +21,8 @@ class BanksExchangeRates(models.Model):
     to_fiat = models.CharField(max_length=3)
     price = models.FloatField(null=True, blank=True, default=None)
     update = models.ForeignKey(
-        BanksExchangeRatesUpdates, related_name='datas', on_delete=models.CASCADE
+        BanksExchangeRatesUpdates, related_name='datas',
+        on_delete=models.CASCADE
     )
 
 
