@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from sys import getsizeof
 
 from banks.banks_config import BANKS_CONFIG

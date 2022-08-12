@@ -59,8 +59,13 @@ class IntraBanksNotLoopedExchanges(models.Model):
         on_delete=models.CASCADE
     )
     list_of_transfers = models.JSONField()
+    price = models.FloatField(null=True, blank=True, default=None)
     marginality_percentage = models.FloatField(
         null=True, blank=True, default=None
+    )
+    analogous_exchange = models.ForeignKey(
+        BanksExchangeRates, related_name='not_looped', null=True,
+        on_delete=models.SET_NULL
     )
     update = models.ForeignKey(
         IntraBanksNotLoopedExchangesUpdates, related_name='datas',

@@ -121,11 +121,8 @@ class IntraBanks(object):
 class IntraBanksNotLooped(IntraBanks):
     bank_name = None
 
-    def create_marginality_percentage_not_looped(
-            self, bank, input_currency, output_currency, combination,
-            all_exchanges
-    ):
-
+    def create_price_percentage_not_looped(self, bank, combination,
+                                           all_exchanges):
         iteration_combinations = self.create_iteration_combinations(combination)
         iteration_prices = []
         for fiat_pair in iteration_combinations:
@@ -133,13 +130,14 @@ class IntraBanksNotLooped(IntraBanks):
                 from_fiat=fiat_pair[0], to_fiat=fiat_pair[1], bank=bank)
             iteration_price = fiat_pair_exchange.price
             iteration_prices.append(iteration_price)
-        exchange_rate = math.prod(iteration_prices)
-        analogous_exchange_rate = all_exchanges.get(
-            from_fiat=input_currency, to_fiat=output_currency, bank=bank
-        )
-        analogous_exchange_rate_price = analogous_exchange_rate.price
-        accurate_marginality_percentage = exchange_rate / (
-                analogous_exchange_rate_price / 100) - 100
+        price = math.prod(iteration_prices)
+        return price
+
+    def create_marginality_percentage_not_looped(self, analogous_exchange,
+                                                 price):
+        analogous_exchange_price = analogous_exchange.price
+        accurate_marginality_percentage = price / (
+                analogous_exchange_price / 100) - 100
         marginality_percentage = round(accurate_marginality_percentage,
                                        self.percentage_round_to)
         return marginality_percentage
@@ -147,7 +145,7 @@ class IntraBanksNotLooped(IntraBanks):
 
     def add_to_bulk_update_or_create_not_looped(
             self, bank, new_update, records_to_update, records_to_create,
-            combination, marginality_percentage
+            combination, analogous_exchange, price, marginality_percentage
     ):
         target_object = IntraBanksNotLoopedExchanges.objects.filter(
             bank=bank,
@@ -157,10 +155,14 @@ class IntraBanksNotLooped(IntraBanks):
             updated_object = IntraBanksNotLoopedExchanges.objects.get(
                 bank=bank,
                 list_of_transfers=combination
-
             )
-            if updated_object.marginality_percentage == marginality_percentage:
+            if (
+                    updated_object.marginality_percentage
+                    == marginality_percentage and updated_object.price
+                    == price
+            ):
                 return
+            updated_object.price = price
             updated_object.marginality_percentage = marginality_percentage
             updated_object.update = new_update
             records_to_update.append(updated_object)
@@ -168,7 +170,9 @@ class IntraBanksNotLooped(IntraBanks):
             created_object = IntraBanksNotLoopedExchanges(
                 bank=bank,
                 list_of_transfers=combination,
+                price=price,
                 marginality_percentage=marginality_percentage,
+                analogous_exchange=analogous_exchange,
                 update=new_update
             )
             records_to_create.append(created_object)
@@ -199,14 +203,22 @@ class IntraBanksNotLooped(IntraBanks):
                     combination = list(body_combination)
                     combination.insert(0, input_currency)
                     combination.append(output_currency)
+                    analogous_exchange = all_exchanges.get(
+                        from_fiat=input_currency, to_fiat=output_currency,
+                        bank=bank
+                    )
+                    price = self.create_price_percentage_not_looped(
+                        bank, combination, all_exchanges
+                    )
                     marginality_percentage = (
                         self.create_marginality_percentage_not_looped(
-                            bank, input_currency, output_currency, combination,
-                            all_exchanges)
+                            analogous_exchange, price
+                        )
                     )
                     self.add_to_bulk_update_or_create_not_looped(
                         bank, new_update, records_to_update, records_to_create,
-                        combination, marginality_percentage
+                        combination, analogous_exchange, price,
+                        marginality_percentage
                     )
 
     def main(self):
@@ -223,7 +235,7 @@ class IntraBanksNotLooped(IntraBanks):
         )
         IntraBanksNotLoopedExchanges.objects.bulk_create(records_to_create)
         IntraBanksNotLoopedExchanges.objects.bulk_update(
-            records_to_update, ['marginality_percentage', 'update']
+            records_to_update, ['price', 'marginality_percentage', 'update']
         )
         duration = datetime.now() - start_time
         new_update.duration = duration

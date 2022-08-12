@@ -1,6 +1,7 @@
 from django.db import models
 
 from core.models import UpdatesModel
+from banks.models import Banks
 
 
 class CryptoExchanges(models.Model):
@@ -45,4 +46,26 @@ class IntraCryptoExchanges(models.Model):
     update = models.ForeignKey(
         IntraCryptoExchangesUpdates, related_name='datas',
         on_delete=models.CASCADE
+    )
+
+
+class InterExchangesUpdate(UpdatesModel):
+    pass
+
+
+class InterExchanges(models.Model):
+    bank = models.ForeignKey(
+        Banks, related_name='inter_exchanges', on_delete=models.CASCADE
+    )
+    crypto_exchange = models.ForeignKey(
+        CryptoExchanges, related_name='inter_exchanges',
+        on_delete=models.CASCADE
+    )
+    list_of_transfers = models.JSONField()
+    p2p_type = models.CharField(max_length=7)
+    marginality_percentage = models.FloatField(
+        null=True, blank=True, default=None
+    )
+    update = models.ForeignKey(
+        InterExchangesUpdate, related_name='datas', on_delete=models.CASCADE
     )

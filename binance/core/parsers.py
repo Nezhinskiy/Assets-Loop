@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime
 from http import HTTPStatus
 from itertools import combinations, permutations, product
@@ -269,7 +271,7 @@ class P2PParser(object):
 
 
 class CryptoExchangesParser(BankParser):
-    crypto_exchanges_name = None
+    crypto_exchange_name = None
 
     def calculates_buy_and_sell_data(self, params) -> tuple[dict, dict]:
         buy_and_sell = self.extract_buy_and_sell_from_json(
@@ -354,11 +356,11 @@ class CryptoExchangesParser(BankParser):
     def main(self):
         start_time = datetime.now()
         if not CryptoExchanges.objects.filter(
-                name=self.crypto_exchanges_name
+                name=self.crypto_exchange_name
         ).exists():
-            CryptoExchanges.objects.create(name=self.crypto_exchanges_name)
+            CryptoExchanges.objects.create(name=self.crypto_exchange_name)
         crypto_exchange = CryptoExchanges.objects.get(
-            name=self.crypto_exchanges_name
+            name=self.crypto_exchange_name
         )
         new_update = IntraCryptoExchangesUpdates.objects.create(
             crypto_exchange=crypto_exchange
