@@ -55,7 +55,7 @@ class BankParser(object):
             message = f'Ошибка при запросе к основному API: {error}'
             raise Exception(message)
         if response.status_code != HTTPStatus.OK:
-            message = f'Ошибка {response.status_code}'
+            message = f'Ошибка {response.status_code}, params: {params}, endpoint: {self.endpoint}'
             raise Exception(message)
         return response.json()
 
@@ -297,17 +297,20 @@ class CryptoExchangesParser(BankParser):
         }
         return [price_data]
 
-    def generate_unique_params(self) -> list[dict[str]]:
+    def generate_unique_params(self) -> list[tuple[str]]:
         """Repackaging a tuple with tuples into a list with params."""
         from crypto_exchanges.crypto_exchanges_config import (
             CRYPTO_EXCHANGES_CONFIG)
         crypto_exchanges_configs = CRYPTO_EXCHANGES_CONFIG.get(
             self.crypto_exchange_name)
         assets = crypto_exchanges_configs.get('assets')
-        currencies_combinations = tuple(combinations(
+        currencies_combinations = list(combinations(
             assets, self.CURRENCY_PAIR
-        ) if self.buy_and_sell else permutations(assets, self.CURRENCY_PAIR)
-        )
+        ) if self.buy_and_sell else permutations(assets, self.CURRENCY_PAIR))
+        crypto_fiats = crypto_exchanges_configs.get('crypto_fiats')
+        for crypto_fiat in crypto_fiats:
+            for asset in assets:
+                currencies_combinations.append((asset, crypto_fiat))
         params_list = self.create_params(currencies_combinations)
         return params_list
 

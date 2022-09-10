@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import os
+from http import HTTPStatus
 from sys import getsizeof
 
+import requests
 from banks.banks_config import BANKS_CONFIG
 from core.parsers import CryptoExchangesParser, P2PParser
 
@@ -11,6 +13,7 @@ CRYPTO_EXCHANGES_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 BINANCE_ASSETS = ('ETH', 'BTC', 'BUSD', 'USDT')
 BINANCE_TRADE_TYPES = ('BUY', 'SELL')
 BINANCE_FIATS = ('RUB', 'USD', 'EUR')
+BINANCE_CRYPTO_FIATS = ('AUD', 'BRL', 'EUR', 'GBP', 'RUB', 'TRY', 'UAH')
 BINANCE_PAY_TYPES = (pay_type for pay_type in BANKS_CONFIG.keys())
 
 ASSETS = (
@@ -19,6 +22,7 @@ ASSETS = (
     ('BUSD', 'BUSD'),
     ('USDT', 'USDT'),
 )
+
 TRADE_TYPES = (
     ('BUY', 'buy'),
     ('SELL', 'sell')
@@ -28,6 +32,9 @@ FIATS = (
     # ('USD', 'usd'),
     # ('EUR', 'eur'),
     # ('GBP', 'gbp'),
+)
+CRYPTO_FIATS = (
+    'AUD', 'BRL', 'EUR', 'GBP', 'RUB', 'TRY', 'UAH'
 )
 PAY_TYPES = (
     ('Tinkoff', 'Tinkoff'),
@@ -83,6 +90,21 @@ class BinanceCryptoParser(CryptoExchangesParser):
     endpoint = 'https://api.binance.com/api/v3/ticker/price?'
     name_from = 'symbol'
 
+    def get_api_answer(self, params):
+        """Делает запрос к эндпоинту API Tinfoff."""
+        try:
+            response = requests.get(self.endpoint, params)
+        except Exception as error:
+            message = f'Ошибка при запросе к основному API: {error}'
+            raise Exception(message)
+        if response.status_code != HTTPStatus.OK:
+            params = {
+                self.name_from:
+                    params[self.name_from][4:] + params[self.name_from][:4]
+            }
+            response = requests.get(self.endpoint, params)
+        return response.json()
+
     def converts_choices_to_set(self, choices: tuple[tuple[str, str]]
                                 ) -> list[str]:
         """repackaging choices into a set."""
@@ -101,9 +123,9 @@ class BinanceCryptoParser(CryptoExchangesParser):
 
     def calculates_buy_and_sell_data(self, params) -> tuple[dict, dict]:
         price = self.extract_price_from_json(self.get_api_answer(params))
-        for from_fiat in self.converts_choices_to_set(self.fiats):
+        for from_fiat in BINANCE_ASSETS + BINANCE_CRYPTO_FIATS:
             if from_fiat in params['symbol'][0:4]:
-                for to_fiat in self.converts_choices_to_set(self.fiats):
+                for to_fiat in BINANCE_ASSETS + BINANCE_CRYPTO_FIATS:
                     if to_fiat in params['symbol'][-4:]:
                         buy_data = {
                             'from_asset': from_fiat,
