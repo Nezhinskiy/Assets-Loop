@@ -8,7 +8,8 @@ BANKS_CONFIG = {
         'bank_parser': TinkoffParser,
         'intra_exchange': IntraTinkoff,
         'currencies': TINKOFF_CURRENCIES,
-        'currencies_with_requisites': TINKOFF_CURRENCIES_WITH_REQUISITES
+        'currencies_with_requisites': TINKOFF_CURRENCIES_WITH_REQUISITES,
+        'crypto_exchanges': ('Binance',)
     },
     'Wise': {
         'bank_parser': WiseParser,

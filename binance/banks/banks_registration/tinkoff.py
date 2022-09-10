@@ -1,7 +1,9 @@
+import os
+
 from core.intra_exchanges import IntraBanks, IntraBanksNotLooped
 from core.parsers import BankParser
 
-BANK_NAME = 'Tinkoff'
+BANK_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
 TINKOFF_CURRENCIES = (
     'RUB', 'USD', 'EUR', 'ILS', 'GBP', 'CHF', 'CAD', 'AUD', 'SGD'

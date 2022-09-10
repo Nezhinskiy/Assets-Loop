@@ -1,6 +1,6 @@
 import math
 from itertools import product
-
+"""
 from banks.banks_config import BANKS_CONFIG
 from banks.models import IntraBanksExchanges, BanksExchangeRates, IntraBanksNotLoopedExchanges
 from crypto_exchanges.crypto_exchanges_config import CRYPTO_EXCHANGES_CONFIG
@@ -12,6 +12,7 @@ FIATS = ('RUB', 'USD', 'EUR')
 class InterExchangesCalculate(object):
     currencies_with_requisites = None
     percentage_round_to = 2
+    p2p_types = ('instant', 'slow')
 
     def create_list_of_transfers(self, input_currency, input_asset,
                     output_asset, list_of_output_transfers):
@@ -46,6 +47,9 @@ class InterExchangesCalculate(object):
             # crypto enter loop start
             for crypto_exchange_name, crypto_exchange_config in (
                     CRYPTO_EXCHANGES_CONFIG):
+                if (crypto_exchange_name
+                        not in input_bank_config.get('crypto_exchanges')):
+                    continue
                 input_currencies_with_requisites = input_bank_config.get(
                     'currencies_with_requisites')
                 assets = crypto_exchange_config.get('assets')
@@ -62,6 +66,7 @@ class InterExchangesCalculate(object):
                     )
                     p2p_slow_input_price = target_p2p_slow_input.price
                     # crypto enter loop end
+
                     # crypto intra loop start
                     for count_exchanges in range(2):
                         if count_exchanges == 0:
@@ -96,29 +101,38 @@ class InterExchangesCalculate(object):
                                 )
                                 p2p_slow_output_price = target_p2p_slow_input.price
                                 # crypto output loop end
-                                # margin_exchanges
-                                output_bank_margin_exchanges = IntraBanksNotLoopedExchanges.objects.filter(
-                                    bank__name=output_bank_name,
-                                    analogous_exchange__from_fiat=output_currency,
-                                    analogous_exchange__to_fiat=input_currency,
-                                    marginality_percentage__gt=0
-                                )
-                                if not output_bank_margin_exchanges.exists():
-                                    bank_output_exchange = BanksExchangeRates.objects.get(
-                                        bank__name=output_bank_name,
-                                        from_fiat=output_currency,
-                                        to_fiat=input_currency
-                                    )
-                                    bank_output_price = bank_output_exchange.price
-                                    list_of_output_transfers = [output_currency, input_currency]
-                                else:
-                                    for output_bank_margin_exchange in output_bank_margin_exchanges:
-                                        bank_output_price = output_bank_margin_exchange.price
-                                        list_of_output_transfers = output_bank_margin_exchange.list_of_transfers
-                                        marginality_percentage = self.create_marginality_percentage(
-                                            p2p_instant_input_price, p2p_slow_input_price, intra_crypto_exchange_price,
-                                            p2p_instant_output_price, p2p_slow_output_price, bank_output_price
-                                        )
+                                for p2p_type in self.p2p_types:
+                                    if p2p_instant_input_price and p2p_instant_output_price:
+
+"""
+
+
+
+
+
+
+                                # output_bank_margin_exchanges = IntraBanksNotLoopedExchanges.objects.filter(
+                                #     bank__name=output_bank_name,
+                                #     analogous_exchange__from_fiat=output_currency,
+                                #     analogous_exchange__to_fiat=input_currency,
+                                #     marginality_percentage__gt=0
+                                # )
+                                # if not output_bank_margin_exchanges.exists():
+                                #     bank_output_exchange = BanksExchangeRates.objects.get(
+                                #         bank__name=output_bank_name,
+                                #         from_fiat=output_currency,
+                                #         to_fiat=input_currency
+                                #     )
+                                #     bank_output_price = bank_output_exchange.price
+                                #     list_of_output_transfers = [output_currency, input_currency]
+                                # else:
+                                #     for output_bank_margin_exchange in output_bank_margin_exchanges:
+                                #         bank_output_price = output_bank_margin_exchange.price
+                                #         list_of_output_transfers = output_bank_margin_exchange.list_of_transfers
+                                #         marginality_percentage = self.create_marginality_percentage(
+                                #             p2p_instant_input_price, p2p_slow_input_price, intra_crypto_exchange_price,
+                                #             p2p_instant_output_price, p2p_slow_output_price, bank_output_price
+                                #         )
 
 
                                 # margin_exchanges_end

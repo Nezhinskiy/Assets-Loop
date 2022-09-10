@@ -1,7 +1,9 @@
+import os
+
 from core.intra_exchanges import IntraBanks
 from core.parsers import BankParser
 
-BANK_NAME = 'Wise'
+BANK_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
 WISE_CURRENCIES = (
     'RUB', 'USD', 'EUR', 'ILS', 'GBP', 'CHF', 'CAD', 'AUD', 'SGD'

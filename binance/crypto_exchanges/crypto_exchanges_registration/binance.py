@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import os
 from sys import getsizeof
 
 from banks.banks_config import BANKS_CONFIG
 from core.parsers import CryptoExchangesParser, P2PParser
 
-CRYPTO_EXCHANGES_NAME = 'Binance'
+CRYPTO_EXCHANGES_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
 BINANCE_ASSETS = ('ETH', 'BTC', 'BUSD', 'USDT')
 BINANCE_TRADE_TYPES = ('BUY', 'SELL')

@@ -48,24 +48,28 @@ class IntraCryptoExchanges(models.Model):
         on_delete=models.CASCADE
     )
 
-
-class InterExchangesUpdate(UpdatesModel):
-    pass
-
-
-class InterExchanges(models.Model):
-    bank = models.ForeignKey(
-        Banks, related_name='inter_exchanges', on_delete=models.CASCADE
-    )
-    crypto_exchange = models.ForeignKey(
-        CryptoExchanges, related_name='inter_exchanges',
-        on_delete=models.CASCADE
-    )
-    list_of_transfers = models.JSONField()
-    p2p_type = models.CharField(max_length=7)
-    marginality_percentage = models.FloatField(
-        null=True, blank=True, default=None
-    )
-    update = models.ForeignKey(
-        InterExchangesUpdate, related_name='datas', on_delete=models.CASCADE
-    )
+#
+# class InterExchangesUpdate(UpdatesModel):
+#     pass
+#
+#
+# class InterExchanges(models.Model):
+#     input_bank = models.ForeignKey(
+#         Banks, related_name='inter_exchanges', on_delete=models.CASCADE
+#     )
+#     crypto_exchange = models.ForeignKey(
+#         CryptoExchanges, related_name='inter_exchanges',
+#         on_delete=models.CASCADE
+#     )
+#     output_bank = models.ForeignKey(
+#         Banks, related_name='inter_exchanges', on_delete=models.CASCADE
+#     )
+#     list_of_transfers = models.JSONField()
+#     p2p_type = models.CharField(max_length=7)
+#     price = models.FloatField(null=True, blank=True, default=None)
+#     marginality_percentage = models.FloatField(
+#         null=True, blank=True, default=None
+#     )
+#     update = models.ForeignKey(
+#         InterExchangesUpdate, related_name='datas', on_delete=models.CASCADE
+#     )
