@@ -1,6 +1,7 @@
 from crypto_exchanges.crypto_exchanges_registration.binance import (
     BINANCE_ASSETS, BINANCE_FIATS, BINANCE_PAY_TYPES, BINANCE_TRADE_TYPES,
-    BinanceCryptoParser, BinanceP2PParser, BINANCE_CRYPTO_FIATS)
+    BinanceCryptoParser, BinanceP2PParser, BINANCE_CRYPTO_FIATS,
+    DEPOSIT_FIATS, WITHDRAW_FIATS)
 
 CRYPTO_EXCHANGES_CONFIG = {
     'Binance': {
@@ -10,6 +11,8 @@ CRYPTO_EXCHANGES_CONFIG = {
         'trade_types': BINANCE_TRADE_TYPES,
         'fiats': BINANCE_FIATS,
         'crypto_fiats': BINANCE_CRYPTO_FIATS,
-        'pay_types': BINANCE_PAY_TYPES
+        'pay_types': BINANCE_PAY_TYPES,
+        'deposit_fiats': DEPOSIT_FIATS,
+        'withdraw_fiats': WITHDRAW_FIATS
     },
 }

@@ -6,7 +6,7 @@ from sys import getsizeof
 
 import requests
 from banks.banks_config import BANKS_CONFIG
-from core.parsers import CryptoExchangesParser, P2PParser
+from core.parsers import CryptoExchangesParser, P2PParser, Card2Fiat2CryptoExchangesParser
 
 CRYPTO_EXCHANGES_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
@@ -27,7 +27,6 @@ WITHDRAW_FIATS = {
     'GBP': (('Bank Card (Visa)', 1.8),),
     'TRY': (('Turkish Bank Transfer', 0),),
 }
-# Withdraw Fiat
 
 ASSETS = (
     ('ETH', 'ETH'),
@@ -152,7 +151,6 @@ class BinanceCryptoParser(CryptoExchangesParser):
                         }
                         return buy_data, sell_data
 
-
 def get_all_binance_crypto_exchanges():
     binance_crypto_parser = BinanceCryptoParser()
     message = binance_crypto_parser.main()
@@ -162,4 +160,11 @@ def get_all_binance_crypto_exchanges():
 def get_all_p2p_binance_exchanges():
     binance_parser = BinanceP2PParser()
     message = binance_parser.main()
+    return message
+
+
+def get_all_card_2_fiat_2_crypto_exchanges():
+    card_2_fiat_2_crypto_exchanges_parser = Card2Fiat2CryptoExchangesParser(
+        CRYPTO_EXCHANGES_NAME)
+    message = card_2_fiat_2_crypto_exchanges_parser.main()
     return message
