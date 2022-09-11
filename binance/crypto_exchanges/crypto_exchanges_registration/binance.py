@@ -15,6 +15,19 @@ BINANCE_TRADE_TYPES = ('BUY', 'SELL')
 BINANCE_FIATS = ('RUB', 'USD', 'EUR')
 BINANCE_CRYPTO_FIATS = ('AUD', 'BRL', 'EUR', 'GBP', 'RUB', 'TRY', 'UAH')
 BINANCE_PAY_TYPES = (pay_type for pay_type in BANKS_CONFIG.keys())
+DEPOSIT_FIATS = {
+    'UAH': (('SettlePay (Visa/MC)', 1.5),),
+    'EUR': (('Bank Card (Visa/MC)', 1.8),),
+    'GBP': (('Bank Card (Visa/MC)', 1.8),),
+    'TRY': (('Turkish Bank Transfer', 0),),
+}
+WITHDRAW_FIATS = {
+    'UAH': (('SettlePay (Visa/MC)', 1),),
+    'EUR': (('Bank Card (Visa)', 1.8),),
+    'GBP': (('Bank Card (Visa)', 1.8),),
+    'TRY': (('Turkish Bank Transfer', 0),),
+}
+# Withdraw Fiat
 
 ASSETS = (
     ('ETH', 'ETH'),

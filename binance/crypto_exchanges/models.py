@@ -48,6 +48,47 @@ class IntraCryptoExchanges(models.Model):
         on_delete=models.CASCADE
     )
 
+
+class Card2Fiat2CryptoExchangesUpdates(UpdatesModel):
+    crypto_exchange = models.ForeignKey(
+        CryptoExchanges, related_name='card_2_fiat_2_crypto_exchanges_update',
+        on_delete=models.CASCADE
+    )
+
+
+class Card2Fiat2CryptoExchanges(models.Model):
+    crypto_exchange = models.ForeignKey(
+        CryptoExchanges, related_name='card_2_fiat_2_crypto_exchanges',
+        on_delete=models.CASCADE
+    )
+    asset = models.CharField(max_length=4)
+    fiat = models.CharField(max_length=3)
+    trade_type = models.CharField(max_length=4)
+    transaction_method = models.CharField(max_length=35)
+    price = models.FloatField(null=True, blank=True, default=None)
+    update = models.ForeignKey(Card2Fiat2CryptoExchangesUpdates,
+                               related_name='datas', on_delete=models.CASCADE)
+
+
+class Card2CryptoExchangesUpdates(UpdatesModel):
+    crypto_exchange = models.ForeignKey(
+        CryptoExchanges, related_name='card_2_crypto_exchanges_update',
+        on_delete=models.CASCADE
+    )
+
+
+class Card2CryptoExchanges(models.Model):
+    crypto_exchange = models.ForeignKey(
+        CryptoExchanges, related_name='card_2_crypto_exchanges',
+        on_delete=models.CASCADE
+    )
+    asset = models.CharField(max_length=4)
+    fiat = models.CharField(max_length=3)
+    trade_type = models.CharField(max_length=4)
+    price = models.FloatField(null=True, blank=True, default=None)
+    update = models.ForeignKey(Card2CryptoExchangesUpdates,
+                               related_name='datas', on_delete=models.CASCADE)
+
 #
 # class InterExchangesUpdate(UpdatesModel):
 #     pass
