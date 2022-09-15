@@ -89,28 +89,21 @@ class Card2CryptoExchanges(models.Model):
     update = models.ForeignKey(Card2CryptoExchangesUpdates,
                                related_name='datas', on_delete=models.CASCADE)
 
-#
-# class InterExchangesUpdate(UpdatesModel):
-#     pass
-#
-#
-# class InterExchanges(models.Model):
-#     input_bank = models.ForeignKey(
-#         Banks, related_name='inter_exchanges', on_delete=models.CASCADE
-#     )
-#     crypto_exchange = models.ForeignKey(
-#         CryptoExchanges, related_name='inter_exchanges',
-#         on_delete=models.CASCADE
-#     )
-#     output_bank = models.ForeignKey(
-#         Banks, related_name='inter_exchanges', on_delete=models.CASCADE
-#     )
-#     list_of_transfers = models.JSONField()
-#     p2p_type = models.CharField(max_length=7)
-#     price = models.FloatField(null=True, blank=True, default=None)
-#     marginality_percentage = models.FloatField(
-#         null=True, blank=True, default=None
-#     )
-#     update = models.ForeignKey(
-#         InterExchangesUpdate, related_name='datas', on_delete=models.CASCADE
-#     )
+
+class ListsFiatCryptoUpdates(UpdatesModel):
+    crypto_exchange = models.ForeignKey(
+        CryptoExchanges, related_name='list_fiat_crypto_update',
+        on_delete=models.CASCADE
+    )
+
+
+class ListsFiatCrypto(models.Model):
+    crypto_exchange = models.ForeignKey(
+        CryptoExchanges, related_name='list_fiat_crypto',
+        on_delete=models.CASCADE
+    )
+    list_fiat_crypto = models.JSONField()
+    trade_type = models.CharField(max_length=4)
+    update = models.ForeignKey(
+        ListsFiatCryptoUpdates, related_name='datas', on_delete=models.CASCADE
+    )

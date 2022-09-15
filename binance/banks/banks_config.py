@@ -14,5 +14,6 @@ BANKS_CONFIG = {
     'Wise': {
         'bank_parser': WiseParser,
         'intra_exchange': IntraWise,
+        'currencies': TINKOFF_CURRENCIES,
     }
 }

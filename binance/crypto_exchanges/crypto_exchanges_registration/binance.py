@@ -6,7 +6,7 @@ from sys import getsizeof
 
 import requests
 from banks.banks_config import BANKS_CONFIG
-from core.parsers import CryptoExchangesParser, P2PParser, Card2Fiat2CryptoExchangesParser
+from core.parsers import CryptoExchangesParser, P2PParser, Card2Fiat2CryptoExchangesParser, ListsFiatCryptoParser
 
 CRYPTO_EXCHANGES_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
@@ -150,6 +150,18 @@ class BinanceCryptoParser(CryptoExchangesParser):
                             'price': round(1.0 / price, self.ROUND_TO)
                         }
                         return buy_data, sell_data
+
+
+class BinanceListsFiatCryptoParser(ListsFiatCryptoParser):
+    crypto_exchange_name = CRYPTO_EXCHANGES_NAME
+    endpoint_sell = 'https://www.binance.com/bapi/fiat/v2/friendly/ocbs/sell/list-fiat'
+    endpoint_buy = 'https://www.binance.com/bapi/fiat/v2/friendly/ocbs/buy/list-crypto'
+
+
+def get_binance_fiat_crypto_list():
+    binance_fiat_crypto_list_parser = BinanceListsFiatCryptoParser()
+    message = binance_fiat_crypto_list_parser.main()
+    return message
 
 def get_all_binance_crypto_exchanges():
     binance_crypto_parser = BinanceCryptoParser()

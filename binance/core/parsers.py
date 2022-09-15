@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 from http import HTTPStatus
 from itertools import combinations, permutations, product
+from sys import getsizeof
+from typing import List
 
 import requests
 
@@ -12,7 +14,9 @@ from crypto_exchanges.models import (CryptoExchanges, IntraCryptoExchanges,
                                      P2PCryptoExchangesRates,
                                      P2PCryptoExchangesRatesUpdates,
                                      Card2Fiat2CryptoExchanges,
-                                     Card2Fiat2CryptoExchangesUpdates)
+                                     Card2Fiat2CryptoExchangesUpdates,
+                                     ListsFiatCrypto, ListsFiatCryptoUpdates
+                                     )
 
 
 class BankParser(object):
@@ -491,6 +495,143 @@ class Card2Fiat2CryptoExchangesParser:
         Card2Fiat2CryptoExchanges.objects.bulk_create(records_to_create)
         Card2Fiat2CryptoExchanges.objects.bulk_update(records_to_update,
                                                       ['price', 'update'])
+        duration = datetime.now() - start_time
+        new_update.duration = duration
+        new_update.save()
+
+
+class ListsFiatCryptoParser(object):
+    crypto_exchange_name = None
+    endpoint_sell = None
+    endpoint_buy = None
+
+    def create_body_sell(self, asset):
+        return {
+            "channels": ["card"],
+            "crypto": asset,
+            "transactionType": "SELL"
+        }
+
+    def create_body_buy(self, fiat):
+        return {
+            "channels": ["card"],
+            "fiat": fiat,
+            "transactionType": "BUY"
+        }
+
+    def create_headers(self, body):
+        return {
+            "Content-Type": "application/json",
+            "Content-Length": str(getsizeof(body)),
+        }
+
+    def extract_sell_list_from_json(self, json_data: dict, fiats
+                                    ) -> List[list]:
+        general_sell_list = json_data.get('data')
+        valid_sell_list = []
+        for fiat_data in general_sell_list:
+            fiat = fiat_data.get('assetCode')
+            if fiat_data.get('quotation') != '' and fiat in fiats:  # rate exists
+                max_limit = fiat_data.get('maxLimit')
+                valid_sell_list.append([fiat, max_limit])
+        return valid_sell_list
+
+    def extract_buy_list_from_json(self, json_data: dict, assets
+                                   ) -> List[list]:
+        general_buy_list = json_data.get('data')
+        if general_buy_list == '':
+            return []
+        valid_buy_list = []
+        for fiat_data in general_buy_list:
+            asset = fiat_data.get('assetCode')
+            if fiat_data.get('quotation') != '' and asset in assets:  # rate exists
+                max_limit = fiat_data.get('maxLimit')
+                valid_buy_list.append([asset, max_limit])
+        return valid_buy_list
+
+    def get_api_answer(self, asset=None, fiat=None):
+        """Делает запрос к эндпоинту API Tinfoff."""
+        if asset:
+            body = self.create_body_sell(asset)
+            endpoint = self.endpoint_sell
+        else:  # if fiat
+            body = self.create_body_buy(fiat)
+            endpoint = self.endpoint_buy
+        headers = self.create_headers(body)
+        try:
+            response = requests.post(endpoint, headers=headers, json=body)
+        except Exception as error:
+            message = f'Ошибка при запросе к основному API: {error}'
+            raise Exception(message)
+        if response.status_code != HTTPStatus.OK:
+            message = f'Ошибка {response.status_code}'
+            raise Exception(message)
+        return response.json()
+
+    def add_to_update_or_create(
+            self, crypto_exchange, new_update, list_fiat_crypto, trade_type
+    ):
+        target_object = ListsFiatCrypto.objects.filter(
+            crypto_exchange=crypto_exchange, trade_type=trade_type
+        )
+        if target_object.exists():
+            updated_object = ListsFiatCrypto.objects.get(
+                crypto_exchange=crypto_exchange, trade_type=trade_type
+            )
+            if updated_object.list_fiat_crypto == list_fiat_crypto:
+                return
+            updated_object.list_fiat_crypto = list_fiat_crypto
+            updated_object.update = new_update
+            updated_object.save()
+        else:
+            created_object = ListsFiatCrypto(
+                crypto_exchange=crypto_exchange,
+                list_fiat_crypto=list_fiat_crypto,
+                trade_type=trade_type,
+                update=new_update
+            )
+            created_object.save()
+
+    def get_all_api_answers(self, crypto_exchange, new_update):
+        from crypto_exchanges.crypto_exchanges_config import (
+            CRYPTO_EXCHANGES_CONFIG)
+        crypto_exchanges_configs = CRYPTO_EXCHANGES_CONFIG.get(
+            self.crypto_exchange_name)
+        assets = crypto_exchanges_configs.get('assets')
+        fiats = CRYPTO_EXCHANGES_CONFIG.get('all_fiats')
+        sell_dict = {}
+        buy_dict = {}
+
+        for asset in assets:
+            response_sell = self.get_api_answer(asset=asset)
+            sell_list = self.extract_sell_list_from_json(response_sell, fiats)
+            sell_dict[asset] = sell_list
+
+        for fiat in fiats:
+            response_buy = self.get_api_answer(fiat=fiat)
+            buy_list = self.extract_buy_list_from_json(response_buy, assets)
+            for asset_info in buy_list:
+                fiat_list = []
+                if asset_info[0] not in buy_dict:
+                    buy_dict[asset_info[0]] = fiat_list
+                buy_dict[asset_info[0]].append([fiat, asset_info[1]])
+
+        self.add_to_update_or_create(
+            crypto_exchange, new_update, sell_dict, trade_type='SELL'
+        )
+        self.add_to_update_or_create(
+            crypto_exchange, new_update, buy_dict, trade_type='BUY'
+        )
+
+    def main(self):
+        start_time = datetime.now()
+        crypto_exchange = CryptoExchanges.objects.get(
+            name=self.crypto_exchange_name
+        )
+        new_update = ListsFiatCryptoUpdates.objects.create(
+            crypto_exchange=crypto_exchange
+        )
+        self.get_all_api_answers(crypto_exchange, new_update)
         duration = datetime.now() - start_time
         new_update.duration = duration
         new_update.save()
