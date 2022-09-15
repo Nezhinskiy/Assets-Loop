@@ -86,6 +86,8 @@ class Card2CryptoExchanges(models.Model):
     fiat = models.CharField(max_length=3)
     trade_type = models.CharField(max_length=4)
     price = models.FloatField(null=True, blank=True, default=None)
+    pre_price = models.FloatField(null=True, blank=True, default=None)
+    commission = models.FloatField(null=True, blank=True, default=None)
     update = models.ForeignKey(Card2CryptoExchangesUpdates,
                                related_name='datas', on_delete=models.CASCADE)
 

@@ -15,7 +15,9 @@ from crypto_exchanges.models import (CryptoExchanges, IntraCryptoExchanges,
                                      P2PCryptoExchangesRatesUpdates,
                                      Card2Fiat2CryptoExchanges,
                                      Card2Fiat2CryptoExchangesUpdates,
-                                     ListsFiatCrypto, ListsFiatCryptoUpdates
+                                     ListsFiatCrypto, ListsFiatCryptoUpdates,
+                                     Card2CryptoExchanges,
+                                     Card2CryptoExchangesUpdates
                                      )
 
 
@@ -532,7 +534,7 @@ class ListsFiatCryptoParser(object):
         for fiat_data in general_sell_list:
             fiat = fiat_data.get('assetCode')
             if fiat_data.get('quotation') != '' and fiat in fiats:  # rate exists
-                max_limit = fiat_data.get('maxLimit')
+                max_limit = int(float(fiat_data['maxLimit']) * 0.9)
                 valid_sell_list.append([fiat, max_limit])
         return valid_sell_list
 
@@ -545,7 +547,7 @@ class ListsFiatCryptoParser(object):
         for fiat_data in general_buy_list:
             asset = fiat_data.get('assetCode')
             if fiat_data.get('quotation') != '' and asset in assets:  # rate exists
-                max_limit = fiat_data.get('maxLimit')
+                max_limit = int(float(fiat_data['maxLimit']) * 0.9)
                 valid_buy_list.append([asset, max_limit])
         return valid_buy_list
 
@@ -632,6 +634,171 @@ class ListsFiatCryptoParser(object):
             crypto_exchange=crypto_exchange
         )
         self.get_all_api_answers(crypto_exchange, new_update)
+        duration = datetime.now() - start_time
+        new_update.duration = duration
+        new_update.save()
+
+
+class Card2CryptoExchangesParser(object):
+    crypto_exchange_name = None
+    endpoint_sell = None
+    endpoint_buy = None
+    ROUND_TO = 5
+
+    def converts_choices_to_set(self, choices: tuple[tuple[str, str]]
+                                ) -> set[str]:
+        """repackaging choices into a set."""
+        return {choice[0] for choice in choices}
+
+    def create_body_sell(self, fiat, asset, amount):
+        return {
+            "baseCurrency": fiat,
+            "cryptoCurrency": asset,
+            "payType": "Ask",
+            "paymentChannel": "card",
+            "rail": "card",
+            "requestedAmount": amount,
+            "requestedCurrency": fiat
+        }
+
+    def create_body_buy(self, fiat, asset, amount):
+        return {
+            "baseCurrency": fiat,
+            "cryptoCurrency": asset,
+            "payType": "Ask",
+            "paymentChannel": "card",
+            "rail": "card",
+            "requestedAmount": amount,
+            "requestedCurrency": fiat
+        }
+
+    def create_params_buy(self, fiat, asset):
+        return {
+            'channelCode': 'card',
+            'fiatCode': fiat,
+            'cryptoAsset': asset
+        }
+
+    def create_headers(self, body):
+        return {
+            "Content-Type": "application/json",
+            "Content-Length": str(getsizeof(body)),
+        }
+
+    def extract_values_from_json(self, json_data: dict, amount, trade_type
+                                 ) -> [int | None]:
+        if trade_type == 'SELL':
+            data = json_data['data'].get('rows')
+            pre_price = round(data.get('quotePrice'), self.ROUND_TO)
+            commission = data.get('totalFee') / amount
+            price = pre_price / (1 + commission)
+            commission *= 100
+        else:  # BUY
+            data = json_data['data']
+            pre_price = round(float(data['price']), self.ROUND_TO)
+            commission = 0.02
+            price = pre_price * (1 + commission)
+            commission *= 100
+        return price, pre_price, commission
+
+    def get_api_answer(self, asset, trade_type, fiat, amount):
+        """Делает запрос к эндпоинту API Tinfoff."""
+        if trade_type == 'SELL':
+            body = self.create_body_sell(fiat, asset, amount)
+            endpoint = self.endpoint_sell
+            headers = self.create_headers(body)
+            try:
+                response = requests.post(endpoint, headers=headers, json=body)
+            except Exception as error:
+                message = f'Ошибка при запросе к основному API: {error}'
+                raise Exception(message)
+        else:
+            params = self.create_params_buy(fiat, asset)
+            endpoint = self.endpoint_buy
+            try:
+                response = requests.get(endpoint, params)
+            except Exception as error:
+                message = f'Ошибка при запросе к основному API: {error}'
+                raise Exception(message)
+        if response.status_code != HTTPStatus.OK:
+            message = f'Ошибка {response.status_code}'
+            raise Exception(message)
+        return response.json()
+
+    def add_to_bulk_update_or_create(
+            self, crypto_exchange, new_update, records_to_update,
+            records_to_create, asset, trade_type, fiat, price, pre_price,
+            commission
+    ):
+        target_object = Card2CryptoExchanges.objects.filter(
+            crypto_exchange=crypto_exchange, asset=asset, trade_type=trade_type,
+            fiat=fiat
+        )
+        if target_object.exists():
+            updated_object = Card2CryptoExchanges.objects.get(
+                crypto_exchange=crypto_exchange, asset=asset,
+                trade_type=trade_type, fiat=fiat
+            )
+            if updated_object.price == price:
+                return
+            updated_object.price = price
+            updated_object.pre_price = pre_price
+            updated_object.commission = commission
+            updated_object.update = new_update
+            records_to_update.append(updated_object)
+        else:
+            created_object = Card2CryptoExchanges(
+                crypto_exchange=crypto_exchange, asset=asset,
+                trade_type=trade_type, fiat=fiat, price=price,
+                pre_price=pre_price, commission=commission, update=new_update
+            )
+            records_to_create.append(created_object)
+
+    def get_all_api_answers(self, crypto_exchange, new_update,
+                            records_to_update, records_to_create):
+        from crypto_exchanges.crypto_exchanges_config import (
+            CRYPTO_EXCHANGES_CONFIG)
+        crypto_exchanges_configs = CRYPTO_EXCHANGES_CONFIG.get(
+            self.crypto_exchange_name)
+        assets = crypto_exchanges_configs.get('assets')
+        trade_types = crypto_exchanges_configs.get('trade_types')
+        for trade_type in trade_types:
+            list_fiat_crypto = ListsFiatCrypto.objects.get(
+                crypto_exchange=crypto_exchange, trade_type=trade_type
+            ).list_fiat_crypto
+            for asset in assets:
+                fiats_info = list_fiat_crypto.get(asset)
+                for fiat_info in fiats_info:
+                    fiat, amount = fiat_info
+                    if fiat == 'RUB':
+                        continue
+                    response = self.get_api_answer(asset, trade_type, fiat,
+                                                   amount)
+                    price, pre_price, commission = (
+                        self.extract_values_from_json(response, amount,
+                                                      trade_type))
+                    self.add_to_bulk_update_or_create(
+                        crypto_exchange, new_update, records_to_update,
+                        records_to_create, asset, trade_type, fiat, price,
+                        pre_price, commission
+                    )
+
+    def main(self):
+        start_time = datetime.now()
+        crypto_exchange = CryptoExchanges.objects.get(
+            name=self.crypto_exchange_name
+        )
+        new_update = Card2CryptoExchangesUpdates.objects.create(
+            crypto_exchange=crypto_exchange
+        )
+        records_to_update = []
+        records_to_create = []
+        self.get_all_api_answers(crypto_exchange, new_update, records_to_update,
+                                 records_to_create)
+        Card2CryptoExchanges.objects.bulk_create(records_to_create)
+        Card2CryptoExchanges.objects.bulk_update(
+            records_to_update, ['price', 'pre_price', 'commission', 'update']
+        )
         duration = datetime.now() - start_time
         new_update.duration = duration
         new_update.save()
