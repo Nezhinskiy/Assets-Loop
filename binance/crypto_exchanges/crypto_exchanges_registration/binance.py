@@ -5,8 +5,13 @@ from http import HTTPStatus
 from sys import getsizeof
 
 import requests
+
 from banks.banks_config import BANKS_CONFIG
-from core.parsers import CryptoExchangesParser, P2PParser, Card2Fiat2CryptoExchangesParser, ListsFiatCryptoParser, Card2CryptoExchangesParser
+from core.intra_exchanges import BestCryptoExchanges, BestTotalCryptoExchanges
+from core.parsers import (Card2CryptoExchangesParser,
+                          Card2Wallet2CryptoExchangesParser,
+                          CryptoExchangesParser, ListsFiatCryptoParser,
+                          P2PParser)
 
 CRYPTO_EXCHANGES_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
@@ -62,19 +67,18 @@ class BinanceP2PParser(P2PParser):
     crypto_exchange_name = CRYPTO_EXCHANGES_NAME
     assets = ASSETS
     fiats = FIATS
-    pay_types = PAY_TYPES
     trade_types = TRADE_TYPES
     endpoint = 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search'
     page = 1
     rows = 1
 
-    def create_body(self, asset, trade_type, fiat, pay_types):
+    def create_body(self, asset, bank, fiat, pay_types):
         return {
             "page": self.page,
             "rows": self.rows,
             "publisherType": None,
             "asset": asset,
-            "tradeType": trade_type,
+            "tradeType": bank,
             "fiat": fiat,
             "payTypes": [pay_types]
         }
@@ -85,7 +89,7 @@ class BinanceP2PParser(P2PParser):
             "Content-Length": str(getsizeof(body)),
         }
 
-    def extract_price_from_json(self, json_data: dict) -> [int | None]:
+    def extract_price_from_json(self, json_data: dict) -> float | None:
         data = json_data.get('data')
         if len(data) == 0:
             price = None
@@ -93,7 +97,7 @@ class BinanceP2PParser(P2PParser):
         internal_data = data[0]
         adv = internal_data.get('adv')
         price = adv.get('price')
-        return price
+        return float(price)
 
 
 class BinanceCryptoParser(CryptoExchangesParser):
@@ -188,8 +192,22 @@ def get_all_p2p_binance_exchanges():
     return message
 
 
-def get_all_card_2_fiat_2_crypto_exchanges():
-    card_2_fiat_2_crypto_exchanges_parser = Card2Fiat2CryptoExchangesParser(
+def get_all_card_2_wallet_2_crypto_exchanges():
+    card_2_wallet_2_crypto_exchanges_parser = Card2Wallet2CryptoExchangesParser(
         CRYPTO_EXCHANGES_NAME)
-    message = card_2_fiat_2_crypto_exchanges_parser.main()
+    message = card_2_wallet_2_crypto_exchanges_parser.main()
+    return message
+
+
+def get_best_crypto_exchanges():
+    best_intra_crypto_exchanges = BestCryptoExchanges(CRYPTO_EXCHANGES_NAME)
+    message = best_intra_crypto_exchanges.main()
+    return message
+
+
+def get_best_card_2_card_crypto_exchanges():
+    best_intra_card_2_card_crypto_exchanges = BestTotalCryptoExchanges(
+        CRYPTO_EXCHANGES_NAME
+    )
+    message = best_intra_card_2_card_crypto_exchanges.main()
     return message

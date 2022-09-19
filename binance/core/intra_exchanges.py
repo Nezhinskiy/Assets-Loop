@@ -1,4 +1,5 @@
 import math
+import sys
 from datetime import datetime
 from itertools import permutations, product
 
@@ -6,6 +7,20 @@ from banks.models import (Banks, BanksExchangeRates, IntraBanksExchanges,
                           IntraBanksExchangesUpdates,
                           IntraBanksNotLoopedExchanges,
                           IntraBanksNotLoopedExchangesUpdates)
+from crypto_exchanges.models import (BestCombinationPaymentChannels,
+                                     BestCombinationPaymentChannelsUpdates,
+                                     BestPaymentChannels,
+                                     BestPaymentChannelsUpdates,
+                                     Card2CryptoExchanges,
+                                     Card2Wallet2CryptoExchanges,
+                                     CryptoExchanges, IntraCryptoExchanges,
+                                     P2PCryptoExchangesRates)
+
+
+def get_related_exchange(meta_exchange):
+    model = meta_exchange.payment_channel_model
+    id = meta_exchange.exchange_id
+    return getattr(sys.modules[__name__], model).objects.get(id=id)
 
 
 class IntraBanks(object):
@@ -142,7 +157,6 @@ class IntraBanksNotLooped(IntraBanks):
                                        self.percentage_round_to)
         return marginality_percentage
 
-
     def add_to_bulk_update_or_create_not_looped(
             self, bank, new_update, records_to_update, records_to_create,
             combination, analogous_exchange, price, marginality_percentage
@@ -240,3 +254,232 @@ class IntraBanksNotLooped(IntraBanks):
         duration = datetime.now() - start_time
         new_update.duration = duration
         new_update.save()
+
+
+class BestCryptoExchanges(object):
+    def __init__(self, crypto_exchange_name):
+        self.crypto_exchange_name = crypto_exchange_name
+        self.crypto_exchange = CryptoExchanges.objects.get(
+            name=crypto_exchange_name
+        )
+
+    def add_to_bulk_update_or_create(
+            self, bank, fiat, asset, trade_type, best_price,
+            best_exchange_model, best_exchange_id, new_update,
+            records_to_update, records_to_create
+    ):
+        target_object = BestPaymentChannels.objects.filter(
+            crypto_exchange=self.crypto_exchange, bank=bank, fiat=fiat,
+            asset=asset, trade_type=trade_type,
+        )
+        if target_object.exists():
+            updated_object = target_object.get()
+            if (updated_object.payment_channel_model == best_exchange_model
+                    and updated_object.exchange_id == best_exchange_id):
+                if updated_object.price == best_price:
+                    return
+                new_update = updated_object.update
+            updated_object.price = best_price
+            updated_object.payment_channel_model = best_exchange_model
+            updated_object.exchange_id = best_exchange_id
+            updated_object.update = new_update
+            records_to_update.append(updated_object)
+        else:
+            created_object = BestPaymentChannels(
+                crypto_exchange=self.crypto_exchange, bank=bank, fiat=fiat,
+                asset=asset, trade_type=trade_type, price=best_price,
+                payment_channel_model=best_exchange_model,
+                exchange_id=best_exchange_id, update=new_update
+            )
+            records_to_create.append(created_object)
+
+    def get_best_exchanges(self, new_update, records_to_update,
+                           records_to_create):
+        from banks.banks_config import BANKS_CONFIG
+        from crypto_exchanges.crypto_exchanges_config import \
+            CRYPTO_EXCHANGES_CONFIG
+        banks = BANKS_CONFIG.keys()
+        crypto_exchanges_configs = CRYPTO_EXCHANGES_CONFIG.get(
+            self.crypto_exchange_name)
+        valid_payment_channels = crypto_exchanges_configs.get('payment_channels')
+        assets = crypto_exchanges_configs.get('assets')
+        trade_types = crypto_exchanges_configs.get('trade_types')
+
+        for bank_name in banks:
+            bank = Banks.objects.get(name=bank_name)
+            bank_configs = BANKS_CONFIG[bank_name]
+            bank_payment_channels = bank_configs['payment_channels']
+            fiats = bank_configs['currencies']
+            for fiat, asset, trade_type in product(fiats, assets, trade_types):
+                exchanges_dict = {}
+                for bank_payment_channel in bank_payment_channels:
+                    if bank_payment_channel not in valid_payment_channels:
+                        continue
+                    checked_object = bank_payment_channel.objects.filter(
+                        crypto_exchange=self.crypto_exchange,
+                        trade_type=trade_type, fiat=fiat, asset=asset
+                        )
+                    if not checked_object.exists():
+                        continue
+                    exchange = (checked_object.get(bank=bank)
+                                if hasattr(bank_payment_channel, 'bank')
+                                else checked_object.get())
+                    price = exchange.price
+                    if price is None:
+                        continue
+                    exchange_info = (exchange.__class__.__name__, exchange.pk)
+                    exchanges_dict[price] = exchange_info
+                if not exchanges_dict:
+                    continue
+                best_price = max(exchanges_dict.keys())
+                best_exchange_model = exchanges_dict[best_price][0]
+                best_exchange_id = exchanges_dict[best_price][1]
+                self.add_to_bulk_update_or_create(
+                    bank, fiat, asset, trade_type, best_price,
+                    best_exchange_model, best_exchange_id, new_update,
+                    records_to_update, records_to_create
+                )
+
+    def main(self):
+        start_time = datetime.now()
+        new_update = BestPaymentChannelsUpdates.objects.create(
+            crypto_exchange=self.crypto_exchange
+        )
+        records_to_update = []
+        records_to_create = []
+        self.get_best_exchanges(
+            new_update, records_to_update, records_to_create
+        )
+        BestPaymentChannels.objects.bulk_create(records_to_create)
+        BestPaymentChannels.objects.bulk_update(
+            records_to_update,
+            ['price', 'payment_channel_model', 'exchange_id', 'update']
+        )
+        duration = datetime.now() - start_time
+        new_update.duration = duration
+        new_update.save()
+
+
+class BestTotalCryptoExchanges(object):
+    def __init__(self, crypto_exchange_name):
+        self.crypto_exchange_name = crypto_exchange_name
+        self.crypto_exchange = CryptoExchanges.objects.get(
+            name=crypto_exchange_name
+        )
+
+    def add_to_bulk_update_or_create(
+            self, new_update, records_to_update, records_to_create,
+            best_total_price, best_total_exchange
+    ):
+        input_meta_exchange, interim_exchange, output_meta_exchange = (
+            best_total_exchange)
+        input_exchange = get_related_exchange(input_meta_exchange)
+        input_bank = input_meta_exchange.bank
+        from_fiat = input_exchange.fiat
+        output_exchange = get_related_exchange(output_meta_exchange)
+        output_bank = output_meta_exchange.bank
+        to_fiat = output_exchange.fiat
+        target_object = BestCombinationPaymentChannels.objects.filter(
+            crypto_exchange=self.crypto_exchange, input_bank=input_bank,
+            output_bank=output_bank, from_fiat=from_fiat, to_fiat=to_fiat,
+        )
+        if target_object.exists():
+            updated_object = target_object.get()
+            if (updated_object.input_exchange == input_meta_exchange
+                    and updated_object.output_exchange == output_meta_exchange):
+                if updated_object.price == best_total_price:
+                    return
+                new_update = updated_object.update
+            updated_object.price = best_total_price
+            updated_object.input_exchange = input_meta_exchange
+            updated_object.interim_exchange = interim_exchange
+            updated_object.output_exchange = output_meta_exchange
+            updated_object.update = new_update
+            records_to_update.append(updated_object)
+        else:
+            created_object = BestCombinationPaymentChannels(
+                crypto_exchange=self.crypto_exchange, input_bank=input_bank,
+                output_bank=output_bank, from_fiat=from_fiat, to_fiat=to_fiat,
+                input_exchange=input_meta_exchange,
+                interim_exchange=interim_exchange,
+                output_exchange=output_meta_exchange, price=best_total_price,
+                update=new_update
+            )
+            records_to_create.append(created_object)
+
+    def get_best_total_exchanges(self, new_update,
+                                 records_to_update, records_to_create):
+        from banks.banks_config import BANKS_CONFIG
+        banks = BANKS_CONFIG.keys()
+        for input_bank_name in banks:
+            input_bank = Banks.objects.get(name=input_bank_name)
+            input_meta_exchanges = BestPaymentChannels.objects.filter(
+                crypto_exchange=self.crypto_exchange, bank=input_bank,
+                trade_type='BUY'
+            )
+            output_meta_exchanges = BestPaymentChannels.objects.filter(
+                crypto_exchange=self.crypto_exchange, trade_type='SELL'
+            )
+            exchanges_list = {}
+            for input_meta_exchange, output_meta_exchange in product(
+                    input_meta_exchanges, output_meta_exchanges):
+                input_exchange = get_related_exchange(input_meta_exchange)
+                input_fiat = input_exchange.fiat
+                input_asset = input_exchange.asset
+                input_price = input_exchange.price
+                output_exchange = get_related_exchange(output_meta_exchange)
+                output_fiat = output_exchange.fiat
+                output_asset = output_exchange.asset
+                output_price = output_exchange.price
+                exchanges_name = input_fiat + output_fiat
+                if not exchanges_list.get(exchanges_name):
+                    exchanges_list[exchanges_name] = {}
+                if input_asset != output_asset:
+                    interim_exchange = IntraCryptoExchanges.objects.get(
+                        crypto_exchange=self.crypto_exchange,
+                        from_asset=input_asset, to_asset=output_asset
+                    )
+                    interim_price = interim_exchange.price
+                else:
+                    interim_exchange = None
+                    interim_price = 1
+                total_price = input_price * interim_price * output_price
+                total_exchange = (
+                    input_meta_exchange, interim_exchange, output_meta_exchange
+                )
+                exchanges_list[exchanges_name][total_price] = total_exchange
+
+            for name, similar_exchanges in exchanges_list.items():
+                best_total_price = max(similar_exchanges.keys())
+                best_total_exchange = similar_exchanges[best_total_price]
+                self.add_to_bulk_update_or_create(
+                    new_update, records_to_update, records_to_create,
+                    best_total_price, best_total_exchange
+                )
+
+    def main(self):
+        start_time = datetime.now()
+        new_update = BestCombinationPaymentChannelsUpdates.objects.create(
+            crypto_exchange=self.crypto_exchange
+        )
+        records_to_update = []
+        records_to_create = []
+        self.get_best_total_exchanges(
+            new_update, records_to_update, records_to_create
+        )
+        BestCombinationPaymentChannels.objects.bulk_create(records_to_create)
+        BestCombinationPaymentChannels.objects.bulk_update(
+            records_to_update,
+            ['price', 'input_exchange', 'interim_exchange',
+             'output_exchange', 'update']
+        )
+        duration = datetime.now() - start_time
+        new_update.duration = duration
+        new_update.save()
+
+
+
+
+
+
+

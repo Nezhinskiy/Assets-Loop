@@ -6,10 +6,10 @@ from core.parsers import BankParser
 BANK_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
 WISE_CURRENCIES = (
-    'RUB', 'USD', 'EUR', 'ILS', 'GBP', 'CHF', 'CAD', 'AUD', 'SGD'
+    'USD', 'EUR', 'ILS', 'GBP', 'CHF', 'CAD', 'AUD', 'SGD'
 )
 
-WISE_CURRENCIES_WITH_REQUISITES = ('RUB', 'USD', 'EUR', )
+WISE_CURRENCIES_WITH_REQUISITES = ('USD', 'EUR', )
 
 FIATS_WISE = (
     ('USD', 'Usd'),

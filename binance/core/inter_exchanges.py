@@ -1,5 +1,6 @@
 import math
 from itertools import product
+
 """
 from banks.banks_config import BANKS_CONFIG
 from banks.models import IntraBanksExchanges, BanksExchangeRates, IntraBanksNotLoopedExchanges
