@@ -1,8 +1,11 @@
-from crypto_exchanges.crypto_exchanges_registration.binance import (
-    BINANCE_ASSETS, BINANCE_FIATS, BINANCE_PAY_TYPES, BINANCE_TRADE_TYPES,
-    BinanceCryptoParser, BinanceP2PParser, BINANCE_CRYPTO_FIATS,
-    DEPOSIT_FIATS, WITHDRAW_FIATS)
 from banks.banks_config import BANKS_CONFIG
+from crypto_exchanges.crypto_exchanges_registration.binance import (
+    BINANCE_ASSETS, BINANCE_CRYPTO_FIATS, BINANCE_FIATS, BINANCE_PAY_TYPES,
+    BINANCE_TRADE_TYPES, DEPOSIT_FIATS, WITHDRAW_FIATS, BinanceCryptoParser,
+    BinanceP2PParser)
+from crypto_exchanges.models import (Card2CryptoExchanges,
+                                     Card2Wallet2CryptoExchanges,
+                                     P2PCryptoExchangesRates)
 
 CRYPTO_EXCHANGES_CONFIG = {
     'all_fiats': tuple({fiat for bank_info in BANKS_CONFIG.values()
@@ -16,6 +19,12 @@ CRYPTO_EXCHANGES_CONFIG = {
         'crypto_fiats': BINANCE_CRYPTO_FIATS,
         'pay_types': BINANCE_PAY_TYPES,
         'deposit_fiats': DEPOSIT_FIATS,
-        'withdraw_fiats': WITHDRAW_FIATS
+        'withdraw_fiats': WITHDRAW_FIATS,
+        'payment_channels': (
+            P2PCryptoExchangesRates, Card2CryptoExchanges,
+            Card2Wallet2CryptoExchanges
+        )
+
+
     },
 }

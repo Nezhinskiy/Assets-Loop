@@ -9,16 +9,15 @@ from typing import List
 import requests
 
 from banks.models import Banks, BanksExchangeRates, BanksExchangeRatesUpdates
-from crypto_exchanges.models import (CryptoExchanges, IntraCryptoExchanges,
+from crypto_exchanges.models import (Card2CryptoExchanges,
+                                     Card2CryptoExchangesUpdates,
+                                     Card2Wallet2CryptoExchanges,
+                                     Card2Wallet2CryptoExchangesUpdates,
+                                     CryptoExchanges, IntraCryptoExchanges,
                                      IntraCryptoExchangesUpdates,
-                                     P2PCryptoExchangesRates,
-                                     P2PCryptoExchangesRatesUpdates,
-                                     Card2Fiat2CryptoExchanges,
-                                     Card2Fiat2CryptoExchangesUpdates,
                                      ListsFiatCrypto, ListsFiatCryptoUpdates,
-                                     Card2CryptoExchanges,
-                                     Card2CryptoExchangesUpdates
-                                     )
+                                     P2PCryptoExchangesRates,
+                                     P2PCryptoExchangesRatesUpdates)
 
 
 class BankParser(object):
@@ -147,7 +146,9 @@ class BankParser(object):
     def main(self):
         start_time = datetime.now()
         if not Banks.objects.filter(name=self.bank_name).exists():
-            Banks.objects.create(name=self.bank_name)
+            binance_name = (self.bank_name if self.bank_name != 'Tinkoff'
+                            else 'TinkoffNew')
+            Banks.objects.create(name=self.bank_name, binance_name=binance_name)
         bank = Banks.objects.get(name=self.bank_name)
         new_update = BanksExchangeRatesUpdates.objects.create(bank=bank)
         records_to_update = []
@@ -179,7 +180,7 @@ class P2PParser(object):
         """repackaging choices into a set."""
         return {choice[0] for choice in choices}
 
-    def create_body(self, asset, trade_type, fiat, pay_types):
+    def create_body(self, asset, trade_type, fiat, bank):
         pass
 
     def create_headers(self, body):
@@ -188,9 +189,9 @@ class P2PParser(object):
     def extract_price_from_json(self, json_data: dict) -> [int | None]:
         pass
 
-    def get_api_answer(self, asset, trade_type, fiat, pay_types):
+    def get_api_answer(self, asset, trade_type, fiat, bank):
         """Делает запрос к эндпоинту API Tinfoff."""
-        body = self.create_body(asset, trade_type, fiat, pay_types)
+        body = self.create_body(asset, trade_type, fiat, bank)
         headers = self.create_headers(body)
         try:
             response = requests.post(self.endpoint, headers=headers, json=body)
@@ -208,16 +209,19 @@ class P2PParser(object):
 
     def add_to_bulk_update_or_create(
             self, crypto_exchange, new_update, records_to_update,
-            records_to_create, asset, trade_type, fiat, pay_type, price
+            records_to_create, asset, trade_type, fiat, bank_object, price
     ):
         target_object = P2PCryptoExchangesRates.objects.filter(
             crypto_exchange=crypto_exchange, asset=asset, trade_type=trade_type,
-            fiat=fiat, pay_type=pay_type
+            fiat=fiat, bank=bank_object
         )
+        print(bank_object.name)
+        #print(target_object.get().price)
+        print(price)
         if target_object.exists():
             updated_object = P2PCryptoExchangesRates.objects.get(
                 crypto_exchange=crypto_exchange, asset=asset,
-                trade_type=trade_type, fiat=fiat, pay_type=pay_type
+                trade_type=trade_type, fiat=fiat, bank=bank_object
             )
             if updated_object.price == price:
                 return
@@ -227,32 +231,35 @@ class P2PParser(object):
         else:
             created_object = P2PCryptoExchangesRates(
                 crypto_exchange=crypto_exchange, asset=asset,
-                trade_type=trade_type, fiat=fiat, pay_type=pay_type,
+                trade_type=trade_type, fiat=fiat, bank=bank_object,
                 price=price, update=new_update
             )
             records_to_create.append(created_object)
 
     def get_all_api_answers(self, crypto_exchange, new_update,
                             records_to_update, records_to_create):
-        from crypto_exchanges.crypto_exchanges_config import (
-            CRYPTO_EXCHANGES_CONFIG)
+        from banks.banks_config import BANKS_CONFIG
+        from crypto_exchanges.crypto_exchanges_config import \
+            CRYPTO_EXCHANGES_CONFIG
         crypto_exchanges_configs = CRYPTO_EXCHANGES_CONFIG.get(
             self.crypto_exchange_name)
         assets = crypto_exchanges_configs.get('assets')
         trade_types = crypto_exchanges_configs.get('trade_types')
-        fiats = crypto_exchanges_configs.get('fiats')
-        pay_types = crypto_exchanges_configs.get('pay_types')
-        for asset, trade_type, fiat, pay_type in product(assets, trade_types,
-                                                         fiats, pay_types):
-            if self.get_exception(fiat, pay_type):
-                continue
-            response = self.get_api_answer(asset, trade_type,
-                                           fiat, pay_type)
-            price = self.extract_price_from_json(response)
-            self.add_to_bulk_update_or_create(
-                crypto_exchange, new_update, records_to_update,
-                records_to_create, asset, trade_type, fiat, pay_type, price
-            )
+        banks = BANKS_CONFIG.keys()
+        for bank in banks:
+            bank_object = Banks.objects.get(name=bank)
+            bank_name = bank_object.binance_name
+            banks_configs = BANKS_CONFIG[bank]
+            fiats = banks_configs['currencies']
+            for trade_type, asset, fiat in product(trade_types, assets, fiats):
+                response = self.get_api_answer(asset, trade_type,
+                                               fiat, bank_name)
+                price = self.extract_price_from_json(response)
+                self.add_to_bulk_update_or_create(
+                    crypto_exchange, new_update, records_to_update,
+                    records_to_create, asset, trade_type, fiat, bank_object,
+                    price
+                )
 
     def main(self):
         start_time = datetime.now()
@@ -307,8 +314,8 @@ class CryptoExchangesParser(BankParser):
 
     def generate_unique_params(self) -> list[tuple[str]]:
         """Repackaging a tuple with tuples into a list with params."""
-        from crypto_exchanges.crypto_exchanges_config import (
-            CRYPTO_EXCHANGES_CONFIG)
+        from crypto_exchanges.crypto_exchanges_config import \
+            CRYPTO_EXCHANGES_CONFIG
         crypto_exchanges_configs = CRYPTO_EXCHANGES_CONFIG.get(
             self.crypto_exchange_name)
         assets = crypto_exchanges_configs.get('assets')
@@ -388,7 +395,7 @@ class CryptoExchangesParser(BankParser):
         new_update.save()
 
 
-class Card2Fiat2CryptoExchangesParser:
+class Card2Wallet2CryptoExchangesParser:
 
     def __init__(self, crypto_exchange_name, round_to=10):
         self.crypto_exchange_name = crypto_exchange_name
@@ -428,8 +435,8 @@ class Card2Fiat2CryptoExchangesParser:
 
     def get_all_datas(self, crypto_exchange, new_update, records_to_update,
                       records_to_create):
-        from crypto_exchanges.crypto_exchanges_config import (
-            CRYPTO_EXCHANGES_CONFIG)
+        from crypto_exchanges.crypto_exchanges_config import \
+            CRYPTO_EXCHANGES_CONFIG
         crypto_exchanges_configs = CRYPTO_EXCHANGES_CONFIG.get(
             self.crypto_exchange_name)
         assets = crypto_exchanges_configs.get('assets')
@@ -446,7 +453,7 @@ class Card2Fiat2CryptoExchangesParser:
             self, crypto_exchange, new_update, records_to_update,
             records_to_create, value_dict, price
     ):
-        target_object = Card2Fiat2CryptoExchanges.objects.filter(
+        target_object = Card2Wallet2CryptoExchanges.objects.filter(
             crypto_exchange=crypto_exchange,
             asset=value_dict['asset'],
             fiat=value_dict['fiat'],
@@ -454,7 +461,7 @@ class Card2Fiat2CryptoExchangesParser:
             transaction_method=value_dict['transaction_method']
         )
         if target_object.exists():
-            updated_object = Card2Fiat2CryptoExchanges.objects.get(
+            updated_object = Card2Wallet2CryptoExchanges.objects.get(
                 crypto_exchange=crypto_exchange,
                 asset=value_dict['asset'],
                 fiat=value_dict['fiat'],
@@ -467,7 +474,7 @@ class Card2Fiat2CryptoExchangesParser:
             updated_object.update = new_update
             records_to_update.append(updated_object)
         else:
-            created_object = Card2Fiat2CryptoExchanges(
+            created_object = Card2Wallet2CryptoExchanges(
                 crypto_exchange=crypto_exchange,
                 asset=value_dict['asset'],
                 fiat=value_dict['fiat'],
@@ -487,15 +494,15 @@ class Card2Fiat2CryptoExchangesParser:
         crypto_exchange = CryptoExchanges.objects.get(
             name=self.crypto_exchange_name
         )
-        new_update = Card2Fiat2CryptoExchangesUpdates.objects.create(
+        new_update = Card2Wallet2CryptoExchangesUpdates.objects.create(
             crypto_exchange=crypto_exchange
         )
         records_to_update = []
         records_to_create = []
         self.get_all_datas(crypto_exchange, new_update,
                            records_to_update, records_to_create)
-        Card2Fiat2CryptoExchanges.objects.bulk_create(records_to_create)
-        Card2Fiat2CryptoExchanges.objects.bulk_update(records_to_update,
+        Card2Wallet2CryptoExchanges.objects.bulk_create(records_to_create)
+        Card2Wallet2CryptoExchanges.objects.bulk_update(records_to_update,
                                                       ['price', 'update'])
         duration = datetime.now() - start_time
         new_update.duration = duration
@@ -595,8 +602,8 @@ class ListsFiatCryptoParser(object):
             created_object.save()
 
     def get_all_api_answers(self, crypto_exchange, new_update):
-        from crypto_exchanges.crypto_exchanges_config import (
-            CRYPTO_EXCHANGES_CONFIG)
+        from crypto_exchanges.crypto_exchanges_config import \
+            CRYPTO_EXCHANGES_CONFIG
         crypto_exchanges_configs = CRYPTO_EXCHANGES_CONFIG.get(
             self.crypto_exchange_name)
         assets = crypto_exchanges_configs.get('assets')
@@ -756,8 +763,8 @@ class Card2CryptoExchangesParser(object):
 
     def get_all_api_answers(self, crypto_exchange, new_update,
                             records_to_update, records_to_create):
-        from crypto_exchanges.crypto_exchanges_config import (
-            CRYPTO_EXCHANGES_CONFIG)
+        from crypto_exchanges.crypto_exchanges_config import \
+            CRYPTO_EXCHANGES_CONFIG
         crypto_exchanges_configs = CRYPTO_EXCHANGES_CONFIG.get(
             self.crypto_exchange_name)
         assets = crypto_exchanges_configs.get('assets')
@@ -770,7 +777,7 @@ class Card2CryptoExchangesParser(object):
                 fiats_info = list_fiat_crypto.get(asset)
                 for fiat_info in fiats_info:
                     fiat, amount = fiat_info
-                    if fiat == 'RUB':
+                    if fiat == 'RUB' and trade_type == 'BUY':
                         continue
                     response = self.get_api_answer(asset, trade_type, fiat,
                                                    amount)
