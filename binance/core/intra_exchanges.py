@@ -13,7 +13,10 @@ from crypto_exchanges.models import (BestCombinationPaymentChannels,
                                      BestPaymentChannelsUpdates,
                                      Card2CryptoExchanges,
                                      Card2Wallet2CryptoExchanges,
-                                     CryptoExchanges, IntraCryptoExchanges,
+                                     CryptoExchanges,
+                                     InterBankAndCryptoExchanges,
+                                     InterBankAndCryptoExchangesUpdates,
+                                     IntraCryptoExchanges,
                                      P2PCryptoExchangesRates)
 
 
@@ -473,6 +476,147 @@ class BestTotalCryptoExchanges(object):
             ['price', 'input_exchange', 'interim_exchange',
              'output_exchange', 'update']
         )
+        duration = datetime.now() - start_time
+        new_update.duration = duration
+        new_update.save()
+
+
+class InterExchangesCalculate(object):
+    def __init__(self, crypto_exchange_name):
+        self.crypto_exchange_name = crypto_exchange_name
+        self.crypto_exchange = CryptoExchanges.objects.get(
+            name=crypto_exchange_name
+        )
+
+    def get_list_crypt(self, crypto_rate):
+        from crypto_exchanges.crypto_exchanges_config import \
+            CRYPTO_EXCHANGES_CONFIG
+        crypto_exchanges_configs = CRYPTO_EXCHANGES_CONFIG.get(
+            self.crypto_exchange_name)
+        list_crypto = []
+        input_exchange = get_related_exchange(crypto_rate.input_exchange)
+        input_fiat = input_exchange.fiat
+        input_asset = input_exchange.asset
+        input_price = input_exchange.price
+        input_payment_channel = input_exchange.__class__.__name__
+        if (input_payment_channel == 'P2PCryptoExchangesRates'
+                or input_payment_channel == 'Card2CryptoExchanges'):
+            list_crypto.append(
+                [input_fiat, input_asset, input_payment_channel, input_price]
+            )
+        elif input_payment_channel == 'Card2Wallet2CryptoExchanges':
+            input1_payment_channel, commission = crypto_exchanges_configs[
+                'deposit_fiats'][input_fiat]
+            input1_price = (100 - commission) / 100
+            list_crypto.append(
+                [input_fiat, input_fiat, input1_payment_channel, input1_price]
+            )
+            intra_exchange = IntraCryptoExchanges.objects.get(
+                crypto_exchange=self.crypto_exchange, from_asset=input_fiat,
+                to_asset=input_asset
+            )
+            input2_payment_channel = intra_exchange.__class__.__name__
+            input2_price = intra_exchange.price
+            list_crypto.append(
+                [input_fiat, input_asset, input2_payment_channel, input2_price]
+            )
+        interim_exchange = crypto_rate.interim_exchange
+        output_exchange = get_related_exchange(crypto_rate.output_exchange)
+        output_asset = output_exchange.asset
+        output_fiat = output_exchange.fiat
+        output_price = output_exchange.price
+        output_payment_channel = input_exchange.__class__.__name__
+        if interim_exchange:
+            interim_price = interim_exchange.price
+            interim_payment_channel = interim_exchange.__class__.__name__
+            list_crypto.append(
+                [input_asset, output_asset,
+                 interim_payment_channel, interim_price]
+            )
+        if (output_payment_channel == 'P2PCryptoExchangesRates'
+                or output_payment_channel == 'Card2CryptoExchanges'):
+            list_crypto.append(
+                [output_asset, output_fiat,
+                 output_payment_channel, output_price]
+            )
+        elif output_payment_channel == 'Card2Wallet2CryptoExchanges':
+            intra_exchange = IntraCryptoExchanges.objects.get(
+                crypto_exchange=self.crypto_exchange, from_asset=output_asset,
+                to_asset=output_fiat
+            )
+            output1_payment_channel = intra_exchange.__class__.__name__
+            output1_price = intra_exchange.price
+            list_crypto.append(
+                [output_asset, output_fiat,
+                 output1_payment_channel, output1_price]
+            )
+            output2_payment_channel, commission = crypto_exchanges_configs[
+                'withdraw_fiats'][output_fiat]
+            output2_price = (100 - commission) / 100
+            list_crypto.append(
+                [output_fiat, output_fiat,
+                 output2_payment_channel, output2_price]
+            )
+        return list_crypto
+
+    def get_list_bank(self, bank_rate, bank):
+        from_fiat = bank_rate.from_fiat
+        to_fiat = bank_rate.to_fiat
+        price = bank_rate.price
+        bank_name = bank.name
+        return [from_fiat, to_fiat, bank_name, price]
+
+    def add_to_bulk_create(
+            self, new_update, records_to_create,
+            crypto_rate, bank_rate, marginality_percentage
+    ):
+        bank = bank_rate.bank
+        list_bank_rate = self.get_list_bank(bank_rate, bank)
+        list_crypto_rate = self.get_list_crypt(crypto_rate)
+        created_object = InterBankAndCryptoExchanges(
+            crypto_exchange=self.crypto_exchange, bank=bank,
+            list_bank_rate=list_bank_rate, list_crypto_rate=list_crypto_rate,
+            crypto_rate=crypto_rate, bank_rate=bank_rate,
+            marginality_percentage=marginality_percentage, update=new_update
+        )
+        records_to_create.append(created_object)
+
+    def calculate_marginality_percentage(self, new_update, records_to_create):
+        from banks.banks_config import BANKS_CONFIG
+        banks = BANKS_CONFIG.keys()
+        for bank_name in banks:
+            bank = Banks.objects.get(name=bank_name)
+            crypto_rates = BestCombinationPaymentChannels.objects.filter(
+                input_bank=bank, output_bank=bank
+            )
+            for crypto_rate in crypto_rates:
+                crypto_rate_price = crypto_rate.price
+                to_bank_fiat = crypto_rate.from_fiat
+                from_bank_fiat = crypto_rate.to_fiat
+                if to_bank_fiat == from_bank_fiat:
+                    continue
+                bank_rate = BanksExchangeRates.objects.get(
+                    bank=bank, from_fiat=from_bank_fiat, to_fiat=to_bank_fiat
+                )
+                bank_rate_price = bank_rate.price
+                marginality_percentage = (crypto_rate_price *
+                                          bank_rate_price - 1) * 100
+                print(marginality_percentage)
+                self.add_to_bulk_create(
+                    new_update, records_to_create, crypto_rate, bank_rate,
+                    marginality_percentage
+                )
+
+    def main(self):
+        start_time = datetime.now()
+        new_update = InterBankAndCryptoExchangesUpdates.objects.create(
+            crypto_exchange=self.crypto_exchange
+        )
+        records_to_create = []
+        self.calculate_marginality_percentage(
+            new_update, records_to_create
+        )
+        InterBankAndCryptoExchanges.objects.bulk_create(records_to_create)
         duration = datetime.now() - start_time
         new_update.duration = duration
         new_update.save()

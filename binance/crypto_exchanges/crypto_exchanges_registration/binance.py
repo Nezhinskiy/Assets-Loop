@@ -7,7 +7,9 @@ from sys import getsizeof
 import requests
 
 from banks.banks_config import BANKS_CONFIG
-from core.intra_exchanges import BestCryptoExchanges, BestTotalCryptoExchanges
+from core.intra_exchanges import (BestCryptoExchanges,
+                                  BestTotalCryptoExchanges,
+                                  InterExchangesCalculate)
 from core.parsers import (Card2CryptoExchangesParser,
                           Card2Wallet2CryptoExchangesParser,
                           CryptoExchangesParser, ListsFiatCryptoParser,
@@ -119,7 +121,7 @@ class BinanceCryptoParser(CryptoExchangesParser):
                     params[self.name_from][4:] + params[self.name_from][:4]
             }
             response = requests.get(self.endpoint, params)
-        return response.json()
+        return response.json(), params
 
     def converts_choices_to_set(self, choices: tuple[tuple[str, str]]
                                 ) -> list[str]:
@@ -138,11 +140,12 @@ class BinanceCryptoParser(CryptoExchangesParser):
         return params
 
     def calculates_buy_and_sell_data(self, params) -> tuple[dict, dict]:
-        price = self.extract_price_from_json(self.get_api_answer(params))
+        json_data, valid_params = self.get_api_answer(params)
+        price = self.extract_price_from_json(json_data)
         for from_fiat in BINANCE_ASSETS + BINANCE_CRYPTO_FIATS:
-            if from_fiat in params['symbol'][0:4]:
+            if from_fiat in valid_params['symbol'][0:4]:
                 for to_fiat in BINANCE_ASSETS + BINANCE_CRYPTO_FIATS:
-                    if to_fiat in params['symbol'][-4:]:
+                    if to_fiat in valid_params['symbol'][-4:]:
                         buy_data = {
                             'from_asset': from_fiat,
                             'to_asset': to_fiat,
@@ -211,3 +214,20 @@ def get_best_card_2_card_crypto_exchanges():
     )
     message = best_intra_card_2_card_crypto_exchanges.main()
     return message
+
+
+def get_inter_exchanges_calculate():
+    inter_exchanges_calculate = InterExchangesCalculate(CRYPTO_EXCHANGES_NAME)
+    message = inter_exchanges_calculate.main()
+    return message
+
+
+def get_all():
+    get_all_p2p_binance_exchanges()
+    get_all_binance_crypto_exchanges()
+    get_binance_fiat_crypto_list()
+    get_binance_card_2_crypto_exchanges()
+    get_all_card_2_wallet_2_crypto_exchanges()
+    get_best_crypto_exchanges()
+    get_best_card_2_card_crypto_exchanges()
+    get_inter_exchanges_calculate()\

@@ -1,6 +1,6 @@
 from django.db import models
 
-from banks.models import Banks
+from banks.models import Banks, BanksExchangeRates
 from core.models import UpdatesModel
 
 
@@ -184,5 +184,43 @@ class BestCombinationPaymentChannels(models.Model):
     price = models.FloatField(null=True, blank=True, default=None)
     update = models.ForeignKey(
         BestCombinationPaymentChannelsUpdates, related_name='datas',
+        on_delete=models.CASCADE
+    )
+
+
+class InterBankAndCryptoExchangesUpdates(UpdatesModel):
+    crypto_exchange = models.ForeignKey(
+        CryptoExchanges,
+        related_name='inter_bank_and_crypro_exchanges_update',
+        on_delete=models.CASCADE
+    )
+
+
+class InterBankAndCryptoExchanges(models.Model):
+    crypto_exchange = models.ForeignKey(
+        CryptoExchanges, related_name='inter_bank_and_crypro_exchanges',
+        on_delete=models.CASCADE
+    )
+    bank = models.ForeignKey(
+        Banks, related_name='inter_bank_and_crypro_exchanges',
+        on_delete=models.CASCADE
+    )
+    crypto_rate = models.ForeignKey(
+        BestCombinationPaymentChannels,
+        related_name='crypto_rates_inter_bank_and_crypro_exchanges',
+        on_delete=models.CASCADE
+    )
+    bank_rate = models.ForeignKey(
+        BanksExchangeRates,
+        related_name='bank_rate_inter_bank_and_crypro_exchanges',
+        on_delete=models.CASCADE
+    )
+    list_bank_rate = models.JSONField()
+    list_crypto_rate = models.JSONField()
+    marginality_percentage = models.FloatField(
+        null=True, blank=True, default=None
+    )
+    update = models.ForeignKey(
+        InterBankAndCryptoExchangesUpdates, related_name='datas',
         on_delete=models.CASCADE
     )

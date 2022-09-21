@@ -1,9 +1,11 @@
 from django.urls import include, path
 
-from crypto_exchanges.views import (binance_best_card_2_card_crypto_exchanges,
+from crypto_exchanges.views import (all,
+                                    binance_best_card_2_card_crypto_exchanges,
                                     binance_best_crypto_exchanges,
                                     binance_card_2_crypto_exchanges,
                                     binance_crypto, binance_fiat_crypto_list,
+                                    binance_inter_exchanges_calculate,
                                     card_2_wallet_2_crypto, p2p_binance)
 
 app_name = 'crypto_exchanges'
@@ -18,5 +20,8 @@ urlpatterns = [
     path('500/', binance_best_crypto_exchanges,
          name="binance_best_crypto_exchanges"),
     path('600/', binance_best_card_2_card_crypto_exchanges,
-         name="binance_best_card_2_card_crypto_exchanges")
+         name="binance_best_card_2_card_crypto_exchanges"),
+    path('700/', binance_inter_exchanges_calculate,
+         name="binance_inter_exchanges_calculate"),
+    path('1000/', all, name="all")
 ]
