@@ -476,10 +476,3 @@ class BestTotalCryptoExchanges(object):
         duration = datetime.now() - start_time
         new_update.duration = duration
         new_update.save()
-
-
-
-
-
-
-

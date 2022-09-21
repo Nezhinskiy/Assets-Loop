@@ -504,7 +504,7 @@ class Card2Wallet2CryptoExchangesParser:
                            records_to_update, records_to_create)
         Card2Wallet2CryptoExchanges.objects.bulk_create(records_to_create)
         Card2Wallet2CryptoExchanges.objects.bulk_update(records_to_update,
-                                                      ['price', 'update'])
+                                                        ['price', 'update'])
         duration = datetime.now() - start_time
         new_update.duration = duration
         new_update.save()
