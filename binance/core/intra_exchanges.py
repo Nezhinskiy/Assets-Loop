@@ -6,7 +6,9 @@ from itertools import permutations, product
 from banks.models import (Banks, BanksExchangeRates, IntraBanksExchanges,
                           IntraBanksExchangesUpdates,
                           IntraBanksNotLoopedExchanges,
-                          IntraBanksNotLoopedExchangesUpdates)
+                          IntraBanksNotLoopedExchangesUpdates,
+                          BestBankExchangesUpdates, BestBankExchanges,
+                          BankInvestExchanges, BankInvestExchangesUpdates)
 from crypto_exchanges.models import (BestCombinationPaymentChannels,
                                      BestCombinationPaymentChannelsUpdates,
                                      BestPaymentChannels,
@@ -187,6 +189,8 @@ class IntraBanksNotLooped(IntraBanks):
             created_object = IntraBanksNotLoopedExchanges(
                 bank=bank,
                 list_of_transfers=combination,
+                from_fiat=combination[0],
+                to_fiat=combination[-1],
                 price=price,
                 marginality_percentage=marginality_percentage,
                 analogous_exchange=analogous_exchange,
@@ -624,6 +628,100 @@ class InterExchangesCalculate(object):
             new_update, records_to_create
         )
         InterBankAndCryptoExchanges.objects.bulk_create(records_to_create)
+        duration = datetime.now() - start_time
+        new_update.duration = duration
+        new_update.save()
+
+
+class BestBankIntraExchanges(object):
+    def __init__(self):
+        bank = None
+    def add_to_bulk_update_or_create(
+            self, bank, from_fiat, to_fiat, best_price, best_exchange_model,
+            best_exchange_id, new_update, records_to_update, records_to_create
+    ):
+        target_object = BestBankExchanges.objects.filter(
+            bank=bank, from_fiat=from_fiat, to_fiat=to_fiat
+        )
+        if target_object.exists():
+            updated_object = target_object.get()
+            if (updated_object.bank_exchange_model == best_exchange_model
+                    and updated_object.exchange_id == best_exchange_id):
+                if updated_object.price == best_price:
+                    return
+                new_update = updated_object.update
+            updated_object.price = best_price
+            updated_object.bank_exchange_model = best_exchange_model
+            updated_object.exchange_id = best_exchange_id
+            updated_object.update = new_update
+            records_to_update.append(updated_object)
+        else:
+            created_object = BestBankExchanges(
+                bank=bank, from_fiat=from_fiat, to_fiat=to_fiat,
+                price=best_price, bank_exchange_model=best_exchange_model,
+                exchange_id=best_exchange_id, update=new_update
+            )
+            records_to_create.append(created_object)
+
+    def get_best_exchanges(self, new_update, records_to_update,
+                           records_to_create):
+        from banks.banks_config import BANKS_CONFIG
+        banks = BANKS_CONFIG.keys()
+        for bank_name in banks:
+            bank = Banks.objects.get(name=bank_name)
+            bank_configs = BANKS_CONFIG[bank_name]
+            bank_invests = bank_configs['bank_invest_exchanges']
+            methods_exchanges = [
+                BankInvestExchanges.objects.filter(
+                    bank=Banks.objects.get(name=bank_invest)
+                ) for bank_invest in bank_invests
+            ]
+            methods_exchanges.extend([
+                BanksExchangeRates.objects.filter(bank=bank),
+                IntraBanksNotLoopedExchanges.objects.filter(
+                    bank=bank, marginality_percentage__gt=0
+                )
+            ])
+            fiats = bank_configs['currencies']
+            for from_fiat, to_fiat in product(fiats, fiats):
+                if from_fiat == to_fiat:
+                    continue
+                exchanges_dict = {}
+                for exchanges in methods_exchanges:
+                    if not exchanges:
+                        continue
+                    checked_object = exchanges.filter(from_fiat=from_fiat,
+                                                      to_fiat=to_fiat)
+                    if not checked_object.exists():
+                        continue
+                    exchange = checked_object.get()
+                    price = exchange.price
+                    exchange_info = (exchange.__class__.__name__, exchange.pk)
+                    exchanges_dict[price] = exchange_info
+                if not exchanges_dict:
+                    continue
+                best_price = max(exchanges_dict.keys())
+                best_exchange_model, best_exchange_id = exchanges_dict[
+                    best_price]
+                self.add_to_bulk_update_or_create(
+                    bank, from_fiat, to_fiat, best_price, best_exchange_model,
+                    best_exchange_id, new_update, records_to_update,
+                    records_to_create
+                )
+
+    def main(self):
+        start_time = datetime.now()
+        new_update = BestBankExchangesUpdates.objects.create()
+        records_to_update = []
+        records_to_create = []
+        self.get_best_exchanges(
+            new_update, records_to_update, records_to_create
+        )
+        BestBankExchanges.objects.bulk_create(records_to_create)
+        BestBankExchanges.objects.bulk_update(
+            records_to_update,
+            ['price', 'bank_exchange_model', 'exchange_id', 'update']
+        )
         duration = datetime.now() - start_time
         new_update.duration = duration
         new_update.save()

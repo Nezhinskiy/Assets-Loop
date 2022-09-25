@@ -6,6 +6,7 @@ from banks.banks_registration.wise import (WISE_CURRENCIES, IntraWise,
 from crypto_exchanges.models import (Card2CryptoExchanges,
                                      Card2Wallet2CryptoExchanges,
                                      P2PCryptoExchangesRates)
+from banks.models import BanksExchangeRates, IntraBanksNotLoopedExchanges, BestBankExchanges
 
 BANKS_CONFIG = {
     'Tinkoff': {
@@ -16,7 +17,8 @@ BANKS_CONFIG = {
         'crypto_exchanges': ('Binance',),
         'payment_channels': (
             P2PCryptoExchangesRates,
-        )
+        ),
+        'bank_invest_exchanges': ['Tinkoff']
     },
     'Wise': {
         'bank_parser': WiseParser,
@@ -25,6 +27,7 @@ BANKS_CONFIG = {
         'payment_channels': (
             Card2CryptoExchanges, Card2Wallet2CryptoExchanges,
             P2PCryptoExchangesRates
-        )
+        ),
+        'bank_invest_exchanges': []
     }
 }

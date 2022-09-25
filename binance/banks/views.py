@@ -7,6 +7,7 @@ from banks.banks_registration.tinkoff import (get_all_tinkoff,
                                               get_tinkoff_invest_exchanges)
 from banks.banks_registration.wise import get_all_wise_exchanges
 from banks.models import BanksExchangeRates
+from core.intra_exchanges import BestBankIntraExchanges
 
 
 class SelectModelListView(ListView):
@@ -56,3 +57,8 @@ def tinkoff_invest_exchanges(request):
 
 def wise(request):
     return get_all_wise_exchanges()
+
+
+def best_bank_intra_exchanges(request):
+    get_best_bank_intra_exchanges = BestBankIntraExchanges()
+    return get_best_bank_intra_exchanges.main()
