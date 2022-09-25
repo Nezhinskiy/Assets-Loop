@@ -49,14 +49,14 @@ class IntraBanksExchanges(models.Model):
 
 class IntraBanksNotLoopedExchangesUpdates(UpdatesModel):
     bank = models.ForeignKey(
-        Banks, related_name='bank_exchanges_not_looped',
+        Banks, related_name='bank_exchanges_not_looped_update',
         on_delete=models.CASCADE
     )
 
 
 class IntraBanksNotLoopedExchanges(models.Model):
     bank = models.ForeignKey(
-        Banks, related_name='bank_exchanges_not_looped_update',
+        Banks, related_name='bank_exchanges_not_looped',
         on_delete=models.CASCADE
     )
     list_of_transfers = models.JSONField()
@@ -70,5 +70,25 @@ class IntraBanksNotLoopedExchanges(models.Model):
     )
     update = models.ForeignKey(
         IntraBanksNotLoopedExchangesUpdates, related_name='datas',
+        on_delete=models.CASCADE
+    )
+
+
+class BankInvestExchangesUpdates(UpdatesModel):
+    bank = models.ForeignKey(
+        Banks, related_name='bank_invest_exchanges_update',
+        on_delete=models.CASCADE
+    )
+
+
+class BankInvestExchanges(models.Model):
+    bank = models.ForeignKey(
+        Banks, related_name='bank_invest_exchanges', on_delete=models.CASCADE
+    )
+    from_fiat = models.CharField(max_length=3)
+    to_fiat = models.CharField(max_length=3)
+    price = models.FloatField(null=True, blank=True, default=None)
+    update = models.ForeignKey(
+        BankInvestExchangesUpdates, related_name='datas',
         on_delete=models.CASCADE
     )

@@ -3,7 +3,8 @@ from django.views.generic import ListView
 
 from banks.banks_registration.tinkoff import (get_all_tinkoff,
                                               get_all_tinkoff_exchanges,
-                                              get_not_looped)
+                                              get_not_looped,
+                                              get_tinkoff_invest_exchanges)
 from banks.banks_registration.wise import get_all_wise_exchanges
 from banks.models import BanksExchangeRates
 
@@ -36,8 +37,10 @@ class BankRatesList(ListView):
                                                           ).update.updated
         return context
 
+
 def tinkoff_not_looped(request):
     return get_not_looped()
+
 
 def tinkoff(request):
     return get_all_tinkoff_exchanges()
@@ -45,6 +48,10 @@ def tinkoff(request):
 
 def tinkoff_all(request):
     return get_all_tinkoff()
+
+
+def tinkoff_invest_exchanges(request):
+    return get_tinkoff_invest_exchanges()
 
 
 def wise(request):

@@ -1,7 +1,7 @@
 import os
 
 from core.intra_exchanges import IntraBanks, IntraBanksNotLooped
-from core.parsers import BankParser
+from core.parsers import BankInvestParser, BankParser
 
 BANK_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
@@ -72,6 +72,11 @@ class IntraTinkoff(IntraBanks):
 class IntraTinkoffNotLooped(IntraBanksNotLooped):
     bank_name = BANK_NAME
 
+
+def get_tinkoff_invest_exchanges():
+    tinkoff_invest_parser = BankInvestParser(BANK_NAME)
+    message = tinkoff_invest_parser.main()
+    return message
 
 def get_not_looped():
     tinkoff_not_looped = IntraTinkoffNotLooped()

@@ -304,7 +304,8 @@ class BestCryptoExchanges(object):
         banks = BANKS_CONFIG.keys()
         crypto_exchanges_configs = CRYPTO_EXCHANGES_CONFIG.get(
             self.crypto_exchange_name)
-        valid_payment_channels = crypto_exchanges_configs.get('payment_channels')
+        valid_payment_channels = crypto_exchanges_configs.get(
+            'payment_channels')
         assets = crypto_exchanges_configs.get('assets')
         trade_types = crypto_exchanges_configs.get('trade_types')
 
@@ -328,7 +329,7 @@ class BestCryptoExchanges(object):
                                 if hasattr(bank_payment_channel, 'bank')
                                 else checked_object.get())
                     price = exchange.price
-                    if price is None:
+                    if not price:
                         continue
                     exchange_info = (exchange.__class__.__name__, exchange.pk)
                     exchanges_dict[price] = exchange_info
@@ -434,6 +435,12 @@ class BestTotalCryptoExchanges(object):
                 output_fiat = output_exchange.fiat
                 output_asset = output_exchange.asset
                 output_price = output_exchange.price
+                if not input_price or not output_price:
+                    if not input_price:
+                        input_meta_exchange.delete()
+                    if not output_price:
+                        output_meta_exchange.delete()
+                    continue
                 exchanges_name = input_fiat + output_fiat
                 if not exchanges_list.get(exchanges_name):
                     exchanges_list[exchanges_name] = {}
