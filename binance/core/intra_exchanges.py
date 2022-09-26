@@ -3,12 +3,12 @@ import sys
 from datetime import datetime
 from itertools import permutations, product
 
-from banks.models import (Banks, BanksExchangeRates, IntraBanksExchanges,
+from banks.models import (BankInvestExchanges, BankInvestExchangesUpdates,
+                          Banks, BanksExchangeRates, BestBankExchanges,
+                          BestBankExchangesUpdates, IntraBanksExchanges,
                           IntraBanksExchangesUpdates,
                           IntraBanksNotLoopedExchanges,
-                          IntraBanksNotLoopedExchangesUpdates,
-                          BestBankExchangesUpdates, BestBankExchanges,
-                          BankInvestExchanges, BankInvestExchangesUpdates)
+                          IntraBanksNotLoopedExchangesUpdates)
 from crypto_exchanges.models import (BestCombinationPaymentChannels,
                                      BestCombinationPaymentChannelsUpdates,
                                      BestPaymentChannels,

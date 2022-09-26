@@ -3,10 +3,11 @@ from banks.banks_registration.tinkoff import (
     TinkoffParser)
 from banks.banks_registration.wise import (WISE_CURRENCIES, IntraWise,
                                            WiseParser)
+from banks.models import (BanksExchangeRates, BestBankExchanges,
+                          IntraBanksNotLoopedExchanges)
 from crypto_exchanges.models import (Card2CryptoExchanges,
                                      Card2Wallet2CryptoExchanges,
                                      P2PCryptoExchangesRates)
-from banks.models import BanksExchangeRates, IntraBanksNotLoopedExchanges, BestBankExchanges
 
 BANKS_CONFIG = {
     'Tinkoff': {
