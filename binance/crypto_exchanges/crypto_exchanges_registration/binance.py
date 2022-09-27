@@ -17,7 +17,18 @@ from core.parsers import (Card2CryptoExchangesParser,
 
 CRYPTO_EXCHANGES_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
-BINANCE_ASSETS = ('ETH', 'BTC', 'BUSD', 'USDT')
+BINANCE_ASSETS = ('BNB', 'ETH', 'BTC', 'BUSD', 'USDT', 'DAI') # 'SHIB', 'ADA'
+BINANCE_ASSETS_FOR_FIAT = {
+    'all': ('USDT', 'BTC', 'BUSD', 'ETH'),
+    'RUB': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'SHIB', 'RUB'),
+    'USD': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'DAI'),
+    'EUR': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'DAI', 'SHIB'),
+    'GBP': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'DAI'),
+    'CHF': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'DAI'),
+    'CAD': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'DAI'),
+    'AUD': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'SHIB', 'ADA'),
+    'SGD': ()
+}
 BINANCE_TRADE_TYPES = ('BUY', 'SELL')
 BINANCE_FIATS = ('RUB', 'USD', 'EUR')
 BINANCE_CRYPTO_FIATS = ('AUD', 'BRL', 'EUR', 'GBP', 'RUB', 'TRY', 'UAH')
@@ -110,6 +121,7 @@ class BinanceCryptoParser(CryptoExchangesParser):
 
     def get_api_answer(self, params):
         """Делает запрос к эндпоинту API Tinfoff."""
+        print(params)
         try:
             response = requests.get(self.endpoint, params)
         except Exception as error:
@@ -157,6 +169,21 @@ class BinanceCryptoParser(CryptoExchangesParser):
                             'price': round(1.0 / price, self.ROUND_TO)
                         }
                         return buy_data, sell_data
+
+    def get_all_api_answers(
+            self, bank, new_update, records_to_update, records_to_create
+    ):
+        for params in self.generate_unique_params():
+            invalid_params_list = ('DAIAUD',)
+            print(params)
+            if params.values()[0] in invalid_params_list:
+                continue
+            for value_dict in self.choice_buy_and_sell_or_price(params):
+                price = value_dict.pop('price')
+                self.add_to_bulk_update_or_create(
+                    bank, new_update, records_to_update, records_to_create,
+                    value_dict, price
+                )
 
 
 class BinanceCard2CryptoExchangesParser(Card2CryptoExchangesParser):
@@ -230,4 +257,4 @@ def get_all():
     get_all_card_2_wallet_2_crypto_exchanges()
     get_best_crypto_exchanges()
     get_best_card_2_card_crypto_exchanges()
-    get_inter_exchanges_calculate()\
+    get_inter_exchanges_calculate()

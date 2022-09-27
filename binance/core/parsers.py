@@ -241,7 +241,6 @@ class P2PParser(object):
             CRYPTO_EXCHANGES_CONFIG
         crypto_exchanges_configs = CRYPTO_EXCHANGES_CONFIG.get(
             self.crypto_exchange_name)
-        assets = crypto_exchanges_configs.get('assets')
         trade_types = crypto_exchanges_configs.get('trade_types')
         banks = BANKS_CONFIG.keys()
         for bank in banks:
@@ -249,19 +248,25 @@ class P2PParser(object):
             bank_name = bank_object.binance_name
             banks_configs = BANKS_CONFIG[bank]
             fiats = banks_configs['currencies']
-            for trade_type, asset, fiat in product(trade_types, assets, fiats):
-                response = self.get_api_answer(asset, trade_type,
-                                               fiat, bank_name)
-                price = (1 / self.extract_price_from_json(response)
-                         if trade_type == 'BUY'
-                         and self.extract_price_from_json(response) is not None
-                         else self.extract_price_from_json(response))
+            for fiat in fiats:
+                assets = crypto_exchanges_configs['assets_for_fiats'].get(fiat)
+                if not assets:
+                    assets = crypto_exchanges_configs['assets_for_fiats']['all']
+                for trade_type, asset in product(trade_types, assets):
+                    response = self.get_api_answer(asset, trade_type,
+                                                   fiat, bank_name)
+                    price = (
+                        1 / self.extract_price_from_json(response)
+                        if trade_type == 'BUY'
+                        and self.extract_price_from_json(response) is not None
+                        else self.extract_price_from_json(response)
+                    )
 
-                self.add_to_bulk_update_or_create(
-                    crypto_exchange, new_update, records_to_update,
-                    records_to_create, asset, trade_type, fiat, bank_object,
-                    price
-                )
+                    self.add_to_bulk_update_or_create(
+                        crypto_exchange, new_update, records_to_update,
+                        records_to_create, asset, trade_type, fiat, bank_object,
+                        price
+                    )
 
     def main(self):
         start_time = datetime.now()
@@ -292,7 +297,8 @@ class CryptoExchangesParser(BankParser):
 
     def calculates_buy_and_sell_data(self, params) -> tuple[dict, dict]:
         buy_and_sell = self.extract_buy_and_sell_from_json(
-            self.get_api_answer(params))
+            self.get_api_answer(params)
+        )
         buy_data = {
             'from_asset': params[self.name_from],
             'to_asset': params[self.name_to],

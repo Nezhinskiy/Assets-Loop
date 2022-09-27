@@ -78,7 +78,8 @@ def get_tinkoff_invest_exchanges():
     message = tinkoff_invest_parser.main()
     return message
 
-def get_not_looped():
+
+def get_tinkoff_not_looped():
     tinkoff_not_looped = IntraTinkoffNotLooped()
     message = tinkoff_not_looped.main()
     return message

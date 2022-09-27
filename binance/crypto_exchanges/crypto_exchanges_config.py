@@ -2,7 +2,7 @@ from banks.banks_config import BANKS_CONFIG
 from crypto_exchanges.crypto_exchanges_registration.binance import (
     BINANCE_ASSETS, BINANCE_CRYPTO_FIATS, BINANCE_FIATS, BINANCE_PAY_TYPES,
     BINANCE_TRADE_TYPES, DEPOSIT_FIATS, WITHDRAW_FIATS, BinanceCryptoParser,
-    BinanceP2PParser)
+    BinanceP2PParser, BINANCE_ASSETS_FOR_FIAT)
 from crypto_exchanges.models import (Card2CryptoExchanges,
                                      Card2Wallet2CryptoExchanges,
                                      P2PCryptoExchangesRates)
@@ -14,6 +14,7 @@ CRYPTO_EXCHANGES_CONFIG = {
         'p2p_parser': BinanceP2PParser,
         'crypto_exchanges_parser': BinanceCryptoParser,
         'assets': BINANCE_ASSETS,
+        'assets_for_fiats': BINANCE_ASSETS_FOR_FIAT,
         'trade_types': BINANCE_TRADE_TYPES,
         'fiats': BINANCE_FIATS,
         'crypto_fiats': BINANCE_CRYPTO_FIATS,
@@ -24,7 +25,5 @@ CRYPTO_EXCHANGES_CONFIG = {
             P2PCryptoExchangesRates, Card2CryptoExchanges,
             Card2Wallet2CryptoExchanges
         )
-
-
     },
 }

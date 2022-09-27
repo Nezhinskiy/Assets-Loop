@@ -23,9 +23,12 @@ from crypto_exchanges.models import (BestCombinationPaymentChannels,
 
 
 def get_related_exchange(meta_exchange):
-    model = meta_exchange.payment_channel_model
-    id = meta_exchange.exchange_id
-    return getattr(sys.modules[__name__], model).objects.get(id=id)
+    try:
+        model = meta_exchange.payment_channel_model
+    except AttributeError:
+        model = meta_exchange.bank_exchange_model
+    exchange_id = meta_exchange.exchange_id
+    return getattr(sys.modules[__name__], model).objects.get(id=exchange_id)
 
 
 class IntraBanks(object):
@@ -153,9 +156,8 @@ class IntraBanksNotLooped(IntraBanks):
         price = math.prod(iteration_prices)
         return price
 
-    def create_marginality_percentage_not_looped(self, analogous_exchange,
+    def create_marginality_percentage_not_looped(self, analogous_exchange_price,
                                                  price):
-        analogous_exchange_price = analogous_exchange.price
         accurate_marginality_percentage = price / (
                 analogous_exchange_price / 100) - 100
         marginality_percentage = round(accurate_marginality_percentage,
@@ -171,10 +173,7 @@ class IntraBanksNotLooped(IntraBanks):
             list_of_transfers=combination
         )
         if target_object.exists():
-            updated_object = IntraBanksNotLoopedExchanges.objects.get(
-                bank=bank,
-                list_of_transfers=combination
-            )
+            updated_object = target_object.get()
             if (
                     updated_object.marginality_percentage
                     == marginality_percentage and updated_object.price
@@ -203,37 +202,41 @@ class IntraBanksNotLooped(IntraBanks):
         from banks.banks_config import BANKS_CONFIG
         bank_config = BANKS_CONFIG.get(self.bank_name)
         all_fiats = bank_config.get('currencies')
-        input_currencies_with_requisites = bank_config.get(
-            'currencies_with_requisites')
-        output_currencies_with_requisites = bank_config.get(
-            'currencies_with_requisites')
-        for input_currency, output_currency in product(
-                input_currencies_with_requisites,
-                output_currencies_with_requisites):
-            if input_currency == output_currency:
-                continue
+        input_fiats = output_fiats = bank_config.get('currencies')
+        for input_fiat, output_fiat in product(input_fiats, output_fiats):
+            duplicates_list = []
             combinable_fiats: list = list(all_fiats)
-            combinable_fiats.remove(input_currency)
-            combinable_fiats.remove(output_currency)
+            combinable_fiats.remove(input_fiat)
+            if input_fiat != output_fiat:
+                combinable_fiats.remove(output_fiat)
             for index in range(len(combinable_fiats)):
-                if index == 3:
+                if index == 2:
                     break
+                if input_fiat == output_fiat:
+                    if input_fiat + str(index) in duplicates_list:
+                        continue
+                    else:
+                        duplicates_list.append(input_fiat + str(index))
                 body_combinations = list(permutations(combinable_fiats,
                                                       index + 1))
                 for body_combination in body_combinations:
                     combination = list(body_combination)
-                    combination.insert(0, input_currency)
-                    combination.append(output_currency)
-                    analogous_exchange = all_exchanges.get(
-                        from_fiat=input_currency, to_fiat=output_currency,
-                        bank=bank
-                    )
+                    combination.insert(0, input_fiat)
+                    combination.append(output_fiat)
                     price = self.create_price_percentage_not_looped(
                         bank, combination, all_exchanges
                     )
+                    if input_fiat != output_fiat:
+                        analogous_exchange = all_exchanges.get(
+                            from_fiat=input_fiat, to_fiat=output_fiat, bank=bank
+                        )
+                        analogous_exchange_price = analogous_exchange.price
+                    else:
+                        analogous_exchange = None
+                        analogous_exchange_price = 1
                     marginality_percentage = (
                         self.create_marginality_percentage_not_looped(
-                            analogous_exchange, price
+                            analogous_exchange_price, price
                         )
                     )
                     self.add_to_bulk_update_or_create_not_looped(
@@ -571,11 +574,21 @@ class InterExchangesCalculate(object):
         return list_crypto
 
     def get_list_bank(self, bank_rate, bank):
-        from_fiat = bank_rate.from_fiat
-        to_fiat = bank_rate.to_fiat
-        price = bank_rate.price
+        bank_exchange = get_related_exchange(bank_rate)
+        from_fiat = bank_exchange.from_fiat
+        to_fiat = bank_exchange.to_fiat
+        price = bank_exchange.price
         bank_name = bank.name
-        return [from_fiat, to_fiat, bank_name, price]
+        bank_exchange_type = bank_exchange.__class__.__name__
+        if bank_exchange_type == 'BanksExchangeRates':
+            return [from_fiat, to_fiat, bank_name, price]
+        elif bank_exchange_type == 'BankInvestExchanges':
+            invest_exchange_name = bank_exchange.bank.name
+            return [from_fiat, to_fiat, bank_name,
+                    f'invest exchange: {invest_exchange_name}', price]
+        elif bank_exchange_type == 'IntraBanksNotLoopedExchanges':
+            list_of_transfers = bank_exchange.list_of_transfers
+            return [*list_of_transfers, bank_name, price]
 
     def add_to_bulk_create(
             self, new_update, records_to_create,
@@ -606,13 +619,12 @@ class InterExchangesCalculate(object):
                 from_bank_fiat = crypto_rate.to_fiat
                 if to_bank_fiat == from_bank_fiat:
                     continue
-                bank_rate = BanksExchangeRates.objects.get(
+                bank_rate = BestBankExchanges.objects.get(
                     bank=bank, from_fiat=from_bank_fiat, to_fiat=to_bank_fiat
                 )
                 bank_rate_price = bank_rate.price
                 marginality_percentage = (crypto_rate_price *
                                           bank_rate_price - 1) * 100
-                print(marginality_percentage)
                 self.add_to_bulk_create(
                     new_update, records_to_create, crypto_rate, bank_rate,
                     marginality_percentage

@@ -1,6 +1,6 @@
 import os
 
-from core.intra_exchanges import IntraBanks
+from core.intra_exchanges import IntraBanks, IntraBanksNotLooped
 from core.parsers import BankParser
 
 BANK_NAME = os.path.basename(__file__).split('.')[0].capitalize()
@@ -78,6 +78,16 @@ class IntraWise(IntraBanks):
     bank_name = BANK_NAME
     fiats = FIATS_WISE
     currencies_with_requisites = WISE_CURRENCIES_WITH_REQUISITES
+
+
+class IntraWiseNotLooped(IntraBanksNotLooped):
+    bank_name = BANK_NAME
+
+
+def get_wise_not_looped():
+    wise_not_looped = IntraWiseNotLooped()
+    message = wise_not_looped.main()
+    return message
 
 
 def get_all_wise_exchanges():

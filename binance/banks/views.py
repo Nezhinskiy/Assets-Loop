@@ -1,13 +1,18 @@
 from django.shortcuts import get_object_or_404
 from django.views.generic import ListView
+from threading import Thread
+from multiprocessing import Process
+from datetime import datetime
 
 from banks.banks_registration.tinkoff import (get_all_tinkoff,
                                               get_all_tinkoff_exchanges,
-                                              get_not_looped,
+                                              get_tinkoff_not_looped,
                                               get_tinkoff_invest_exchanges)
-from banks.banks_registration.wise import get_all_wise_exchanges
+from banks.banks_registration.wise import get_all_wise_exchanges, get_wise_not_looped
 from banks.models import BanksExchangeRates
 from core.intra_exchanges import BestBankIntraExchanges
+
+from banks.multithreading import all_banks_exchanges
 
 
 class SelectModelListView(ListView):
@@ -40,7 +45,11 @@ class BankRatesList(ListView):
 
 
 def tinkoff_not_looped(request):
-    return get_not_looped()
+    return get_tinkoff_not_looped()
+
+
+def wise_not_looped(request):
+    return get_wise_not_looped()
 
 
 def tinkoff(request):
@@ -62,3 +71,7 @@ def wise(request):
 def best_bank_intra_exchanges(request):
     get_best_bank_intra_exchanges = BestBankIntraExchanges()
     return get_best_bank_intra_exchanges.main()
+
+
+def get_all_banks_exchanges(request):
+    all_banks_exchanges()

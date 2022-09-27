@@ -1,6 +1,6 @@
 from django.db import models
 
-from banks.models import Banks, BanksExchangeRates
+from banks.models import Banks, BanksExchangeRates, BestBankExchanges
 from core.models import UpdatesModel
 
 
@@ -211,7 +211,7 @@ class InterBankAndCryptoExchanges(models.Model):
         on_delete=models.CASCADE
     )
     bank_rate = models.ForeignKey(
-        BanksExchangeRates,
+        BestBankExchanges,
         related_name='bank_rate_inter_bank_and_crypro_exchanges',
         on_delete=models.CASCADE
     )
