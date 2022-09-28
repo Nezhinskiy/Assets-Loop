@@ -17,7 +17,7 @@ from core.parsers import (Card2CryptoExchangesParser,
 
 CRYPTO_EXCHANGES_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
-BINANCE_ASSETS = ('BNB', 'ETH', 'BTC', 'BUSD', 'USDT', 'DAI') # 'SHIB', 'ADA'
+BINANCE_ASSETS = ('ADA', 'BNB', 'ETH', 'BTC', 'BUSD', 'USDT', 'DAI', 'SHIB')
 BINANCE_ASSETS_FOR_FIAT = {
     'all': ('USDT', 'BTC', 'BUSD', 'ETH'),
     'RUB': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'SHIB', 'RUB'),
@@ -27,8 +27,14 @@ BINANCE_ASSETS_FOR_FIAT = {
     'CHF': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'DAI'),
     'CAD': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'DAI'),
     'AUD': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'SHIB', 'ADA'),
-    'SGD': ()
+    'GEL': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH')
 }
+INVALID_PARAMS_LIST = (
+    ('DAI', 'AUD'), ('DAI', 'BRL'), ('DAI', 'EUR'), ('DAI', 'GBP'),
+    ('DAI', 'RUB'), ('DAI', 'TRY'), ('DAI', 'UAH'), ('BNB', 'SHIB'),
+    ('ETH', 'SHIB'), ('BTC', 'SHIB'), ('DAI', 'SHIB'), ('ADA', 'DAI'),
+    ('ADA', 'SHIB'), ('ADA', 'UAH')
+)
 BINANCE_TRADE_TYPES = ('BUY', 'SELL')
 BINANCE_FIATS = ('RUB', 'USD', 'EUR')
 BINANCE_CRYPTO_FIATS = ('AUD', 'BRL', 'EUR', 'GBP', 'RUB', 'TRY', 'UAH')
@@ -174,10 +180,7 @@ class BinanceCryptoParser(CryptoExchangesParser):
             self, bank, new_update, records_to_update, records_to_create
     ):
         for params in self.generate_unique_params():
-            invalid_params_list = ('DAIAUD',)
-            print(params)
-            if params.values()[0] in invalid_params_list:
-                continue
+            print(1, params['symbol'])
             for value_dict in self.choice_buy_and_sell_or_price(params):
                 price = value_dict.pop('price')
                 self.add_to_bulk_update_or_create(

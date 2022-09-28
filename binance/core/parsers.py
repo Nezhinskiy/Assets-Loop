@@ -331,9 +331,16 @@ class CryptoExchangesParser(BankParser):
             assets, self.CURRENCY_PAIR
         ) if self.buy_and_sell else permutations(assets, self.CURRENCY_PAIR))
         crypto_fiats = crypto_exchanges_configs.get('crypto_fiats')
+        invalid_params_list = crypto_exchanges_configs.get(
+            'invalid_params_list')
         for crypto_fiat in crypto_fiats:
             for asset in assets:
                 currencies_combinations.append((asset, crypto_fiat))
+        currencies_combinations = [
+            currencies_combination for currencies_combination
+            in currencies_combinations
+            if currencies_combination not in invalid_params_list
+        ]
         params_list = self.create_params(currencies_combinations)
         return params_list
 
@@ -411,6 +418,7 @@ class Card2Wallet2CryptoExchangesParser:
 
     def calculates_price(self, fiat, asset, transaction_fee, trade_type):
         fiat_price = 1 - transaction_fee / 100
+        print(fiat,asset,trade_type)
         if trade_type == 'BUY':
             crypto_price = IntraCryptoExchanges.objects.get(
                 from_asset=fiat, to_asset=asset).price
@@ -431,8 +439,17 @@ class Card2Wallet2CryptoExchangesParser:
 
     def main_loop(self, fiats, assets, trade_type, crypto_exchange, new_update,
                   records_to_update, records_to_create):
+        from crypto_exchanges.crypto_exchanges_config import \
+            CRYPTO_EXCHANGES_CONFIG
+        crypto_exchanges_configs = CRYPTO_EXCHANGES_CONFIG.get(
+            self.crypto_exchange_name)
         for fiat, methods in fiats.items():
             for method, asset in product(methods, assets):
+                invalid_params_list = crypto_exchanges_configs.get(
+                    'invalid_params_list')
+                if ((fiat, asset) in invalid_params_list or (asset, fiat)
+                        in invalid_params_list):
+                    continue
                 value_dict = self.generate_all_datas(fiat, asset, method,
                                                      trade_type)
                 price = self.calculates_price(fiat, asset, method[1],
@@ -825,9 +842,9 @@ class BankInvestParser(object):
         self.endpoint = ('https://www.tinkoff.ru/api/invest-gw/'
                          'social/post/feed/v1/post/instrument/')
         self.link_ends = (
-            'USDRUB', 'EURRUB', 'GBPRUB', 'CHFRUB', 'JPYRUB', 'HKDRUB',
+            'USDRUB', 'EURRUB', 'GBPRUB', 'HKDRUB',
             'TRYRUB', 'KZTRUB_TOM', 'BYNRUB_TOM', 'AMDRUB_TOM'
-        )
+        )  # 'CHFRUB', 'JPYRUB',
 
     def get_api_answer(self, link_end):
         """Делает запрос к эндпоинту API Tinfoff."""
@@ -841,7 +858,7 @@ class BankInvestParser(object):
             raise Exception(message)
         return response.json()
 
-    def extract_buy_and_sell_from_json(self, json_data: dict):
+    def extract_buy_and_sell_from_json(self, json_data: dict, link_end):
         items = json_data['payload']['items']
         for item in items:
             content = item['content']
@@ -849,15 +866,18 @@ class BankInvestParser(object):
             for instrument in instruments:
                 if not instrument:
                     continue
-                price = instrument['price']
-                break
+                ticker = instrument.get('ticker')
+                if ticker == link_end:
+                    price = instrument['price']
+                    break
         buy_price = price - price * 0.003
         sell_price = (1 / price) - (1 / price) * 0.003
         return buy_price, sell_price
 
     def calculates_buy_and_sell_data(self, link_end,
                                      answer) -> tuple[dict, dict]:
-        buy_price, sell_price = self.extract_buy_and_sell_from_json(answer)
+        buy_price, sell_price = self.extract_buy_and_sell_from_json(answer,
+                                                                    link_end)
         buy_data = {
             'from_fiat': link_end[0:3],
             'to_fiat': link_end[3:6],

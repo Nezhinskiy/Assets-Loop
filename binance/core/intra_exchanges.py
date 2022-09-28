@@ -421,6 +421,10 @@ class BestTotalCryptoExchanges(object):
     def get_best_total_exchanges(self, new_update,
                                  records_to_update, records_to_create):
         from banks.banks_config import BANKS_CONFIG
+        from crypto_exchanges.crypto_exchanges_config import \
+            CRYPTO_EXCHANGES_CONFIG
+        crypto_exchanges_configs = CRYPTO_EXCHANGES_CONFIG.get(
+            self.crypto_exchange_name)
         banks = BANKS_CONFIG.keys()
         for input_bank_name in banks:
             input_bank = Banks.objects.get(name=input_bank_name)
@@ -442,6 +446,11 @@ class BestTotalCryptoExchanges(object):
                 output_fiat = output_exchange.fiat
                 output_asset = output_exchange.asset
                 output_price = output_exchange.price
+                invalid_params_list = crypto_exchanges_configs.get(
+                    'invalid_params_list')
+                if ((input_asset, output_asset) in invalid_params_list
+                        or (output_asset, input_asset) in invalid_params_list):
+                    continue
                 if not input_price or not output_price:
                     if not input_price:
                         input_meta_exchange.delete()

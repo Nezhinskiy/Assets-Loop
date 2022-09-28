@@ -6,7 +6,7 @@ from core.parsers import BankParser
 BANK_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
 WISE_CURRENCIES = (
-    'USD', 'EUR', 'ILS', 'GBP', 'CHF', 'CAD', 'AUD', 'SGD'
+    'USD', 'EUR', 'ILS', 'GBP', 'CHF', 'CAD', 'AUD', 'SGD', 'GEL'
 )
 
 WISE_CURRENCIES_WITH_REQUISITES = ('USD', 'EUR', )
