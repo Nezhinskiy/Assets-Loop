@@ -1,11 +1,29 @@
 {% extends 'base.html' %}
 
 {% block title %}
-  {{ name_of_bank }} bank
+  {{ bank_name }} bank
 {% endblock %}
 
 {% block content %}
-  <h1>{{ name_of_bank }} bank</h1>
+
+  <ul class="nav nav-tabs">
+    <li class="nav-item">
+      <a class="nav-link active" href="#">All banks</a>
+    </li>
+    {% for bank_name in banks_name %}
+    <li class="nav-item">
+      <a class="nav-link" href="/{{ bank_name }}/intra_exchanges/">{{ bank_name }}</a>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <h1>
+    {% if not bank_name %}
+      All banks {{ request.path }}|split:"/"
+    {% else %}
+      {{ bank_name }} bank
+    {% endif %}
+  </h1>
   <p>
     Count rates: {{ bank_rates.count }}
   </p>

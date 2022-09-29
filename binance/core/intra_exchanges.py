@@ -20,6 +20,7 @@ from crypto_exchanges.models import (BestCombinationPaymentChannels,
                                      InterBankAndCryptoExchangesUpdates,
                                      IntraCryptoExchanges,
                                      P2PCryptoExchangesRates)
+from django.core.exceptions import MultipleObjectsReturned
 
 
 def get_related_exchange(meta_exchange):
@@ -210,7 +211,7 @@ class IntraBanksNotLooped(IntraBanks):
             if input_fiat != output_fiat:
                 combinable_fiats.remove(output_fiat)
             for index in range(len(combinable_fiats)):
-                if index == 2:
+                if index == 1:
                     break
                 if input_fiat == output_fiat:
                     if input_fiat + str(index) in duplicates_list:
@@ -603,6 +604,7 @@ class InterExchangesCalculate(object):
             self, new_update, records_to_create,
             crypto_rate, bank_rate, marginality_percentage
     ):
+        InterBankAndCryptoExchanges.objects.all().delete()
         bank = bank_rate.bank
         list_bank_rate = self.get_list_bank(bank_rate, bank)
         list_crypto_rate = self.get_list_crypt(crypto_rate)
@@ -715,7 +717,12 @@ class BestBankIntraExchanges(object):
                                                       to_fiat=to_fiat)
                     if not checked_object.exists():
                         continue
-                    exchange = checked_object.get()
+                    try:
+                        exchange = checked_object.get()
+                    except MultipleObjectsReturned:
+                        exchange = checked_object.order_by(
+                            '-marginality_percentage'
+                        )[0]
                     price = exchange.price
                     exchange_info = (exchange.__class__.__name__, exchange.pk)
                     exchanges_dict[price] = exchange_info

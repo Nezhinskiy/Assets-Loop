@@ -1,8 +1,50 @@
 {% load static %}
 {% with request.resolver_match.view_name as view_name %}
 <header>
-  <nav class="navbar navbar-light" style="background-color: lightskyblue">
-
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">Navbar</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDarkDropdown" aria-controls="navbarNavDarkDropdown" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNavDarkDropdown">
+        <ul class="navbar-nav">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Banks exchanges
+            </a>
+            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink">
+              <li><a class="dropdown-item" href="{% url 'banks:banks_intra_exchanges' %}">Internal exchange rates</a></li>
+              <li><a class="dropdown-item" href="#">Internal triple exchange rates</a></li>
+              <li><a class="dropdown-item" href="#">Exchange rates through the exchange</a></li>
+              <li><a class="dropdown-item" href="#">The best ways to exchange</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink2" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Crypto exchanges
+            </a>
+            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink">
+              <li><a class="dropdown-item" href="{% url 'banks:banks_intra_exchanges' %}">P2P exchange rates</a></li>
+              <li><a class="dropdown-item" href="#">Internal triple exchange rates</a></li>
+              <li><a class="dropdown-item" href="#">Exchange rates through the exchange</a></li>
+              <li><a class="dropdown-item" href="#">The best ways to exchange</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink3" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Inter-exchange exchanges
+            </a>
+            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink">
+              <li><a class="dropdown-item" href="{% url 'banks:banks_intra_exchanges' %}">Internal exchange rates</a></li>
+              <li><a class="dropdown-item" href="#">Internal triple exchange rates</a></li>
+              <li><a class="dropdown-item" href="#">Exchange rates through the exchange</a></li>
+              <li><a class="dropdown-item" href="#">The best ways to exchange</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
   </nav>
 </header>
 {% endwith %}

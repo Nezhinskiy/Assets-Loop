@@ -870,6 +870,10 @@ class BankInvestParser(object):
                 if ticker == link_end:
                     price = instrument['price']
                     break
+        if link_end[0:3] == 'KZT':
+            price /= 100
+        elif link_end[0:3] == 'AMD':
+            price /= 100
         buy_price = price - price * 0.003
         sell_price = (1 / price) - (1 / price) * 0.003
         return buy_price, sell_price

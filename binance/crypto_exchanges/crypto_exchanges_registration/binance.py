@@ -17,15 +17,15 @@ from core.parsers import (Card2CryptoExchangesParser,
 
 CRYPTO_EXCHANGES_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
-BINANCE_ASSETS = ('ADA', 'BNB', 'ETH', 'BTC', 'BUSD', 'USDT', 'DAI', 'SHIB')
+BINANCE_ASSETS = ('ADA', 'BNB', 'ETH', 'BTC', 'BUSD', 'USDT', 'SHIB')  # 'DAI',
 BINANCE_ASSETS_FOR_FIAT = {
     'all': ('USDT', 'BTC', 'BUSD', 'ETH'),
     'RUB': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'SHIB', 'RUB'),
-    'USD': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'DAI'),
-    'EUR': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'DAI', 'SHIB'),
-    'GBP': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'DAI'),
-    'CHF': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'DAI'),
-    'CAD': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'DAI'),
+    'USD': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH',),# 'DAI'),
+    'EUR': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH',),# 'DAI', 'SHIB'),
+    'GBP': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH',),# 'DAI'),
+    'CHF': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH',),# 'DAI'),
+    'CAD': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH',),# 'DAI'),
     'AUD': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'SHIB', 'ADA'),
     'GEL': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH')
 }
