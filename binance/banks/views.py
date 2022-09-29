@@ -9,7 +9,7 @@ from banks.banks_registration.tinkoff import (get_all_tinkoff,
                                               get_tinkoff_not_looped,
                                               get_tinkoff_invest_exchanges)
 from banks.banks_registration.wise import get_all_wise_exchanges, get_wise_not_looped
-from banks.models import BanksExchangeRates, Banks
+from banks.models import BanksExchangeRates, Banks, IntraBanksNotLoopedExchanges
 from core.intra_exchanges import BestBankIntraExchanges
 
 from banks.multithreading import all_banks_exchanges
@@ -22,7 +22,6 @@ def banks(request):
 
 
 class BanksRatesList(ListView):
-    template_name = 'banks/bank_rates.html'
 
     def get_queryset(self):
         return self.model.objects.all()
@@ -37,7 +36,6 @@ class BanksRatesList(ListView):
 
 
 class BankRatesList(ListView):
-    template_name = 'banks/bank_rates.html'
 
     def get_bank_name(self):
         return self.kwargs.get('bank_name').capitalize()
@@ -56,12 +54,24 @@ class BankRatesList(ListView):
         return context
 
 
-class BankIntraExchanges(BankRatesList):
+class BankInternalExchange(BankRatesList):
     model = BanksExchangeRates
+    template_name = 'banks/internal_exchange.html'
 
 
-class BanksIntraExchanges(BanksRatesList):
+class BanksInternalExchange(BanksRatesList):
     model = BanksExchangeRates
+    template_name = 'banks/internal_exchange.html'
+
+
+class BankInternalTripleExchange(BankRatesList):
+    model = IntraBanksNotLoopedExchanges
+    template_name = 'banks/internal_triple_exchange.html'
+
+
+class BanksInternalTripleExchange(BanksRatesList):
+    model = IntraBanksNotLoopedExchanges
+    template_name = 'banks/internal_triple_exchange.html'
 
 
 def tinkoff_not_looped(request):

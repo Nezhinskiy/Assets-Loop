@@ -1,4 +1,5 @@
 {% load static %}
+{% load custom_filters %}
 {% with request.resolver_match.view_name as view_name %}
 <header>
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -14,8 +15,8 @@
               Banks exchanges
             </a>
             <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink">
-              <li><a class="dropdown-item" href="{% url 'banks:banks_intra_exchanges' %}">Internal exchange rates</a></li>
-              <li><a class="dropdown-item" href="#">Internal triple exchange rates</a></li>
+              <li><a class="dropdown-item {% if 'internal_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'banks:banks_internal_exchanges' %}">Internal exchange rates</a></li>
+              <li><a class="dropdown-item {% if 'internal_triple_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'banks:banks_internal_triple_exchanges' %}">Internal triple exchange rates</a></li>
               <li><a class="dropdown-item" href="#">Exchange rates through the exchange</a></li>
               <li><a class="dropdown-item" href="#">The best ways to exchange</a></li>
             </ul>
@@ -25,7 +26,7 @@
               Crypto exchanges
             </a>
             <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink">
-              <li><a class="dropdown-item" href="{% url 'banks:banks_intra_exchanges' %}">P2P exchange rates</a></li>
+              <li><a class="dropdown-item" href="#">P2P exchange rates</a></li>
               <li><a class="dropdown-item" href="#">Internal triple exchange rates</a></li>
               <li><a class="dropdown-item" href="#">Exchange rates through the exchange</a></li>
               <li><a class="dropdown-item" href="#">The best ways to exchange</a></li>
@@ -36,7 +37,7 @@
               Inter-exchange exchanges
             </a>
             <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink">
-              <li><a class="dropdown-item" href="{% url 'banks:banks_intra_exchanges' %}">Internal exchange rates</a></li>
+              <li><a class="dropdown-item" href="#">Internal exchange rates</a></li>
               <li><a class="dropdown-item" href="#">Internal triple exchange rates</a></li>
               <li><a class="dropdown-item" href="#">Exchange rates through the exchange</a></li>
               <li><a class="dropdown-item" href="#">The best ways to exchange</a></li>

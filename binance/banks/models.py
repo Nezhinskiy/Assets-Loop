@@ -6,6 +6,7 @@ from core.models import UpdatesModel
 class Banks(models.Model):
     name = models.CharField(max_length=10, null=True, blank=True)
     binance_name = models.CharField(max_length=15, null=True, blank=True)
+    invest_name = models.CharField(max_length=15, null=True, blank=True)
 
 
 class BanksExchangeRatesUpdates(UpdatesModel):
@@ -74,6 +75,9 @@ class IntraBanksNotLoopedExchanges(models.Model):
         IntraBanksNotLoopedExchangesUpdates, related_name='datas',
         on_delete=models.CASCADE
     )
+
+    class Meta:
+        ordering = ['-marginality_percentage']
 
 
 class BankInvestExchangesUpdates(UpdatesModel):

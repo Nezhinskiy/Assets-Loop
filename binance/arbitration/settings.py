@@ -31,9 +31,6 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'crypto_exchanges.apps.CryptoExchangesConfig',
-    'banks.apps.BanksConfig',
-    'core.apps.CoreConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -41,6 +38,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'crypto_exchanges.apps.CryptoExchangesConfig',
+    'banks.apps.BanksConfig',
+    'core.apps.CoreConfig',
 ]
 
 MIDDLEWARE = [
