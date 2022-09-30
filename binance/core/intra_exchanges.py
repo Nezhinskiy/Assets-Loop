@@ -8,7 +8,7 @@ from banks.models import (BankInvestExchanges, BankInvestExchangesUpdates,
                           BestBankExchangesUpdates, IntraBanksExchanges,
                           IntraBanksExchangesUpdates,
                           IntraBanksNotLoopedExchanges,
-                          IntraBanksNotLoopedExchangesUpdates)
+                          IntraBanksNotLoopedExchangesUpdates, CurrencyMarkets)
 from crypto_exchanges.models import (BestCombinationPaymentChannels,
                                      BestCombinationPaymentChannelsUpdates,
                                      BestPaymentChannels,
@@ -693,18 +693,16 @@ class BestBankIntraExchanges(object):
         for bank_name in banks:
             bank = Banks.objects.get(name=bank_name)
             bank_configs = BANKS_CONFIG[bank_name]
-            bank_invests = bank_configs['bank_invest_exchanges']
+            bank_invests_names = bank_configs['bank_invest_exchanges']
             methods_exchanges = [
                 BankInvestExchanges.objects.filter(
-                    bank=Banks.objects.get(name=bank_invest)
-                ) for bank_invest in bank_invests
-            ]
-            methods_exchanges.extend([
+                    currency_market__name__in=bank_invests_names
+                ),
                 BanksExchangeRates.objects.filter(bank=bank),
                 IntraBanksNotLoopedExchanges.objects.filter(
                     bank=bank, marginality_percentage__gt=0
                 )
-            ])
+            ]
             fiats = bank_configs['currencies']
             for from_fiat, to_fiat in product(fiats, fiats):
                 if from_fiat == to_fiat:

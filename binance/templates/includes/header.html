@@ -17,7 +17,7 @@
             <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink">
               <li><a class="dropdown-item {% if 'internal_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'banks:banks_internal_exchanges' %}">Internal exchange rates</a></li>
               <li><a class="dropdown-item {% if 'internal_triple_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'banks:banks_internal_triple_exchanges' %}">Internal triple exchange rates</a></li>
-              <li><a class="dropdown-item" href="#">Exchange rates through the exchange</a></li>
+              <li><a class="dropdown-item {% if 'currency_markets' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'banks:banks_currency_market_exchanges' %}">Exchange rates through the exchange</a></li>
               <li><a class="dropdown-item" href="#">The best ways to exchange</a></li>
             </ul>
           </li>

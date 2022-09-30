@@ -19,7 +19,7 @@ BANKS_CONFIG = {
         'payment_channels': (
             P2PCryptoExchangesRates,
         ),
-        'bank_invest_exchanges': ['Tinkoff']
+        'bank_invest_exchanges': ['Tinkoff invest']
     },
     'Wise': {
         'bank_parser': WiseParser,

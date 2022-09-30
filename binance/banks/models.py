@@ -6,7 +6,6 @@ from core.models import UpdatesModel
 class Banks(models.Model):
     name = models.CharField(max_length=10, null=True, blank=True)
     binance_name = models.CharField(max_length=15, null=True, blank=True)
-    invest_name = models.CharField(max_length=15, null=True, blank=True)
 
 
 class BanksExchangeRatesUpdates(UpdatesModel):
@@ -80,16 +79,21 @@ class IntraBanksNotLoopedExchanges(models.Model):
         ordering = ['-marginality_percentage']
 
 
+class CurrencyMarkets(models.Model):
+    name = models.CharField(max_length=15, null=True, blank=True)
+
+
 class BankInvestExchangesUpdates(UpdatesModel):
-    bank = models.ForeignKey(
-        Banks, related_name='bank_invest_exchanges_update',
+    currency_market = models.ForeignKey(
+        CurrencyMarkets, related_name='currency_market_exchanges_update',
         on_delete=models.CASCADE
     )
 
 
 class BankInvestExchanges(models.Model):
-    bank = models.ForeignKey(
-        Banks, related_name='bank_invest_exchanges', on_delete=models.CASCADE
+    currency_market = models.ForeignKey(
+        CurrencyMarkets, related_name='currency_market_exchanges',
+        on_delete=models.CASCADE
     )
     from_fiat = models.CharField(max_length=3)
     to_fiat = models.CharField(max_length=3)

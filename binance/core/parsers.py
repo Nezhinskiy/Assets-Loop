@@ -9,7 +9,8 @@ from typing import List
 import requests
 
 from banks.models import (BankInvestExchanges, BankInvestExchangesUpdates,
-                          Banks, BanksExchangeRates, BanksExchangeRatesUpdates)
+                          Banks, BanksExchangeRates, BanksExchangeRatesUpdates,
+                          CurrencyMarkets)
 from crypto_exchanges.models import (Card2CryptoExchanges,
                                      Card2CryptoExchangesUpdates,
                                      Card2Wallet2CryptoExchanges,
@@ -418,7 +419,6 @@ class Card2Wallet2CryptoExchangesParser:
 
     def calculates_price(self, fiat, asset, transaction_fee, trade_type):
         fiat_price = 1 - transaction_fee / 100
-        print(fiat,asset,trade_type)
         if trade_type == 'BUY':
             crypto_price = IntraCryptoExchanges.objects.get(
                 from_asset=fiat, to_asset=asset).price
@@ -837,14 +837,12 @@ class Card2CryptoExchangesParser(object):
 
 
 class BankInvestParser(object):
-    def __init__(self, bank_name):
-        self.bank = Banks.objects.get(name=bank_name)
-        self.endpoint = ('https://www.tinkoff.ru/api/invest-gw/'
-                         'social/post/feed/v1/post/instrument/')
-        self.link_ends = (
-            'USDRUB', 'EURRUB', 'GBPRUB', 'HKDRUB',
-            'TRYRUB', 'KZTRUB_TOM', 'BYNRUB_TOM', 'AMDRUB_TOM'
-        )  # 'CHFRUB', 'JPYRUB',
+    def __init__(self, currency_markets_name, endpoint, link_ends):
+        self.currency_markets_name = currency_markets_name
+        self.currency_market = CurrencyMarkets.objects.get(
+            name=currency_markets_name)
+        self.endpoint = endpoint
+        self.link_ends = link_ends
 
     def get_api_answer(self, link_end):
         """Делает запрос к эндпоинту API Tinfoff."""
@@ -899,7 +897,7 @@ class BankInvestParser(object):
     ):
         price = value_dict['price']
         target_object = BankInvestExchanges.objects.filter(
-            bank=self.bank,
+            currency_market=self.currency_market,
             from_fiat=value_dict['from_fiat'],
             to_fiat=value_dict['to_fiat']
         )
@@ -912,7 +910,7 @@ class BankInvestParser(object):
             records_to_update.append(updated_object)
         else:
             created_object = BankInvestExchanges(
-                bank=self.bank,
+                currency_market=self.currency_market,
                 from_fiat=value_dict['from_fiat'],
                 to_fiat=value_dict['to_fiat'],
                 price=price,
@@ -935,7 +933,7 @@ class BankInvestParser(object):
     def main(self):
         start_time = datetime.now()
         new_update = BankInvestExchangesUpdates.objects.create(
-            bank=self.bank
+            currency_market=self.currency_market
         )
         records_to_update = []
         records_to_create = []

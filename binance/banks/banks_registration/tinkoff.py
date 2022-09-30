@@ -74,12 +74,6 @@ class IntraTinkoffNotLooped(IntraBanksNotLooped):
     bank_name = BANK_NAME
 
 
-def get_tinkoff_invest_exchanges():
-    tinkoff_invest_parser = BankInvestParser(BANK_NAME)
-    message = tinkoff_invest_parser.main()
-    return message
-
-
 def get_tinkoff_not_looped():
     tinkoff_not_looped = IntraTinkoffNotLooped()
     message = tinkoff_not_looped.main()

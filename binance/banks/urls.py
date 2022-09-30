@@ -4,7 +4,8 @@ from banks.views import (BankInternalExchange, best_bank_intra_exchanges, tinkof
                          tinkoff_all, tinkoff_invest_exchanges,
                          tinkoff_not_looped, wise, wise_not_looped,
                          get_all_banks_exchanges, banks, BanksInternalExchange,
-                         BanksInternalTripleExchange, BankInternalTripleExchange)
+                         BanksInternalTripleExchange, BankInternalTripleExchange,
+                         BanksInvestExchange, BankInvestExchange)
 
 app_name = 'banks'
 
@@ -23,7 +24,11 @@ urlpatterns = [
          name='banks_internal_triple_exchanges'),
     path('<str:bank_name>/internal_triple_exchanges/',
          BankInternalTripleExchange.as_view(),
-         name='bank_internal_triple_exchanges'),
+         name='bank_internal_triple_exchanges_exchanges'),
+    path('banks/currency_markets/',
+         BanksInvestExchange.as_view(), name='banks_currency_market_exchanges'),
+    path('<str:bank_name>/currency_markets/',
+         BankInvestExchange.as_view(), name='bank_currency_market_exchanges'),
     path('55/', tinkoff_invest_exchanges, name="tinkoff_invest_exchanges"),
     path('66/', best_bank_intra_exchanges, name="best_bank_intra_exchanges"),
     path('16/', wise_not_looped, name="wise_not_looped"),
