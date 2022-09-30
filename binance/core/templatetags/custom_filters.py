@@ -2,6 +2,8 @@ from django import template
 
 from banks.models import BankInvestExchanges, BankInvestExchangesUpdates
 
+from core.intra_exchanges import get_related_exchange
+
 register = template.Library()
 
 
@@ -53,3 +55,6 @@ def is_empty(value):
         return True
     else:
         return False
+
+
+register.filter('get_related_exchange', get_related_exchange)

@@ -9,7 +9,7 @@ from banks.banks_registration.tinkoff import (get_all_tinkoff,
                                               get_tinkoff_not_looped,
                                               )
 from banks.banks_registration.wise import get_all_wise_exchanges, get_wise_not_looped
-from banks.models import BanksExchangeRates, Banks, IntraBanksNotLoopedExchanges, BankInvestExchanges
+from banks.models import BanksExchangeRates, Banks, IntraBanksNotLoopedExchanges, BankInvestExchanges, BestBankExchanges
 from core.intra_exchanges import BestBankIntraExchanges
 
 from banks.multithreading import all_banks_exchanges
@@ -103,6 +103,16 @@ class BanksInvestExchange(ListView):
         context = super(BanksInvestExchange, self).get_context_data(**kwargs)
         context['bank_names'] = list(BANKS_CONFIG.keys())
         return context
+
+
+class BankBestExchange(BankRatesList):
+    model = BestBankExchanges
+    template_name = 'banks/best_exchange.html'
+
+
+class BanksBestExchange(BanksRatesList):
+    model = BestBankExchanges
+    template_name = 'banks/best_exchange.html'
 
 
 def tinkoff_not_looped(request):
