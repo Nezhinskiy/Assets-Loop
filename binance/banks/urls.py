@@ -10,11 +10,6 @@ from banks.views import (BankInternalExchange, best_bank_intra_exchanges, tinkof
 app_name = 'banks'
 
 urlpatterns = [
-    path('44/', tinkoff_all, name="tinkoff_all"),
-    path('11/', tinkoff, name="tinkoff"),
-    path('12/', wise, name="wise"),
-    path('15/', tinkoff_not_looped, name="tinkoff_not_looped"),
-    path('banks/', banks, name='banks'),
     path('banks/internal_exchanges/',
          BanksInternalExchange.as_view(), name='banks_internal_exchanges'),
     path('<str:bank_name>/internal_exchanges/',
@@ -33,6 +28,11 @@ urlpatterns = [
          BanksBestExchange.as_view(), name='banks_best_exchanges'),
     path('<str:bank_name>/best_exchanges/',
          BankBestExchange.as_view(), name='bank_best_exchanges'),
+    path('44/', tinkoff_all, name="tinkoff_all"),
+    path('11/', tinkoff, name="tinkoff"),
+    path('12/', wise, name="wise"),
+    path('15/', tinkoff_not_looped, name="tinkoff_not_looped"),
+    path('banks/', banks, name='banks'),
     path('55/', tinkoff_invest_exchanges, name="tinkoff_invest_exchanges"),
     path('66/', best_bank_intra_exchanges, name="best_bank_intra_exchanges"),
     path('16/', wise_not_looped, name="wise_not_looped"),

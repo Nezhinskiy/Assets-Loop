@@ -26,7 +26,7 @@
               Crypto exchanges
             </a>
             <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink">
-              <li><a class="dropdown-item" href="#">P2P exchange rates</a></li>
+              <li><a class="dropdown-item {% if 'p2p_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'crypto_exchanges:crypto_exchanges_p2p_exchanges' %}">P2P exchange rates</a></li>
               <li><a class="dropdown-item" href="#">Internal triple exchange rates</a></li>
               <li><a class="dropdown-item" href="#">Exchange rates through the exchange</a></li>
               <li><a class="dropdown-item" href="#">The best ways to exchange</a></li>
