@@ -69,7 +69,12 @@ class Card2Wallet2CryptoExchanges(models.Model):
     fiat = models.CharField(max_length=3)
     trade_type = models.CharField(max_length=4)
     transaction_method = models.CharField(max_length=35)
+    transaction_fee = models.FloatField(null=True, blank=True, default=None)
     price = models.FloatField(null=True, blank=True, default=None)
+    intra_crypto_exchange = models.ForeignKey(
+        IntraCryptoExchanges, related_name='card_2_wallet_2_crypto_exchange',
+        on_delete=models.CASCADE
+    )
     update = models.ForeignKey(Card2Wallet2CryptoExchangesUpdates,
                                related_name='datas', on_delete=models.CASCADE)
 

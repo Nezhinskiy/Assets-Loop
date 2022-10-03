@@ -17,6 +17,8 @@ from banks.banks_config import BANKS_CONFIG
 
 from banks.currency_markets_registration.tinkoff_invest import get_tinkoff_invest_exchanges
 
+from core.django_shortcuts.shurtcuts import get_queryset_or_404
+
 
 def banks(request):
     template = 'banks/banks.html'
@@ -76,33 +78,22 @@ class BanksInternalTripleExchange(BanksRatesList):
     template_name = 'banks/internal_triple_exchange.html'
 
 
-class BankInvestExchange(ListView):
+class BankInvestExchange(BankRatesList):
     template_name = 'banks/currency_market_exchanges.html'
+    model = BankInvestExchanges
 
     def get_queryset(self):
-        currency_markets_name = BANKS_CONFIG[self.kwargs.get('bank_name').capitalize()]['bank_invest_exchanges']
-        get_list_or_404(
-            BankInvestExchanges,
-            currency_market__name__in=currency_markets_name
+        currency_markets_name = (
+            BANKS_CONFIG[self.get_bank_name()]['bank_invest_exchanges']
+        )
+        return get_queryset_or_404(
+            self.model, currency_market__name__in=currency_markets_name
         )
 
-    def get_context_data(self, **kwargs):
-        context = super(BankInvestExchange, self).get_context_data(**kwargs)
-        context['bank_names'] = list(BANKS_CONFIG.keys())
-        context['bank_name'] = self.kwargs.get('bank_name').capitalize()
-        return context
 
-
-class BanksInvestExchange(ListView):
+class BanksInvestExchange(BanksRatesList):
     template_name = 'banks/currency_market_exchanges.html'
-
-    def get_queryset(self):
-        pass
-
-    def get_context_data(self, **kwargs):
-        context = super(BanksInvestExchange, self).get_context_data(**kwargs)
-        context['bank_names'] = list(BANKS_CONFIG.keys())
-        return context
+    model = BankInvestExchanges
 
 
 class BankBestExchange(BankRatesList):

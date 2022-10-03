@@ -19,6 +19,7 @@ BANKS_CONFIG = {
         'payment_channels': (
             P2PCryptoExchangesRates,
         ),
+        'transaction_methods': (),
         'bank_invest_exchanges': ['Tinkoff invest']
     },
     'Wise': {
@@ -28,6 +29,9 @@ BANKS_CONFIG = {
         'payment_channels': (
             Card2CryptoExchanges, Card2Wallet2CryptoExchanges,
             P2PCryptoExchangesRates
+        ),
+        'transaction_methods': (
+            'SettlePay (Visa/MC)', 'Bank Card (Visa/MC)', 'Bank Card (Visa)'
         ),
         'bank_invest_exchanges': []
     }

@@ -321,6 +321,7 @@ class BestCryptoExchanges(object):
             bank = Banks.objects.get(name=bank_name)
             bank_configs = BANKS_CONFIG[bank_name]
             bank_payment_channels = bank_configs['payment_channels']
+            bank_transaction_methods = bank_configs['transaction_methods']
             fiats = bank_configs['currencies']
             for fiat, asset, trade_type in product(fiats, assets, trade_types):
                 exchanges_dict = {}
@@ -332,6 +333,11 @@ class BestCryptoExchanges(object):
                         trade_type=trade_type, fiat=fiat, asset=asset
                         )
                     if not checked_object.exists():
+                        continue
+                    elif (checked_object.__class__.__name__
+                            == 'Card2Wallet2CryptoExchanges'
+                            and checked_object.transaction_method
+                            not in bank_transaction_methods):
                         continue
                     exchange = (checked_object.get(bank=bank)
                                 if hasattr(bank_payment_channel, 'bank')

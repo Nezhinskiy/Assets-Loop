@@ -7,11 +7,20 @@ from crypto_exchanges.views import (all,
                                     binance_crypto, binance_fiat_crypto_list,
                                     binance_inter_exchanges_calculate,
                                     card_2_wallet_2_crypto, p2p_binance,
-                                    CryptoExchangesP2PExchanges, CryptoExchangeP2PExchanges)
+                                    CryptoExchangesP2PExchanges,
+                                    CryptoExchangeP2PExchanges,
+                                    CryptoExchangesInternalExchanges,
+                                    CryptoExchangeInternalExchanges)
 
 app_name = 'crypto_exchanges'
 
 urlpatterns = [
+    path('crypto_exchanges/internal_crypto_exchanges/',
+         CryptoExchangesInternalExchanges.as_view(),
+         name='crypto_exchanges_internal_exchanges'),
+    path('<str:crypto_exchange_name>/internal_crypto_exchanges/',
+         CryptoExchangeInternalExchanges.as_view(),
+         name='crypto_exchange_internal_exchanges'),
     path('crypto_exchanges/banks/p2p_exchanges/',
          CryptoExchangesP2PExchanges.as_view(),
          name='crypto_exchanges_p2p_exchanges'),

@@ -417,23 +417,29 @@ class Card2Wallet2CryptoExchangesParser:
         self.crypto_exchange_name = crypto_exchange_name
         self.ROUND_TO = round_to
 
-    def calculates_price(self, fiat, asset, transaction_fee, trade_type):
+    def calculates_price_and_intra_crypto_exchange(self, fiat, asset,
+                                                   transaction_fee, trade_type):
         fiat_price = 1 - transaction_fee / 100
         if trade_type == 'BUY':
-            crypto_price = IntraCryptoExchanges.objects.get(
-                from_asset=fiat, to_asset=asset).price
+            intra_crypto_exchange = IntraCryptoExchanges.objects.get(
+                from_asset=fiat, to_asset=asset)
+            crypto_price = intra_crypto_exchange.price
         else:  # SELL
-            crypto_price = IntraCryptoExchanges.objects.get(
-                from_asset=asset, to_asset=fiat).price
+            intra_crypto_exchange = IntraCryptoExchanges.objects.get(
+                from_asset=asset, to_asset=fiat)
+            crypto_price = intra_crypto_exchange.price
         price = fiat_price * crypto_price
-        return price
+        return price, intra_crypto_exchange
 
-    def generate_all_datas(self, fiat, asset, method, trade_type) -> dict:
+    def generate_all_datas(
+            self, fiat, asset, transaction_method, transaction_fee, trade_type
+    ) -> dict:
         data = {
             'asset': asset,
             'fiat': fiat,
             'trade_type': trade_type,
-            'transaction_method': method[0]
+            'transaction_method': transaction_method,
+            'transaction_fee': transaction_fee
         }
         return data
 
@@ -450,13 +456,19 @@ class Card2Wallet2CryptoExchangesParser:
                 if ((fiat, asset) in invalid_params_list or (asset, fiat)
                         in invalid_params_list):
                     continue
-                value_dict = self.generate_all_datas(fiat, asset, method,
-                                                     trade_type)
-                price = self.calculates_price(fiat, asset, method[1],
-                                              trade_type)
+                transaction_method, transaction_fee = method
+                value_dict = self.generate_all_datas(
+                    fiat, asset, transaction_method, transaction_fee, trade_type
+                )
+                price, intra_crypto_exchange = (
+                    self.calculates_price_and_intra_crypto_exchange(
+                        fiat, asset, transaction_fee, trade_type
+                    )
+                )
                 self.add_to_bulk_update_or_create(
                     crypto_exchange, new_update, records_to_update,
-                    records_to_create, value_dict, price)
+                    records_to_create, value_dict, price, intra_crypto_exchange
+                )
 
     def get_all_datas(self, crypto_exchange, new_update, records_to_update,
                       records_to_create):
@@ -476,7 +488,7 @@ class Card2Wallet2CryptoExchangesParser:
 
     def add_to_bulk_update_or_create(
             self, crypto_exchange, new_update, records_to_update,
-            records_to_create, value_dict, price
+            records_to_create, value_dict, price, intra_crypto_exchange
     ):
         target_object = Card2Wallet2CryptoExchanges.objects.filter(
             crypto_exchange=crypto_exchange,
@@ -486,16 +498,13 @@ class Card2Wallet2CryptoExchangesParser:
             transaction_method=value_dict['transaction_method']
         )
         if target_object.exists():
-            updated_object = Card2Wallet2CryptoExchanges.objects.get(
-                crypto_exchange=crypto_exchange,
-                asset=value_dict['asset'],
-                fiat=value_dict['fiat'],
-                trade_type=value_dict['trade_type'],
-                transaction_method=value_dict['transaction_method']
-            )
-            if updated_object.price == price:
+            updated_object = target_object.get()
+            if (updated_object.price == price
+                    and updated_object.transaction_fee
+                    == value_dict['transaction_fee']):
                 return
             updated_object.price = price
+            updated_object.transaction_fee = value_dict['transaction_fee']
             updated_object.update = new_update
             records_to_update.append(updated_object)
         else:
@@ -505,7 +514,9 @@ class Card2Wallet2CryptoExchangesParser:
                 fiat=value_dict['fiat'],
                 trade_type=value_dict['trade_type'],
                 transaction_method=value_dict['transaction_method'],
+                transaction_fee=value_dict['transaction_fee'],
                 price=price,
+                intra_crypto_exchange=intra_crypto_exchange,
                 update=new_update
             )
             records_to_create.append(created_object)
@@ -527,8 +538,9 @@ class Card2Wallet2CryptoExchangesParser:
         self.get_all_datas(crypto_exchange, new_update,
                            records_to_update, records_to_create)
         Card2Wallet2CryptoExchanges.objects.bulk_create(records_to_create)
-        Card2Wallet2CryptoExchanges.objects.bulk_update(records_to_update,
-                                                        ['price', 'update'])
+        Card2Wallet2CryptoExchanges.objects.bulk_update(
+            records_to_update, ['price', 'update', 'transaction_fee']
+        )
         duration = datetime.now() - start_time
         new_update.duration = duration
         new_update.save()

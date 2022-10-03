@@ -10,17 +10,7 @@ from banks.banks_config import BANKS_CONFIG
 
 from banks.models import Banks
 
-from crypto_exchanges.models import CryptoExchanges, P2PCryptoExchangesRates
-
-
-class CryptoExchangesInternalExchanges(ListView):
-    model = P2PCryptoExchangesRates
-    template_name = 'crypto_exchanges/crypto_exchange_internal_exchanges.html'
-
-
-class CryptoExchangeInternalExchanges(ListView):
-    model = P2PCryptoExchangesRates
-    template_name = 'crypto_exchanges/crypto_exchange_internal_exchanges.html'
+from crypto_exchanges.models import CryptoExchanges, P2PCryptoExchangesRates, IntraCryptoExchanges, Card2Wallet2CryptoExchanges
 
 
 class CryptoExchangesRatesList(ListView):
@@ -79,6 +69,34 @@ class CryptoExchangeRatesList(ListView):
         return context
 
 
+class CryptoExchangesInternalExchanges(CryptoExchangesRatesList):
+    model = IntraCryptoExchanges
+    template_name = 'crypto_exchanges/crypto_exchange_internal_exchanges.html'
+
+
+class CryptoExchangeInternalExchanges(CryptoExchangeRatesList):
+    model = IntraCryptoExchanges
+    template_name = 'crypto_exchanges/crypto_exchange_internal_exchanges.html'
+
+    def get_queryset(self):
+        crypto_exchange = CryptoExchanges.objects.get(
+            name=self.get_crypto_exchange_name())
+        return self.model.objects.filter(crypto_exchange=crypto_exchange)
+
+    def get_context_data(self, **kwargs):
+        from crypto_exchanges.crypto_exchanges_config import (
+            CRYPTO_EXCHANGES_CONFIG)
+        context = super(CryptoExchangeRatesList,
+                        self).get_context_data(**kwargs)
+        context['crypto_exchange_names'] = list(CRYPTO_EXCHANGES_CONFIG.keys()
+                                                )[1:]
+        context['crypto_exchange_rates'] = self.get_queryset()
+        context['crypto_exchange_name'] = self.get_crypto_exchange_name()
+        context['last_update'] = self.get_queryset().latest(
+            'update').update.updated
+        return context
+
+
 class CryptoExchangesP2PExchanges(CryptoExchangesRatesList):
     model = P2PCryptoExchangesRates
     template_name = 'crypto_exchanges/crypto_exchange_p2p_exchanges.html'
@@ -87,6 +105,18 @@ class CryptoExchangesP2PExchanges(CryptoExchangesRatesList):
 class CryptoExchangeP2PExchanges(CryptoExchangeRatesList):
     model = P2PCryptoExchangesRates
     template_name = 'crypto_exchanges/crypto_exchange_p2p_exchanges.html'
+
+
+class CryptoExchangesCard2Wallet2CryptoExchanges(CryptoExchangesRatesList):
+    model = Card2Wallet2CryptoExchanges
+    template_name = ('crypto_exchanges/'
+                     'crypto_exchange_card_2_wallet_2_exchanges.html')
+
+
+class CryptoExchangeCard2Wallet2CryptoExchanges(CryptoExchangeRatesList):
+    model = Card2Wallet2CryptoExchanges
+    template_name = ('crypto_exchanges/'
+                     'crypto_exchange_card_2_wallet_2_exchanges.html')
 
 
 def p2p_binance(request):

@@ -20,10 +20,10 @@
     Exchange rates through the exchange
   </h1>
   <p>
-    Count rates: {{ request.path|count_rates }}
+    Count rates: {{ bank_rates.count }}
   </p>
   <p>
-    Last update {{ request.path|last_update }}:
+    Last update: {{ last_update }}
   </p>
   <table class="table table-striped table-dark">
   <thead>
