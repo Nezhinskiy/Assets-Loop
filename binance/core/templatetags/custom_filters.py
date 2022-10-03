@@ -48,9 +48,9 @@ def last_update(value):
 
 
 @register.filter
-def is_empty(value):
+def is_empty(value, channel):
     from banks.banks_config import BANKS_CONFIG
-    currency_markets = BANKS_CONFIG[value]['bank_invest_exchanges']
+    currency_markets = BANKS_CONFIG[value][channel]
     if not currency_markets:
         return True
     else:
@@ -58,3 +58,11 @@ def is_empty(value):
 
 
 register.filter('get_related_exchange', get_related_exchange)
+
+
+@register.filter
+def round_up(value):
+    target_length = 10
+    length = len(str(int(value)))
+    round_length = target_length - length
+    return round(value, round_length)

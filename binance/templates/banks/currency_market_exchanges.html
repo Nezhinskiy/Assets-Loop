@@ -12,7 +12,7 @@
     </li>
     {% for bank_name in bank_names %}
     <li class="nav-item">
-      <a class="nav-link {% if bank_name == request.path|last_url_path:2 %}active{% elif bank_name|is_empty %}disabled{% endif %}" href="/{{ bank_name }}/{{ request.path|last_url_path:1 }}/">{{ bank_name }}</a>
+      <a class="nav-link {% if bank_name == request.path|last_url_path:2 %}active{% elif bank_name|is_empty:'bank_invest_exchanges' %}disabled{% endif %}" href="/{{ bank_name }}/{{ request.path|last_url_path:1 }}/">{{ bank_name }}</a>
     </li>
     {% endfor %}
   </ul>

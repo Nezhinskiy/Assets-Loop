@@ -599,7 +599,7 @@ class InterExchangesCalculate(object):
         if bank_exchange_type == 'BanksExchangeRates':
             return [from_fiat, to_fiat, bank_name, price]
         elif bank_exchange_type == 'BankInvestExchanges':
-            invest_exchange_name = bank_exchange.bank.name
+            invest_exchange_name = bank_exchange.currency_market.name
             return [from_fiat, to_fiat, bank_name,
                     f'invest exchange: {invest_exchange_name}', price]
         elif bank_exchange_type == 'IntraBanksNotLoopedExchanges':

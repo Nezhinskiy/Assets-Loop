@@ -118,6 +118,25 @@ class CryptoExchangeCard2Wallet2CryptoExchanges(CryptoExchangeRatesList):
     template_name = ('crypto_exchanges/'
                      'crypto_exchange_card_2_wallet_2_exchanges.html')
 
+    def get_queryset(self):
+        if self.get_crypto_exchange_name() != 'Crypto_exchanges':
+            crypto_exchange = CryptoExchanges.objects.get(
+                name=self.get_crypto_exchange_name())
+            if self.get_bank_name() != 'Banks':
+                transaction_methods = (
+                    BANKS_CONFIG[self.get_bank_name()]['transaction_methods'])
+                return self.model.objects.filter(
+                    crypto_exchange=crypto_exchange,
+                    transaction_method__in=transaction_methods)
+            else:
+                return self.model.objects.filter(
+                    crypto_exchange=crypto_exchange)
+        else:
+            transaction_methods = (
+                BANKS_CONFIG[self.get_bank_name()]['transaction_methods'])
+            return self.model.objects.filter(
+                transaction_method__in=transaction_methods)
+
 
 def p2p_binance(request):
     return get_all_p2p_binance_exchanges()

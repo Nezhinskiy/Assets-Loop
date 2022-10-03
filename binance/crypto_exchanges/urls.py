@@ -10,7 +10,9 @@ from crypto_exchanges.views import (all,
                                     CryptoExchangesP2PExchanges,
                                     CryptoExchangeP2PExchanges,
                                     CryptoExchangesInternalExchanges,
-                                    CryptoExchangeInternalExchanges)
+                                    CryptoExchangeInternalExchanges,
+                                    CryptoExchangesCard2Wallet2CryptoExchanges,
+                                    CryptoExchangeCard2Wallet2CryptoExchanges)
 
 app_name = 'crypto_exchanges'
 
@@ -27,6 +29,13 @@ urlpatterns = [
     path('<str:crypto_exchange_name>/<str:bank_name>/p2p_exchanges/',
          CryptoExchangeP2PExchanges.as_view(),
          name='crypto_exchange_p2p_exchanges'),
+    path('crypto_exchanges/banks/card_2_wallet_2_crypto_exchanges/',
+         CryptoExchangesCard2Wallet2CryptoExchanges.as_view(),
+         name='crypto_exchanges_card_2_wallet_2_crypto_exchanges'),
+    path('<str:crypto_exchange_name>/<str:bank_name>/'
+         'card_2_wallet_2_crypto_exchanges/',
+         CryptoExchangeCard2Wallet2CryptoExchanges.as_view(),
+         name='crypto_exchange_card_2_wallet_2_crypto_exchanges'),
     path('1/', p2p_binance, name="p2p_binance"),
     path('100/', binance_crypto, name="binance_crypto"),
     path('200/', card_2_wallet_2_crypto, name="binance_card_2_wallet_2_crypto"),
