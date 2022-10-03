@@ -1,8 +1,7 @@
 import os
 
-from core.parsers import BankInvestParser
-
 from banks.models import CurrencyMarkets
+from core.parsers import BankInvestParser
 
 CURRENCY_MARKET_NAME = (
     os.path.basename(__file__).split('.')[0].capitalize().replace('_', ' '))

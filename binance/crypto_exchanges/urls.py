@@ -1,18 +1,19 @@
 from django.urls import include, path
 
-from crypto_exchanges.views import (all,
+from crypto_exchanges.views import (CryptoExchangeCard2CryptoExchanges,
+                                    CryptoExchangeCard2Wallet2CryptoExchanges,
+                                    CryptoExchangeInternalExchanges,
+                                    CryptoExchangeP2PExchanges,
+                                    CryptoExchangesCard2CryptoExchanges,
+                                    CryptoExchangesCard2Wallet2CryptoExchanges,
+                                    CryptoExchangesInternalExchanges,
+                                    CryptoExchangesP2PExchanges, all,
                                     binance_best_card_2_card_crypto_exchanges,
                                     binance_best_crypto_exchanges,
                                     binance_card_2_crypto_exchanges,
                                     binance_crypto, binance_fiat_crypto_list,
                                     binance_inter_exchanges_calculate,
-                                    card_2_wallet_2_crypto, p2p_binance,
-                                    CryptoExchangesP2PExchanges,
-                                    CryptoExchangeP2PExchanges,
-                                    CryptoExchangesInternalExchanges,
-                                    CryptoExchangeInternalExchanges,
-                                    CryptoExchangesCard2Wallet2CryptoExchanges,
-                                    CryptoExchangeCard2Wallet2CryptoExchanges)
+                                    card_2_wallet_2_crypto, p2p_binance)
 
 app_name = 'crypto_exchanges'
 
@@ -36,6 +37,12 @@ urlpatterns = [
          'card_2_wallet_2_crypto_exchanges/',
          CryptoExchangeCard2Wallet2CryptoExchanges.as_view(),
          name='crypto_exchange_card_2_wallet_2_crypto_exchanges'),
+    path('crypto_exchanges/banks/card_2_crypto_exchanges/',
+         CryptoExchangesCard2CryptoExchanges.as_view(),
+         name='crypto_exchanges_card_2_crypto_exchanges'),
+    path('<str:crypto_exchange_name>/<str:bank_name>/card_2_crypto_exchanges/',
+         CryptoExchangeCard2CryptoExchanges.as_view(),
+         name='crypto_exchange_card_2_crypto_exchanges'),
     path('1/', p2p_binance, name="p2p_binance"),
     path('100/', binance_crypto, name="binance_crypto"),
     path('200/', card_2_wallet_2_crypto, name="binance_card_2_wallet_2_crypto"),

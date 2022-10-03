@@ -1,11 +1,13 @@
 from django.urls import path
 
-from banks.views import (BankInternalExchange, best_bank_intra_exchanges, tinkoff,
-                         tinkoff_all, tinkoff_invest_exchanges,
-                         tinkoff_not_looped, wise, wise_not_looped,
-                         get_all_banks_exchanges, banks, BanksInternalExchange,
-                         BanksInternalTripleExchange, BankInternalTripleExchange,
-                         BanksInvestExchange, BankInvestExchange, BanksBestExchange, BankBestExchange)
+from banks.views import (BankBestExchange, BankInternalExchange,
+                         BankInternalTripleExchange, BankInvestExchange,
+                         BanksBestExchange, BanksInternalExchange,
+                         BanksInternalTripleExchange, BanksInvestExchange,
+                         banks, best_bank_intra_exchanges,
+                         get_all_banks_exchanges, tinkoff, tinkoff_all,
+                         tinkoff_invest_exchanges, tinkoff_not_looped, wise,
+                         wise_not_looped)
 
 app_name = 'banks'
 

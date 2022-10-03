@@ -1,7 +1,6 @@
 from django import template
 
 from banks.models import BankInvestExchanges, BankInvestExchangesUpdates
-
 from core.intra_exchanges import get_related_exchange
 
 register = template.Library()
@@ -52,6 +51,17 @@ def is_empty(value, channel):
     from banks.banks_config import BANKS_CONFIG
     currency_markets = BANKS_CONFIG[value][channel]
     if not currency_markets:
+        return True
+    else:
+        return False
+
+
+@register.filter
+def is_not_card_2_crypto(value):
+    from banks.banks_config import BANKS_CONFIG
+    from crypto_exchanges.models import Card2CryptoExchanges
+    payment_channels = BANKS_CONFIG[value]['payment_channels']
+    if Card2CryptoExchanges not in payment_channels:
         return True
     else:
         return False

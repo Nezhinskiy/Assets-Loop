@@ -1,11 +1,11 @@
-from threading import Thread
 from datetime import datetime
+from threading import Thread
 
 from crypto_exchanges.crypto_exchanges_registration.binance import (
-    get_all_binance_crypto_exchanges,
-    get_all_card_2_wallet_2_crypto_exchanges, get_all_p2p_binance_exchanges,
-    get_best_card_2_card_crypto_exchanges, get_best_crypto_exchanges,
-    get_binance_card_2_crypto_exchanges, get_binance_fiat_crypto_list)
+    get_all_binance_crypto_exchanges, get_all_card_2_wallet_2_crypto_exchanges,
+    get_all_p2p_binance_exchanges, get_best_card_2_card_crypto_exchanges,
+    get_best_crypto_exchanges, get_binance_card_2_crypto_exchanges,
+    get_binance_fiat_crypto_list)
 
 
 def first_crypto_exchanges_rates():

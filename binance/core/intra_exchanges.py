@@ -3,12 +3,14 @@ import sys
 from datetime import datetime
 from itertools import permutations, product
 
+from django.core.exceptions import MultipleObjectsReturned
+
 from banks.models import (BankInvestExchanges, BankInvestExchangesUpdates,
                           Banks, BanksExchangeRates, BestBankExchanges,
-                          BestBankExchangesUpdates, IntraBanksExchanges,
-                          IntraBanksExchangesUpdates,
+                          BestBankExchangesUpdates, CurrencyMarkets,
+                          IntraBanksExchanges, IntraBanksExchangesUpdates,
                           IntraBanksNotLoopedExchanges,
-                          IntraBanksNotLoopedExchangesUpdates, CurrencyMarkets)
+                          IntraBanksNotLoopedExchangesUpdates)
 from crypto_exchanges.models import (BestCombinationPaymentChannels,
                                      BestCombinationPaymentChannelsUpdates,
                                      BestPaymentChannels,
@@ -20,7 +22,6 @@ from crypto_exchanges.models import (BestCombinationPaymentChannels,
                                      InterBankAndCryptoExchangesUpdates,
                                      IntraCryptoExchanges,
                                      P2PCryptoExchangesRates)
-from django.core.exceptions import MultipleObjectsReturned
 
 
 def get_related_exchange(meta_exchange):

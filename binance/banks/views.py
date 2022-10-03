@@ -1,23 +1,23 @@
-from django.shortcuts import get_object_or_404, render, get_list_or_404
-from django.views.generic import ListView
-from threading import Thread
-from multiprocessing import Process
 from datetime import datetime
+from multiprocessing import Process
+from threading import Thread
 
+from django.shortcuts import get_list_or_404, get_object_or_404, render
+from django.views.generic import ListView
+
+from banks.banks_config import BANKS_CONFIG
 from banks.banks_registration.tinkoff import (get_all_tinkoff,
                                               get_all_tinkoff_exchanges,
-                                              get_tinkoff_not_looped,
-                                              )
-from banks.banks_registration.wise import get_all_wise_exchanges, get_wise_not_looped
-from banks.models import BanksExchangeRates, Banks, IntraBanksNotLoopedExchanges, BankInvestExchanges, BestBankExchanges
-from core.intra_exchanges import BestBankIntraExchanges
-
+                                              get_tinkoff_not_looped)
+from banks.banks_registration.wise import (get_all_wise_exchanges,
+                                           get_wise_not_looped)
+from banks.currency_markets_registration.tinkoff_invest import \
+    get_tinkoff_invest_exchanges
+from banks.models import (BankInvestExchanges, Banks, BanksExchangeRates,
+                          BestBankExchanges, IntraBanksNotLoopedExchanges)
 from banks.multithreading import all_banks_exchanges
-from banks.banks_config import BANKS_CONFIG
-
-from banks.currency_markets_registration.tinkoff_invest import get_tinkoff_invest_exchanges
-
 from core.django_shortcuts.shurtcuts import get_queryset_or_404
+from core.intra_exchanges import BestBankIntraExchanges
 
 
 def banks(request):

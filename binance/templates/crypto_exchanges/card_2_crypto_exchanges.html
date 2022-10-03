@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Deposit and withdrawal directly to crypto
+{% endblock %}
+
+{% block content %}
+{% load custom_filters %}
+  <ul class="nav nav-tabs">
+    <li class="nav-item">
+      <a class="nav-link {% if request.path|last_url_path:2 == 'banks' %}active{% endif %}" href="/{{ request.path|last_url_path:3 }}/banks/{{ request.path|last_url_path:1 }}/">All banks</a>
+    </li>
+    {% for bank_name in bank_names %}
+    <li class="nav-item">
+      <a class="nav-link {% if bank_name == request.path|last_url_path:2 %}active{% elif bank_name|is_not_card_2_crypto %}disabled{% endif %}" href="/{{ request.path|last_url_path:3 }}/{{ bank_name }}/{{ request.path|last_url_path:1 }}/">{{ bank_name }}</a>
+    </li>
+    {% endfor %}
+    <li class="ms-auto nav-item">
+      <a class="nav-link {% if request.path|last_url_path:3 == 'crypto_exchanges' %}active{% endif %}" href="/crypto_exchanges/{{ request.path|last_url_path:2 }}/{{ request.path|last_url_path:1 }}/">All crypto exchanges</a>
+    </li>
+    {% for crypto_exchange_name in crypto_exchange_names %}
+    <li class="nav-item">
+      <a class="nav-link {% if crypto_exchange_name == request.path|last_url_path:3 %}active{% endif %}" href="/{{ crypto_exchange_name }}/{{ request.path|last_url_path:2 }}/{{ request.path|last_url_path:1 }}/">{{ crypto_exchange_name }}</a>
+    </li>
+    {% endfor %}
+  </ul>
+  <h1>
+    Deposit and withdrawal directly to crypto
+  </h1>
+  <p>
+    Count rates: {{ crypto_exchange_rates.count }}
+  </p>
+  <p>
+    Last update: {{ last_update }}
+  </p>
+  <table class="table table-striped table-dark">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        {% if request.path|last_url_path:3 == 'crypto_exchanges' %}<th scope="col">Crypto exchange</th>{% endif %}
+        <th scope="col">Trade type</th>
+        <th scope="col">Currencies</th>
+        <th scope="col">Transaction method</th>
+        <th scope="col">Transaction fee</th>
+        <th scope="col">General price</th>Internal
+        <th scope="col">Updated</th>
+      </tr>
+    </thead>
+    {% for crypto_exchange_rate in crypto_exchange_rates %}
+      <tr>
+        <th scope="row">{{ forloop.counter }}</th>
+        {% if request.path|last_url_path:3 == 'crypto_exchanges' %}<td>{{ crypto_exchange_rate.crypto_exchange.name }}</td>{% endif %}
+        {% if crypto_exchange_rate.trade_type == 'SELL' %}<td>Withdrawal{% else %}<td>Deposit</td>{% endif %}
+        {% if crypto_exchange_rate.trade_type == 'SELL' %}<td>{{ crypto_exchange_rate.asset }} -> {{ crypto_exchange_rate.fiat }}</td>{% else %}<td>{{ crypto_exchange_rate.fiat }} -> {{ crypto_exchange_rate.asset }}</td>{% endif %}
+        <td>Bank Card (Visa/MC)</td>
+        <td>{{ crypto_exchange_rate.commission|floatformat:2 }} %</td>
+        <td>{{ crypto_exchange_rate.price|round_up }}</td>
+        <td>{{ crypto_exchange_rate.update.updated}}</td>
+      </tr>
+    {% endfor %}
+  </table>
+{% endblock %}

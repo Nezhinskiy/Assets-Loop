@@ -1,12 +1,12 @@
-from threading import Thread
 from datetime import datetime
+from threading import Thread
 
 from banks.banks_registration.tinkoff import (get_all_tinkoff_exchanges,
-                                              get_tinkoff_not_looped,
-                                              )
-from banks.currency_markets_registration.tinkoff_invest import get_tinkoff_invest_exchanges
-
-from banks.banks_registration.wise import get_all_wise_exchanges, get_wise_not_looped
+                                              get_tinkoff_not_looped)
+from banks.banks_registration.wise import (get_all_wise_exchanges,
+                                           get_wise_not_looped)
+from banks.currency_markets_registration.tinkoff_invest import \
+    get_tinkoff_invest_exchanges
 from core.intra_exchanges import BestBankIntraExchanges
 
 

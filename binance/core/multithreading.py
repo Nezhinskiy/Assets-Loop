@@ -1,12 +1,10 @@
-from threading import Thread
 from datetime import datetime
-
-from crypto_exchanges.multithreading import all_crypto_exchanges
+from threading import Thread
 
 from banks.multithreading import all_banks_exchanges
-
 from crypto_exchanges.crypto_exchanges_registration.binance import \
     get_inter_exchanges_calculate
+from crypto_exchanges.multithreading import all_crypto_exchanges
 
 
 def all_exchanges():
