@@ -13,7 +13,11 @@ from crypto_exchanges.views import (CryptoExchangeCard2CryptoExchanges,
                                     binance_card_2_crypto_exchanges,
                                     binance_crypto, binance_fiat_crypto_list,
                                     binance_inter_exchanges_calculate,
-                                    card_2_wallet_2_crypto, p2p_binance)
+                                    card_2_wallet_2_crypto, p2p_binance,
+                                    CryptoExchangesBestPaymentChannelsExchanges,
+                                    CryptoExchangeBestPaymentChannelsExchanges,
+                                    IntraBanksCryptoExchangesCombinations,
+                                    IntraBankCryptoExchangeCombinations)
 
 app_name = 'crypto_exchanges'
 
@@ -43,6 +47,20 @@ urlpatterns = [
     path('<str:crypto_exchange_name>/<str:bank_name>/card_2_crypto_exchanges/',
          CryptoExchangeCard2CryptoExchanges.as_view(),
          name='crypto_exchange_card_2_crypto_exchanges'),
+    path('crypto_exchanges/banks/best_payment_channels_exchanges/',
+         CryptoExchangesBestPaymentChannelsExchanges.as_view(),
+         name='crypto_exchanges_best_payment_channels_exchanges'),
+    path('<str:crypto_exchange_name>/<str:bank_name>/'
+         'best_payment_channels_exchanges/',
+         CryptoExchangeBestPaymentChannelsExchanges.as_view(),
+         name='crypto_exchange_best_payment_channels_exchanges'),
+    path('crypto_exchanges/banks/intra_banks_exchanges_via_crypto_exchanges/',
+         IntraBanksCryptoExchangesCombinations.as_view(),
+         name='intra_banks_exchanges_via_crypto_exchanges_best_combinations'),
+    path('<str:crypto_exchange_name>/<str:bank_name>/'
+         'intra_banks_exchanges_via_crypto_exchanges/',
+         IntraBankCryptoExchangeCombinations.as_view(),
+         name='intra_bank_exchanges_via_crypto_exchange_best_combinations'),
     path('1/', p2p_binance, name="p2p_binance"),
     path('100/', binance_crypto, name="binance_crypto"),
     path('200/', card_2_wallet_2_crypto, name="binance_card_2_wallet_2_crypto"),

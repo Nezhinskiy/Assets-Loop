@@ -31,7 +31,7 @@
         <th scope="row">{{ forloop.counter }}</th>
         {% if request.path|last_url_path:2 == 'crypto_exchanges' %}<td>{{ crypto_exchange_rate.crypto_exchange.name }}</td>{% endif %}
         <td>{{ crypto_exchange_rate.from_asset }} -> {{ crypto_exchange_rate.to_asset }}</td>
-        <td>{{ crypto_exchange_rate.price }}</td>
+        <td>{{ crypto_exchange_rate.price|round_up }}</td>
         <td>{{ crypto_exchange_rate.update.updated}}</td>
       </tr>
     {% endfor %}

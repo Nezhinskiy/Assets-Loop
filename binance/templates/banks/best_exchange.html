@@ -51,7 +51,7 @@
               {{ bank_rate.from_fiat }} -> {{ bank_rate.to_fiat }}
             {% endif %}
           </td>
-          <td>{{ true_bank_rate.price }}</td>
+          <td>{{ true_bank_rate.price|round_up }}</td>
           <td>{{ true_bank_rate.update.updated}}</td>
         </tr>
       {% endwith %}

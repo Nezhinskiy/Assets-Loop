@@ -72,7 +72,25 @@ register.filter('get_related_exchange', get_related_exchange)
 
 @register.filter
 def round_up(value):
+    if value is None:
+        return None
     target_length = 10
     length = len(str(int(value)))
     round_length = target_length - length
     return round(value, round_length)
+
+
+@register.filter
+def payment_channel_name(value, trade_type):
+    if value == 'P2PCryptoExchangesRates':
+        return 'P2P'
+    elif value == 'Card2Wallet2CryptoExchanges':
+        if trade_type == 'BUY':
+            return 'Card-Wallet-Crypto'
+        else:
+            return 'Crypto-Wallet-Card'
+    elif value == 'Card2CryptoExchanges':
+        if trade_type == 'BUY':
+            return 'Card-Crypto'
+        else:
+            return 'Crypto-Card'

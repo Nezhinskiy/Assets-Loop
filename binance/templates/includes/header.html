@@ -30,6 +30,7 @@
               <li><a class="dropdown-item {% if 'p2p_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'crypto_exchanges:crypto_exchanges_p2p_exchanges' %}">Deposit and withdrawal through p2p</a></li>
               <li><a class="dropdown-item {% if 'card_2_wallet_2_crypto_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'crypto_exchanges:crypto_exchanges_card_2_wallet_2_crypto_exchanges' %}">Deposit and withdrawal through a fiat crypto wallet</a></li>
               <li><a class="dropdown-item {% if 'card_2_crypto_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'crypto_exchanges:crypto_exchanges_card_2_crypto_exchanges' %}">Deposit and withdrawal directly to crypto</a></li>
+              <li><a class="dropdown-item {% if 'best_payment_channels_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'crypto_exchanges:crypto_exchanges_best_payment_channels_exchanges' %}">The best ways to deposit and withdrawal</a></li>
             </ul>
           </li>
           <li class="nav-item dropdown">
@@ -37,8 +38,8 @@
               Inter-exchange exchanges
             </a>
             <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink">
-              <li><a class="dropdown-item" href="#">Internal exchange rates</a></li>
-              <li><a class="dropdown-item" href="#">Internal triple exchange rates</a></li>
+              <li><a class="dropdown-item {% if 'intra_banks_exchanges_via_crypto_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'crypto_exchanges:intra_banks_exchanges_via_crypto_exchanges_best_combinations' %}">Best intrabank exchanges via crypto exchange</a></li>
+              <li><a class="dropdown-item" href="#">Best interbank exchanges via crypto exchange</a></li>
               <li><a class="dropdown-item" href="#">Exchange rates through the exchange</a></li>
               <li><a class="dropdown-item" href="#">The best ways to exchange</a></li>
             </ul>

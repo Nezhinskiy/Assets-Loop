@@ -37,7 +37,7 @@
             {% if not forloop.last %}->{% endif %}
           {% endfor %}
         </td>
-        <td>{{ bank_rate.price }}</td>
+        <td>{{ bank_rate.price|round_up }}</td>
         <td>{{ bank_rate.marginality_percentage }} %</td>
         <td>{{ bank_rate.update.updated}}</td>
       </tr>
