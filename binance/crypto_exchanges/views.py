@@ -1,3 +1,4 @@
+from django.db.models import Count
 from django.http import Http404
 from django.views.generic import ListView
 
@@ -15,11 +16,12 @@ from crypto_exchanges.models import (Card2CryptoExchanges,
                                      P2PCryptoExchangesRates,
                                      BestPaymentChannels,
                                      BestCombinationPaymentChannels)
+from django.db.models import F
 
 
 class CryptoExchangesRatesList(ListView):
     def get_queryset(self):
-        return self.model.objects.all()
+        return self.model.objects.filter(price__isnull=False)
 
     def get_context_data(self, **kwargs):
         from crypto_exchanges.crypto_exchanges_config import \
@@ -49,13 +51,16 @@ class CryptoExchangeRatesList(ListView):
             if self.get_bank_name() != 'Banks':
                 bank = Banks.objects.get(name=self.get_bank_name())
                 return self.model.objects.filter(
-                    crypto_exchange=crypto_exchange, bank=bank)
+                    crypto_exchange=crypto_exchange, bank=bank,
+                    price__isnull=False
+                )
             else:
                 return self.model.objects.filter(
-                    crypto_exchange=crypto_exchange)
+                    crypto_exchange=crypto_exchange, price__isnull=False
+                )
         else:
             bank = Banks.objects.get(name=self.get_bank_name())
-            return self.model.objects.filter(bank=bank)
+            return self.model.objects.filter(bank=bank, price__isnull=False)
 
     def get_context_data(self, **kwargs):
         from crypto_exchanges.crypto_exchanges_config import \
@@ -194,7 +199,7 @@ class IntraBanksCryptoExchangesCombinations(ListView):
                      'intra_banks_exchanges_via_crypto_exchanges.html')
 
     def get_queryset(self):
-        return self.model.objects.all()
+        return self.model.objects.filter(input_bank=F('output_bank'))
 
     def get_context_data(self, **kwargs):
         from crypto_exchanges.crypto_exchanges_config import \
@@ -253,6 +258,47 @@ class IntraBankCryptoExchangeCombinations(ListView):
         context['last_update'] = self.get_queryset().latest(
             'update').update.updated
         return context
+
+
+class InterBanksCryptoExchangesCombinations(
+    IntraBanksCryptoExchangesCombinations
+):
+    template_name = ('crypto_exchanges/'
+                     'inter_banks_exchanges_via_crypto_exchanges.html')
+
+    def get_queryset(self):
+        return self.model.objects.exclude(input_bank=F('output_bank'))
+
+
+class InterBankCryptoExchangeCombinations(IntraBankCryptoExchangeCombinations):
+    template_name = ('crypto_exchanges/'
+                     'inter_banks_exchanges_via_crypto_exchanges.html')
+
+    def get_bank_name(self):
+        return self.kwargs.get('input_bank_name').capitalize()
+
+    def get_end_bank_name(self):
+        return self.kwargs.get('output_bank_name').capitalize()
+
+    def get_queryset(self):
+        if self.get_crypto_exchange_name() != 'Crypto_exchanges':
+            crypto_exchange = CryptoExchanges.objects.get(
+                name=self.get_crypto_exchange_name())
+            if self.get_bank_name() != 'Banks':
+                input_bank = Banks.objects.get(name=self.get_bank_name())
+                output_bank = Banks.objects.get(name=self.get_end_bank_name())
+                return self.model.objects.filter(
+                    crypto_exchange=crypto_exchange, input_bank=input_bank,
+                    output_bank=output_bank
+                )
+            else:
+                return self.model.objects.filter(
+                    crypto_exchange=crypto_exchange)
+        else:
+            input_bank = Banks.objects.get(name=self.get_bank_name())
+            output_bank = Banks.objects.get(name=self.get_end_bank_name())
+            return self.model.objects.filter(input_bank=input_bank,
+                                             output_bank=output_bank)
 
 
 def p2p_binance(request):

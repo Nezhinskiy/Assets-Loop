@@ -24,8 +24,8 @@
         {% if request.path|last_url_path:2 == 'banks' %}<th scope="col">Bank</th>{% endif %}
         <th scope="col">Trade type</th>
         <th scope="col">Currencies</th>
-        <th scope="col">Price</th>
         <th scope="col">Payment channel</th>
+        <th scope="col">Price</th>
         <th scope="col">Updated</th>
       </tr>
     </thead>
@@ -49,8 +49,8 @@
               <td>{{ crypto_exchange_rate.fiat }} -> {{ crypto_exchange_rate.asset }}</td>
             {% endif %}
           {% endif %}
-          <td>{{ true_crypto_exchange_rate.price|round_up }}</td>
           <td>{{ crypto_exchange_rate.payment_channel_model|payment_channel_name:crypto_exchange_rate.trade_type }}</td>
+          <td>{{ true_crypto_exchange_rate.price|round_up }}</td>
           <td>{{ crypto_exchange_rate.update.updated }}</td>
         </tr>
       {% endwith %}

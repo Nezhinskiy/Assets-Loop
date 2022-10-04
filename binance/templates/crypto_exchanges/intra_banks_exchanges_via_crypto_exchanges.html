@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
 
 {% block title %}
-  P2P exchange rates
+  Intra-bank exchanges through crypto-exchanges
 {% endblock %}
 
 {% block content %}
 {% load custom_filters %}
 {% include 'crypto_exchanges/includes/bank_and_crypto_exchange_selector.html' %}
   <h1>
-    P2P exchange rates
+    The best possible Intra-bank exchanges through crypto-exchanges
   </h1>
   <p>
     Count rates: {{ crypto_exchange_rates.count }}
@@ -22,8 +22,8 @@
         <th scope="col">#</th>
         {% if request.path|last_url_path:3 == 'crypto_exchanges' %}<th scope="col">Crypto exchange</th>{% endif %}
         {% if request.path|last_url_path:2 == 'banks' %}<th scope="col">Bank</th>{% endif %}
-        <th scope="col">Trade type</th>
         <th scope="col">Currencies</th>
+        <th scope="col">Payment channels</th>
         <th scope="col">Price</th>
         <th scope="col">Updated</th>
       </tr>
@@ -32,9 +32,29 @@
       <tr>
         <th scope="row">{{ forloop.counter }}</th>
         {% if request.path|last_url_path:3 == 'crypto_exchanges' %}<td>{{ crypto_exchange_rate.crypto_exchange.name }}</td>{% endif %}
-        {% if request.path|last_url_path:2 == 'banks' %}<td>{{ crypto_exchange_rate.bank.name }}</td>{% endif %}
-        {% if crypto_exchange_rate.trade_type == 'SELL' %}<td>Withdrawal{% else %}<td>Deposit</td>{% endif %}
-        {% if crypto_exchange_rate.trade_type == 'SELL' %}<td>{{ crypto_exchange_rate.asset }} -> {{ crypto_exchange_rate.fiat }}</td>{% else %}<td>{{ crypto_exchange_rate.fiat }} -> {{ crypto_exchange_rate.asset }}</td>{% endif %}
+        {% if request.path|last_url_path:2 == 'banks' %}<td>{{ crypto_exchange_rate.input_bank.name }}</td>{% endif %}
+        <td>
+          {{ crypto_exchange_rate.from_fiat }} ->
+          {% if crypto_exchange_rate.input_exchange.payment_channel == 'Card2Wallet2CryptoExchanges' %}
+            {{ crypto_exchange_rate.from_fiat }} -> { crypto_exchange_rate.input_exchange.asset }} ->
+          {% else %}
+            {{ crypto_exchange_rate.input_exchange.asset }} ->
+          {% endif %}
+          {% if crypto_exchange_rate.interim_exchange is not None %}
+            {{ crypto_exchange_rate.interim_exchange.to_asset }} ->
+          {% endif %}
+          {% if crypto_exchange_rate.output_exchange.payment_channel == 'Card2Wallet2CryptoExchanges' %}
+            {{ crypto_exchange_rate.to_fiat }} ->
+          {% endif %}
+          {{ crypto_exchange_rate.to_fiat }}
+        </td>
+        <td>
+          {{ crypto_exchange_rate.input_exchange.payment_channel_model|payment_channel_name:'BUY' }} ->
+          {% if crypto_exchange_rate.interim_exchange is not None %}
+            Internal ->
+          {% endif %}
+          {{ crypto_exchange_rate.output_exchange.payment_channel_model|payment_channel_name:'SELL' }}
+        </td>
         <td>{{ crypto_exchange_rate.price|round_up }}</td>
         <td>{{ crypto_exchange_rate.update.updated}}</td>
       </tr>

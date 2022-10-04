@@ -39,7 +39,7 @@
             </a>
             <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink">
               <li><a class="dropdown-item {% if 'intra_banks_exchanges_via_crypto_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'crypto_exchanges:intra_banks_exchanges_via_crypto_exchanges_best_combinations' %}">Best intrabank exchanges via crypto exchange</a></li>
-              <li><a class="dropdown-item" href="#">Best interbank exchanges via crypto exchange</a></li>
+              <li><a class="dropdown-item {% if 'inter_banks_exchanges_via_crypto_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'crypto_exchanges:inter_banks_exchanges_via_crypto_exchanges_best_combinations' %}">Best interbank exchanges via crypto exchange</a></li>
               <li><a class="dropdown-item" href="#">Exchange rates through the exchange</a></li>
               <li><a class="dropdown-item" href="#">The best ways to exchange</a></li>
             </ul>

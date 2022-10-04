@@ -17,7 +17,9 @@ from crypto_exchanges.views import (CryptoExchangeCard2CryptoExchanges,
                                     CryptoExchangesBestPaymentChannelsExchanges,
                                     CryptoExchangeBestPaymentChannelsExchanges,
                                     IntraBanksCryptoExchangesCombinations,
-                                    IntraBankCryptoExchangeCombinations)
+                                    IntraBankCryptoExchangeCombinations,
+                                    InterBanksCryptoExchangesCombinations,
+                                    InterBankCryptoExchangeCombinations)
 
 app_name = 'crypto_exchanges'
 
@@ -61,6 +63,14 @@ urlpatterns = [
          'intra_banks_exchanges_via_crypto_exchanges/',
          IntraBankCryptoExchangeCombinations.as_view(),
          name='intra_bank_exchanges_via_crypto_exchange_best_combinations'),
+    path('crypto_exchanges/input_banks/output_banks/'
+         'inter_banks_exchanges_via_crypto_exchanges/',
+         InterBanksCryptoExchangesCombinations.as_view(),
+         name='inter_banks_exchanges_via_crypto_exchanges_best_combinations'),
+    path('<str:crypto_exchange_name>/<str:input_bank_name>/'
+         '<str:output_bank_name>/inter_banks_exchanges_via_crypto_exchanges/',
+         InterBankCryptoExchangeCombinations.as_view(),
+         name='inter_bank_exchanges_via_crypto_exchange_best_combinations'),
     path('1/', p2p_binance, name="p2p_binance"),
     path('100/', binance_crypto, name="binance_crypto"),
     path('200/', card_2_wallet_2_crypto, name="binance_card_2_wallet_2_crypto"),
