@@ -7,33 +7,36 @@
 {% block content %}
 {% load custom_filters %}
   <ul class="nav nav-tabs">
-    <li class="nav-item">
-      <a class="nav-link {% if request.path|last_url_path:2 == 'banks' %}active{% endif %}" href="/{{ request.path|last_url_path:3 }}/banks/{{ request.path|last_url_path:1 }}/">All input banks</a>
-    </li>
-    {% for bank_name in bank_names %}
-    <li class="nav-item">
-      <a class="nav-link {% if bank_name == request.path|last_url_path:2 %}active{% endif %}" href="/{{ request.path|last_url_path:3 }}/{{ bank_name }}/{{ request.path|last_url_path:1 }}/">{{ bank_name }}</a>
-    </li>
-    {% endfor %}
+    <li class="nav-item dropdown active">
+    <a class="nav-link dropdown-toggle active" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Input banks</a>
+    <ul class="dropdown-menu">
+      <li><a class="dropdown-item dropdown-item {% if request.path|last_url_path:3 == 'input_banks' %}active{% endif %}" href="/{{ request.path|last_url_path:4 }}/input_banks/{{ request.path|last_url_path:2 }}/{{ request.path|last_url_path:1 }}/">All banks</a></li>
+      <li><hr class="dropdown-divider"></li>
+      {% for bank_name in bank_names %}
+        <li><a class="dropdown-item {% if request.path|last_url_path:3 == bank_name %}active{% endif %}" href="{% if request.path|last_url_path:2 == bank_name %}/{{ request.path|last_url_path:4 }}/{{ bank_name }}/intra_banks_exchanges_via_crypto_exchanges/{% else %}/{{ request.path|last_url_path:4 }}/{{ bank_name }}/{{ request.path|last_url_path:2 }}/{{ request.path|last_url_path:1 }}/{% endif %}">{{ bank_name }}</a></li>
+      {% endfor %}
+    </ul>
+  </li>
+  <li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle active" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Output banks</a>
+    <ul class="dropdown-menu">
+      <li><a class="dropdown-item {% if request.path|last_url_path:2 == 'output_banks' %}active{% endif %}" href="/{{ request.path|last_url_path:4 }}/{{ request.path|last_url_path:3 }}/output_banks/{{ request.path|last_url_path:1 }}/">All banks</a></li>
+      <li><hr class="dropdown-divider"></li>
+      {% for bank_name in bank_names %}
+        <li><a class="dropdown-item {% if request.path|last_url_path:2 == bank_name %}active{% endif %}" href="{% if request.path|last_url_path:3 == bank_name %}/{{ request.path|last_url_path:4 }}/{{ bank_name }}/intra_banks_exchanges_via_crypto_exchanges/{% else %}/{{ request.path|last_url_path:4 }}/{{ request.path|last_url_path:3 }}/{{ bank_name }}/{{ request.path|last_url_path:1 }}/{% endif %}">{{ bank_name }}</a></li>
+      {% endfor %}
+    </ul>
+  </li>
     <li class="ms-auto nav-item">
-      <a class="nav-link {% if request.path|last_url_path:3 == 'crypto_exchanges' %}active{% endif %}" href="/crypto_exchanges/{{ request.path|last_url_path:2 }}/{{ request.path|last_url_path:1 }}/">All crypto exchanges</a>
+      <a class="nav-link {% if request.path|last_url_path:4 == 'crypto_exchanges' %}active{% endif %}" href="/crypto_exchanges/{{ request.path|last_url_path:3 }}/{{ request.path|last_url_path:2 }}/{{ request.path|last_url_path:1 }}/">All crypto exchanges</a>
     </li>
     {% for crypto_exchange_name in crypto_exchange_names %}
-    <li class="nav-item">
-      <a class="nav-link {% if crypto_exchange_name == request.path|last_url_path:3 %}active{% endif %}" href="/{{ crypto_exchange_name }}/{{ request.path|last_url_path:2 }}/{{ request.path|last_url_path:1 }}/">{{ crypto_exchange_name }}</a>
-    </li>
+      <li class="nav-item">
+        <a class="nav-link {% if crypto_exchange_name == request.path|last_url_path:4 %}active{% endif %}" href="/{{ crypto_exchange_name }}/{{ request.path|last_url_path:3 }}/{{ request.path|last_url_path:2 }}/{{ request.path|last_url_path:1 }}/">{{ crypto_exchange_name }}</a>
+      </li>
     {% endfor %}
   </ul>
-  <ul class="nav nav-tabs">
-    <li class="nav-item">
-      <a class="nav-link {% if request.path|last_url_path:2 == 'banks' %}active{% endif %}" href="/{{ request.path|last_url_path:3 }}/banks/{{ request.path|last_url_path:1 }}/">All output banks</a>
-    </li>
-    {% for bank_name in bank_names %}
-    <li class="nav-item">
-      <a class="nav-link {% if bank_name == request.path|last_url_path:2 %}active{% endif %}" href="/{{ request.path|last_url_path:3 }}/{{ bank_name }}/{{ request.path|last_url_path:1 }}/">{{ bank_name }}</a>
-    </li>
-    {% endfor %}
-  </ul>
+
   <h1>
     The best possible Inter-bank exchanges through crypto-exchanges
   </h1>

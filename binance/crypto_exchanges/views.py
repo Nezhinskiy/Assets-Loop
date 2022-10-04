@@ -281,24 +281,51 @@ class InterBankCryptoExchangeCombinations(IntraBankCryptoExchangeCombinations):
         return self.kwargs.get('output_bank_name').capitalize()
 
     def get_queryset(self):
-        if self.get_crypto_exchange_name() != 'Crypto_exchanges':
-            crypto_exchange = CryptoExchanges.objects.get(
-                name=self.get_crypto_exchange_name())
-            if self.get_bank_name() != 'Banks':
-                input_bank = Banks.objects.get(name=self.get_bank_name())
-                output_bank = Banks.objects.get(name=self.get_end_bank_name())
-                return self.model.objects.filter(
-                    crypto_exchange=crypto_exchange, input_bank=input_bank,
-                    output_bank=output_bank
-                )
-            else:
-                return self.model.objects.filter(
-                    crypto_exchange=crypto_exchange)
-        else:
+        if self.get_bank_name() != 'Input_banks':
             input_bank = Banks.objects.get(name=self.get_bank_name())
-            output_bank = Banks.objects.get(name=self.get_end_bank_name())
-            return self.model.objects.filter(input_bank=input_bank,
-                                             output_bank=output_bank)
+            if self. get_end_bank_name() != 'Output_banks':
+                output_bank = Banks.objects.get(name=self.get_end_bank_name())
+                if self.get_crypto_exchange_name() != 'Crypto_exchanges':
+                    crypto_exchange = CryptoExchanges.objects.get(
+                        name=self.get_crypto_exchange_name())
+                    return self.model.objects.filter(
+                        crypto_exchange=crypto_exchange, input_bank=input_bank,
+                        output_bank=output_bank
+                    ).exclude(input_bank=F('output_bank'))
+                else:
+                    return self.model.objects.filter(
+                        input_bank=input_bank, output_bank=output_bank
+                    ).exclude(input_bank=F('output_bank'))
+            else:
+                if self.get_crypto_exchange_name() != 'Crypto_exchanges':
+                    crypto_exchange = CryptoExchanges.objects.get(
+                        name=self.get_crypto_exchange_name())
+                    return self.model.objects.filter(
+                        crypto_exchange=crypto_exchange, input_bank=input_bank
+                    ).exclude(input_bank=F('output_bank'))
+                else:
+                    return self.model.objects.filter(
+                        input_bank=input_bank
+                    ).exclude(input_bank=F('output_bank'))
+        else:
+            if self. get_end_bank_name() != 'Output_banks':
+                output_bank = Banks.objects.get(name=self.get_end_bank_name())
+                if self.get_crypto_exchange_name() != 'Crypto_exchanges':
+                    crypto_exchange = CryptoExchanges.objects.get(
+                        name=self.get_crypto_exchange_name())
+                    return self.model.objects.filter(
+                        crypto_exchange=crypto_exchange, output_bank=output_bank
+                    ).exclude(input_bank=F('output_bank'))
+                else:
+                    return self.model.objects.filter(
+                        output_bank=output_bank
+                    ).exclude(input_bank=F('output_bank'))
+            else:
+                crypto_exchange = CryptoExchanges.objects.get(
+                    name=self.get_crypto_exchange_name())
+                return self.model.objects.filter(
+                    crypto_exchange=crypto_exchange
+                ).exclude(input_bank=F('output_bank'))
 
 
 def p2p_binance(request):
