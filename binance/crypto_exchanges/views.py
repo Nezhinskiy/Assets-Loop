@@ -1,4 +1,4 @@
-from django.db.models import Count
+from django.db.models import Count, F
 from django.http import Http404
 from django.views.generic import ListView
 
@@ -10,14 +10,13 @@ from crypto_exchanges.crypto_exchanges_registration.binance import (
     get_best_card_2_card_crypto_exchanges, get_best_crypto_exchanges,
     get_binance_card_2_crypto_exchanges, get_binance_fiat_crypto_list,
     get_inter_exchanges_calculate)
-from crypto_exchanges.models import (Card2CryptoExchanges,
+from crypto_exchanges.models import (BestCombinationPaymentChannels,
+                                     BestPaymentChannels, Card2CryptoExchanges,
                                      Card2Wallet2CryptoExchanges,
-                                     CryptoExchanges, IntraCryptoExchanges,
-                                     P2PCryptoExchangesRates,
-                                     BestPaymentChannels,
-                                     BestCombinationPaymentChannels,
-                                     InterBankAndCryptoExchanges)
-from django.db.models import F
+                                     CryptoExchanges,
+                                     InterBankAndCryptoExchanges,
+                                     IntraCryptoExchanges,
+                                     P2PCryptoExchangesRates)
 
 
 class CryptoExchangesRatesList(ListView):

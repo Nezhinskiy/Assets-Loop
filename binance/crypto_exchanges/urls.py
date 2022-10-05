@@ -1,27 +1,20 @@
 from django.urls import include, path
 
-from crypto_exchanges.views import (CryptoExchangeCard2CryptoExchanges,
-                                    CryptoExchangeCard2Wallet2CryptoExchanges,
-                                    CryptoExchangeInternalExchanges,
-                                    CryptoExchangeP2PExchanges,
-                                    CryptoExchangesCard2CryptoExchanges,
-                                    CryptoExchangesCard2Wallet2CryptoExchanges,
-                                    CryptoExchangesInternalExchanges,
-                                    CryptoExchangesP2PExchanges, all,
-                                    binance_best_card_2_card_crypto_exchanges,
-                                    binance_best_crypto_exchanges,
-                                    binance_card_2_crypto_exchanges,
-                                    binance_crypto, binance_fiat_crypto_list,
-                                    binance_inter_exchanges_calculate,
-                                    card_2_wallet_2_crypto, p2p_binance,
-                                    CryptoExchangesBestPaymentChannelsExchanges,
-                                    CryptoExchangeBestPaymentChannelsExchanges,
-                                    IntraBanksCryptoExchangesCombinations,
-                                    IntraBankCryptoExchangeCombinations,
-                                    InterBanksCryptoExchangesCombinations,
-                                    InterBankCryptoExchangeCombinations,
-                                    LoopInterCombinationsBanksAndCryptoExchanges,
-                                    LoopInterCombinationsBankAndCryptoExchange)
+from crypto_exchanges.views import (
+    CryptoExchangeBestPaymentChannelsExchanges,
+    CryptoExchangeCard2CryptoExchanges,
+    CryptoExchangeCard2Wallet2CryptoExchanges, CryptoExchangeInternalExchanges,
+    CryptoExchangeP2PExchanges, CryptoExchangesBestPaymentChannelsExchanges,
+    CryptoExchangesCard2CryptoExchanges,
+    CryptoExchangesCard2Wallet2CryptoExchanges,
+    CryptoExchangesInternalExchanges, CryptoExchangesP2PExchanges,
+    InterBankCryptoExchangeCombinations, InterBanksCryptoExchangesCombinations,
+    IntraBankCryptoExchangeCombinations, IntraBanksCryptoExchangesCombinations,
+    LoopInterCombinationsBankAndCryptoExchange,
+    LoopInterCombinationsBanksAndCryptoExchanges, all,
+    binance_best_card_2_card_crypto_exchanges, binance_best_crypto_exchanges,
+    binance_card_2_crypto_exchanges, binance_crypto, binance_fiat_crypto_list,
+    binance_inter_exchanges_calculate, card_2_wallet_2_crypto, p2p_binance)
 
 app_name = 'crypto_exchanges'
 

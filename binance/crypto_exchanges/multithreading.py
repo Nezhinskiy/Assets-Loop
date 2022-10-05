@@ -7,8 +7,6 @@ from crypto_exchanges.crypto_exchanges_registration.binance import (
     get_best_crypto_exchanges, get_binance_card_2_crypto_exchanges,
     get_binance_fiat_crypto_list)
 
-from core.models import InfoLoop
-
 
 def first_crypto_exchanges_rates():
     all_p2p_binance_exchanges = Thread(target=get_all_p2p_binance_exchanges)

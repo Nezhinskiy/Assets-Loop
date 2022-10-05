@@ -2,11 +2,10 @@ from datetime import datetime
 from threading import Thread
 
 from banks.multithreading import all_banks_exchanges
+from core.models import InfoLoop
 from crypto_exchanges.crypto_exchanges_registration.binance import \
     get_inter_exchanges_calculate
 from crypto_exchanges.multithreading import all_crypto_exchanges
-
-from core.models import InfoLoop
 
 
 def all_exchanges():

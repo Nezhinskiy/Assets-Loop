@@ -1,6 +1,5 @@
-from core.multithreading import all_exchanges
-
 from core.models import InfoLoop
+from core.multithreading import all_exchanges
 
 
 def get_all_exchanges(request):

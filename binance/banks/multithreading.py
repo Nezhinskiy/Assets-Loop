@@ -9,8 +9,6 @@ from banks.currency_markets_registration.tinkoff_invest import \
     get_tinkoff_invest_exchanges
 from core.intra_exchanges import BestBankIntraExchanges
 
-from core.models import InfoLoop
-
 
 def all_banks_exchanges_rates():
     all_tinkoff_exchanges = Thread(target=get_all_tinkoff_exchanges)
