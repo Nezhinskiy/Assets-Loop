@@ -15,7 +15,8 @@ from crypto_exchanges.models import (Card2CryptoExchanges,
                                      CryptoExchanges, IntraCryptoExchanges,
                                      P2PCryptoExchangesRates,
                                      BestPaymentChannels,
-                                     BestCombinationPaymentChannels)
+                                     BestCombinationPaymentChannels,
+                                     InterBankAndCryptoExchanges)
 from django.db.models import F
 
 
@@ -326,6 +327,72 @@ class InterBankCryptoExchangeCombinations(IntraBankCryptoExchangeCombinations):
                 return self.model.objects.filter(
                     crypto_exchange=crypto_exchange
                 ).exclude(input_bank=F('output_bank'))
+
+
+class LoopInterCombinationsBanksAndCryptoExchanges(CryptoExchangesRatesList):
+    model = InterBankAndCryptoExchanges
+    template_name = ('crypto_exchanges/'
+                     'loop_inter_banks_and_crypto_exchanges.html')
+
+    def get_queryset(self):
+        return self.model.objects.all()
+
+    def get_context_data(self, **kwargs):
+        from crypto_exchanges.crypto_exchanges_config import \
+            CRYPTO_EXCHANGES_CONFIG
+        context = super(CryptoExchangesRatesList,
+                        self).get_context_data(**kwargs)
+        context['bank_names'] = list(BANKS_CONFIG.keys())
+        context['crypto_exchange_names'] = list(CRYPTO_EXCHANGES_CONFIG.keys()
+                                                )[1:]
+        context['loop_rates'] = self.get_queryset()
+        context['last_update'] = self.get_queryset().latest(
+            'update').update.updated
+        return context
+
+
+class LoopInterCombinationsBankAndCryptoExchange(CryptoExchangeRatesList):
+    model = InterBankAndCryptoExchanges
+    template_name = ('crypto_exchanges/'
+                     'loop_inter_banks_and_crypto_exchanges.html')
+
+    def get_crypto_exchange_name(self):
+        return self.kwargs.get('crypto_exchange_name').capitalize()
+
+    def get_bank_name(self):
+        return self.kwargs.get('bank_name').capitalize()
+
+    def get_queryset(self):
+        if self.get_crypto_exchange_name() != 'Crypto_exchanges':
+            crypto_exchange = CryptoExchanges.objects.get(
+                name=self.get_crypto_exchange_name())
+            if self.get_bank_name() != 'Banks':
+                bank = Banks.objects.get(name=self.get_bank_name())
+                return self.model.objects.filter(
+                    crypto_exchange=crypto_exchange, bank=bank
+                )
+            else:
+                return self.model.objects.filter(
+                    crypto_exchange=crypto_exchange
+                )
+        else:
+            bank = Banks.objects.get(name=self.get_bank_name())
+            return self.model.objects.filter(bank=bank)
+
+    def get_context_data(self, **kwargs):
+        from crypto_exchanges.crypto_exchanges_config import \
+            CRYPTO_EXCHANGES_CONFIG
+        context = super(CryptoExchangeRatesList,
+                        self).get_context_data(**kwargs)
+        context['bank_names'] = list(BANKS_CONFIG.keys())
+        context['crypto_exchange_names'] = list(CRYPTO_EXCHANGES_CONFIG.keys()
+                                                )[1:]
+        context['loop_rates'] = self.get_queryset()
+        context['crypto_exchange_name'] = self.get_crypto_exchange_name()
+        context['bank_name'] = self.get_bank_name()
+        context['last_update'] = self.get_queryset().latest(
+            'update').update.updated
+        return context
 
 
 def p2p_binance(request):

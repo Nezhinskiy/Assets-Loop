@@ -229,3 +229,6 @@ class InterBankAndCryptoExchanges(models.Model):
         InterBankAndCryptoExchangesUpdates, related_name='datas',
         on_delete=models.CASCADE
     )
+
+    class Meta:
+        ordering = ['-marginality_percentage']

@@ -127,7 +127,6 @@ class BinanceCryptoParser(CryptoExchangesParser):
 
     def get_api_answer(self, params):
         """Делает запрос к эндпоинту API Tinfoff."""
-        print(params)
         try:
             response = requests.get(self.endpoint, params)
         except Exception as error:
@@ -180,7 +179,6 @@ class BinanceCryptoParser(CryptoExchangesParser):
             self, bank, new_update, records_to_update, records_to_create
     ):
         for params in self.generate_unique_params():
-            print(1, params['symbol'])
             for value_dict in self.choice_buy_and_sell_or_price(params):
                 price = value_dict.pop('price')
                 self.add_to_bulk_update_or_create(

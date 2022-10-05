@@ -2,9 +2,9 @@
 {% load custom_filters %}
 {% with request.resolver_match.view_name as view_name %}
 <header>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark navbar-active-deepskyblue">
     <div class="container-fluid">
-      <a class="navbar-brand" href="#">Navbar</a>
+      <a class="navbar-brand" href="#">Asset L<span style="color:deepskyblue">∞</span>p</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDarkDropdown" aria-controls="navbarNavDarkDropdown" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -40,8 +40,14 @@
             <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink">
               <li><a class="dropdown-item {% if 'intra_banks_exchanges_via_crypto_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'crypto_exchanges:intra_banks_exchanges_via_crypto_exchanges_best_combinations' %}">Best intrabank exchanges via crypto exchange</a></li>
               <li><a class="dropdown-item {% if 'inter_banks_exchanges_via_crypto_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'crypto_exchanges:inter_banks_exchanges_via_crypto_exchanges_best_combinations' %}">Best interbank exchanges via crypto exchange</a></li>
-              <li><a class="dropdown-item" href="#">Exchange rates through the exchange</a></li>
-              <li><a class="dropdown-item" href="#">The best ways to exchange</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink4" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Looped exchanges
+            </a>
+            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink">
+              <li><a class="dropdown-item {% if 'loop_inter_banks_and_crypto_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'crypto_exchanges:loop_inter_banks_and_crypto_exchanges' %}">Best intrabank looped exchanges via crypto exchange</a></li>
             </ul>
           </li>
         </ul>
