@@ -11,7 +11,7 @@
     The best possible Intra-bank exchanges through crypto-exchanges
   </h1>
   <p>
-    Count rates: {{ crypto_exchange_rates.count }}
+    Count rates: {{ loop_rate.count }}
   </p>
   <p>
     Last update: {{ last_update }}
@@ -89,7 +89,7 @@
             </td>
             <td>{{ crypto_exchange_rate.price|round_up }}</td>
             <td>{{ loop_rate.marginality_percentage|floatformat:2 }} %</td>
-            <td>{{ crypto_exchange_rate.update.updated }}</td>
+            <td>{{ loop_rate.update.updated }}</td>
           </tr>
         {% endwith %}
         {% endwith %}

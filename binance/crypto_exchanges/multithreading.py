@@ -7,6 +7,8 @@ from crypto_exchanges.crypto_exchanges_registration.binance import (
     get_best_crypto_exchanges, get_binance_card_2_crypto_exchanges,
     get_binance_fiat_crypto_list)
 
+from core.models import InfoLoop
+
 
 def first_crypto_exchanges_rates():
     all_p2p_binance_exchanges = Thread(target=get_all_p2p_binance_exchanges)
@@ -32,11 +34,12 @@ def second_crypto_exchanges_rates():
     all_card_2_wallet_2_crypto_exchanges.join()
 
 
-def all_crypto_exchanges():
+def all_crypto_exchanges(new_loop):
     start_time = datetime.now()
     first_crypto_exchanges_rates()
     second_crypto_exchanges_rates()
     get_best_crypto_exchanges()
     get_best_card_2_card_crypto_exchanges()
     duration = datetime.now() - start_time
-    print('all_crypto_exchanges', duration)
+    new_loop.all_crypto_exchanges = duration
+    new_loop.save()

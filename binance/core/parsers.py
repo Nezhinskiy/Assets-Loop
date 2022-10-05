@@ -75,17 +75,20 @@ class BankParser(object):
     def calculates_buy_and_sell_data(self, params) -> tuple[dict, dict]:
         buy_and_sell = self.extract_buy_and_sell_from_json(
             self.get_api_answer(params))
-        buy_data = {
-            'from_fiat': params[self.name_from],
-            'to_fiat': params[self.name_to],
-            'price': buy_and_sell[0]
-        }
-        sell_data = {
-            'from_fiat': params[self.name_to],
-            'to_fiat': params[self.name_from],
-            'price': 1 / buy_and_sell[1]
-        }
-        return buy_data, sell_data
+        try:
+            buy_data = {
+                'from_fiat': params[self.name_from],
+                'to_fiat': params[self.name_to],
+                'price': buy_and_sell[0]
+            }
+            sell_data = {
+                'from_fiat': params[self.name_to],
+                'to_fiat': params[self.name_from],
+                'price': 1 / buy_and_sell[1]
+            }
+            return buy_data, sell_data
+        except BaseException as err:
+            print(err, params, buy_and_sell)
 
     def extract_price_from_json(self, json_data: list) -> float:
         pass

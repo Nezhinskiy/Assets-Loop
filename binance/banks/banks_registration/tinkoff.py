@@ -58,11 +58,18 @@ class TinkoffParser(BankParser):
                                                                        float]:
         payload = json_data['payload']
         rates = payload['rates']
+        buy = sell = None
         for category in rates:
             if category['category'] == 'CUTransfersPremium':
                 buy: float = category.get('buy')
                 sell: float = category.get('sell')
                 return buy, sell
+            if not buy or not sell:
+                for category in rates:
+                    if category['category'] == 'DepositPayments':
+                        buy: float = category.get('buy')
+                        sell: float = category.get('sell')
+                        return buy, sell
 
 
 class IntraTinkoff(IntraBanks):

@@ -11,3 +11,14 @@ class UpdatesModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+class InfoLoop(models.Model):
+    value = models.BooleanField(null=True, blank=True, default=None)
+    updated = models.DateTimeField(
+        'Update date', auto_now_add=True
+    )
+    all_banks_exchanges = models.DurationField(default=timedelta())
+    all_crypto_exchanges = models.DurationField(default=timedelta())
+    all_exchanges = models.DurationField(default=timedelta())
+    # check = models.BooleanField(null=True, blank=True, default=None)
