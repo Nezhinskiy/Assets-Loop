@@ -43,9 +43,9 @@
         {% with bank_rate|get_related_exchange as true_bank_rate %}
           <tr>
             <th scope="row">{{ forloop.counter }}</th>
-            {% if request.path|last_url_path:2 == 'banks' %}<td>{{ bank_rate.bank.name }}</td>{% endif %}
+            {% if request.path|last_url_path:2 == 'banks' %}<td>{{ loop_rate.bank.name }}</td>{% endif %}
             <td>
-            {% if bank_rate.bank_exchange_model == 'BanksExchangeRates' %}
+            {% if not bank_rate or bank_rate.bank_exchange_model == 'BanksExchangeRates' %}
               Intrabank exchange
             {% elif bank_rate.bank_exchange_model == 'BankInvestExchanges' %}
               {{ true_bank_rate.currency_market.name }}
@@ -54,7 +54,9 @@
             {% endif %}
           </td>
           <td>
-            {% if bank_rate.bank_exchange_model == 'IntraBanksNotLoopedExchanges' %}
+            {% if not bank_rate %}
+              {{ crypto_exchange_rate.from_fiat }}
+            {% elif bank_rate.bank_exchange_model == 'IntraBanksNotLoopedExchanges' %}
               {% for currency in true_bank_rate.list_of_transfers %}
                 {{ currency }}
                 {% if not forloop.last %}->{% endif %}
@@ -63,7 +65,7 @@
               {{ bank_rate.from_fiat }} -> {{ bank_rate.to_fiat }}
             {% endif %}
           </td>
-          <td>{{ true_bank_rate.price|round_up }}</td>
+          <td>{% if not bank_rate %}1{% else %}{{ true_bank_rate.price|round_up }}{% endif %}</td>
             {% if request.path|last_url_path:3 == 'crypto_exchanges' %}<td>{{ crypto_exchange_rate.crypto_exchange.name }}</td>{% endif %}
             <td>
               {{ crypto_exchange_rate.from_fiat }} ->

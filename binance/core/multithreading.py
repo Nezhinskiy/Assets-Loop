@@ -9,7 +9,8 @@ from crypto_exchanges.multithreading import all_crypto_exchanges
 
 
 def all_exchanges():
-    value = InfoLoop.objects.latest('value').value
+    first_loop = InfoLoop.objects.latest('value')
+    value = first_loop.value
     while value:
         new_loop = InfoLoop.objects.create(value=True)
         start_time = datetime.now()
@@ -24,3 +25,4 @@ def all_exchanges():
         duration = datetime.now() - start_time
         new_loop.all_exchanges = duration
         new_loop.save()
+    first_loop.delete()

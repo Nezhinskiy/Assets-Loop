@@ -16,7 +16,8 @@ from crypto_exchanges.models import (BestCombinationPaymentChannels,
                                      CryptoExchanges,
                                      InterBankAndCryptoExchanges,
                                      IntraCryptoExchanges,
-                                     P2PCryptoExchangesRates)
+                                     P2PCryptoExchangesRates,
+                                     InterBankAndCryptoExchangesUpdates)
 
 
 class CryptoExchangesRatesList(ListView):
@@ -334,7 +335,9 @@ class LoopInterCombinationsBanksAndCryptoExchanges(CryptoExchangesRatesList):
                      'loop_inter_banks_and_crypto_exchanges.html')
 
     def get_queryset(self):
-        return self.model.objects.all()
+        last_update = InterBankAndCryptoExchangesUpdates.objects.exclude(
+            duration=None).last()
+        return self.model.objects.filter(update=last_update)
 
     def get_context_data(self, **kwargs):
         from crypto_exchanges.crypto_exchanges_config import \
@@ -362,21 +365,24 @@ class LoopInterCombinationsBankAndCryptoExchange(CryptoExchangeRatesList):
         return self.kwargs.get('bank_name').capitalize()
 
     def get_queryset(self):
+        last_update = InterBankAndCryptoExchangesUpdates.objects.exclude(
+            duration=None).last()
         if self.get_crypto_exchange_name() != 'Crypto_exchanges':
             crypto_exchange = CryptoExchanges.objects.get(
                 name=self.get_crypto_exchange_name())
             if self.get_bank_name() != 'Banks':
                 bank = Banks.objects.get(name=self.get_bank_name())
                 return self.model.objects.filter(
-                    crypto_exchange=crypto_exchange, bank=bank
+                    crypto_exchange=crypto_exchange, bank=bank,
+                    update=last_update
                 )
             else:
                 return self.model.objects.filter(
-                    crypto_exchange=crypto_exchange
+                    crypto_exchange=crypto_exchange, update=last_update
                 )
         else:
             bank = Banks.objects.get(name=self.get_bank_name())
-            return self.model.objects.filter(bank=bank)
+            return self.model.objects.filter(bank=bank, update=last_update)
 
     def get_context_data(self, **kwargs):
         from crypto_exchanges.crypto_exchanges_config import \

@@ -25,12 +25,13 @@ from crypto_exchanges.models import (BestCombinationPaymentChannels,
 
 
 def get_related_exchange(meta_exchange):
-    try:
-        model = meta_exchange.payment_channel_model
-    except AttributeError:
-        model = meta_exchange.bank_exchange_model
-    exchange_id = meta_exchange.exchange_id
-    return getattr(sys.modules[__name__], model).objects.get(id=exchange_id)
+    if meta_exchange:
+        try:
+            model = meta_exchange.payment_channel_model
+        except AttributeError:
+            model = meta_exchange.bank_exchange_model
+        exchange_id = meta_exchange.exchange_id
+        return getattr(sys.modules[__name__], model).objects.get(id=exchange_id)
 
 
 class IntraBanks(object):
@@ -438,10 +439,11 @@ class BestTotalCryptoExchanges(object):
             input_bank = Banks.objects.get(name=input_bank_name)
             input_meta_exchanges = BestPaymentChannels.objects.filter(
                 crypto_exchange=self.crypto_exchange, bank=input_bank,
-                trade_type='BUY'
+                trade_type='BUY', price__isnull=False
             )
             output_meta_exchanges = BestPaymentChannels.objects.filter(
-                crypto_exchange=self.crypto_exchange, trade_type='SELL'
+                crypto_exchange=self.crypto_exchange, trade_type='SELL',
+                price__isnull=False, bank=input_bank
             )
             exchanges_list = {}
             for input_meta_exchange, output_meta_exchange in product(
@@ -458,12 +460,6 @@ class BestTotalCryptoExchanges(object):
                     'invalid_params_list')
                 if ((input_asset, output_asset) in invalid_params_list
                         or (output_asset, input_asset) in invalid_params_list):
-                    continue
-                if not input_price or not output_price:
-                    if not input_price:
-                        input_meta_exchange.delete()
-                    if not output_price:
-                        output_meta_exchange.delete()
                     continue
                 exchanges_name = input_fiat + output_fiat
                 if not exchanges_list.get(exchanges_name):
@@ -609,11 +605,14 @@ class InterExchangesCalculate(object):
 
     def add_to_bulk_create(
             self, new_update, records_to_create,
-            crypto_rate, bank_rate, marginality_percentage
+            crypto_rate, bank, bank_rate, marginality_percentage
     ):
-        InterBankAndCryptoExchanges.objects.all().delete()
-        bank = bank_rate.bank
-        list_bank_rate = self.get_list_bank(bank_rate, bank)
+        if bank_rate:
+            bank = bank_rate.bank
+            list_bank_rate = self.get_list_bank(bank_rate, bank)
+        else:
+            bank = bank
+            list_bank_rate = None
         list_crypto_rate = self.get_list_crypt(crypto_rate)
         created_object = InterBankAndCryptoExchanges(
             crypto_exchange=self.crypto_exchange, bank=bank,
@@ -636,15 +635,18 @@ class InterExchangesCalculate(object):
                 to_bank_fiat = crypto_rate.from_fiat
                 from_bank_fiat = crypto_rate.to_fiat
                 if to_bank_fiat == from_bank_fiat:
-                    continue
-                bank_rate = BestBankExchanges.objects.get(
-                    bank=bank, from_fiat=from_bank_fiat, to_fiat=to_bank_fiat
-                )
-                bank_rate_price = bank_rate.price
+                    bank_rate = None
+                    bank_rate_price = 1
+                else:
+                    bank_rate = BestBankExchanges.objects.get(
+                        bank=bank, from_fiat=from_bank_fiat,
+                        to_fiat=to_bank_fiat
+                    )
+                    bank_rate_price = bank_rate.price
                 marginality_percentage = (crypto_rate_price *
                                           bank_rate_price - 1) * 100
                 self.add_to_bulk_create(
-                    new_update, records_to_create, crypto_rate, bank_rate,
+                    new_update, records_to_create, crypto_rate, bank, bank_rate,
                     marginality_percentage
                 )
 

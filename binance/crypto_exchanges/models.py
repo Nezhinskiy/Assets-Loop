@@ -192,6 +192,15 @@ class BestCombinationPaymentChannels(models.Model):
         on_delete=models.CASCADE
     )
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=('from_fiat', 'to_fiat', 'input_bank', 'output_bank',
+                        'crypto_exchange'),
+                name='unique_currency_pair'
+            )
+        ]
+
 
 class InterBankAndCryptoExchangesUpdates(UpdatesModel):
     crypto_exchange = models.ForeignKey(
@@ -218,9 +227,9 @@ class InterBankAndCryptoExchanges(models.Model):
     bank_rate = models.ForeignKey(
         BestBankExchanges,
         related_name='bank_rate_inter_bank_and_crypro_exchanges',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE, null=True, blank=True, default=None
     )
-    list_bank_rate = models.JSONField()
+    list_bank_rate = models.JSONField(null=True, blank=True)
     list_crypto_rate = models.JSONField()
     marginality_percentage = models.FloatField(
         null=True, blank=True, default=None

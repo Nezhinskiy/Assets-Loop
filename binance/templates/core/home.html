@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Internal exchange rates
+{% endblock %}
+
+{% block content %}
+{% load custom_filters %}
+  <h1>
+    Internal exchange rates
+  </h1>
+  <p>
+    Count rates: {{ loops_count }}
+  </p>
+  <p>
+    Last update: {{ last_update }}
+  </p>
+  <table class="table table-striped table-dark">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Status</th>
+      <th scope="col">Duration for all bank exchanges</th>
+      <th scope="col">Duration for all crypto exchanges</th>
+      <th scope="col">Duration for all exchanges</th>
+      <th scope="col">Updated</th>
+    </tr>
+  </thead>
+    {% for info_loop in info_loops %}
+      <tr>
+        <th scope="row">{{ forloop.counter }}</th>
+        {% if not info_loop.value %}
+          <td colspan="4">{% if info_loop.value %}Started{% else %}Stopped{% endif %}</td>
+        {% else %}
+          <td>{% if info_loop.value %}Started{% else %}Stopped{% endif %}</td>
+          <td>{{ info_loop.all_banks_exchanges }}</td>
+          <td>{{ info_loop.all_crypto_exchanges }}</td>
+          <td>{{ info_loop.all_exchanges }}</td>
+        {% endif %}
+        <td>{{ info_loop.updated}}</td>
+      </tr>
+    {% endfor %}
+  </table>
+{% endblock %}
