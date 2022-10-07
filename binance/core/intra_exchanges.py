@@ -439,11 +439,11 @@ class BestTotalCryptoExchanges(object):
             input_bank = Banks.objects.get(name=input_bank_name)
             input_meta_exchanges = BestPaymentChannels.objects.filter(
                 crypto_exchange=self.crypto_exchange, bank=input_bank,
-                trade_type='BUY', price__isnull=False
+                trade_type='BUY'
             )
             output_meta_exchanges = BestPaymentChannels.objects.filter(
                 crypto_exchange=self.crypto_exchange, trade_type='SELL',
-                price__isnull=False, bank=input_bank
+                bank=input_bank
             )
             exchanges_list = {}
             for input_meta_exchange, output_meta_exchange in product(
@@ -452,10 +452,16 @@ class BestTotalCryptoExchanges(object):
                 input_fiat = input_exchange.fiat
                 input_asset = input_exchange.asset
                 input_price = input_exchange.price
+                if not input_price:
+                    input_meta_exchange.delete()
                 output_exchange = get_related_exchange(output_meta_exchange)
                 output_fiat = output_exchange.fiat
                 output_asset = output_exchange.asset
                 output_price = output_exchange.price
+                if not output_price:
+                    output_meta_exchange.delete()
+                if not input_price or not output_price:
+                    continue
                 invalid_params_list = crypto_exchanges_configs.get(
                     'invalid_params_list')
                 if ((input_asset, output_asset) in invalid_params_list
