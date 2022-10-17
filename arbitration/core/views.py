@@ -2,6 +2,7 @@ from core.models import InfoLoop
 from core.multithreading import all_exchanges
 from django.shortcuts import redirect
 from django.views.generic import ListView
+from core.registration import all_registration
 
 
 class InfoLoopList(ListView):
@@ -38,4 +39,9 @@ def start(request):
 def stop(request):
     if InfoLoop.objects.last().value == 1:
         InfoLoop.objects.create(value=False)
+    return redirect('core:home')
+
+
+def registration(request):
+    all_registration()
     return redirect('core:home')

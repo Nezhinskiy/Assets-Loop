@@ -152,10 +152,6 @@ class BankParser(object):
 
     def main(self):
         start_time = datetime.now()
-        if not Banks.objects.filter(name=self.bank_name).exists():
-            binance_name = (self.bank_name if self.bank_name != 'Tinkoff'
-                            else 'TinkoffNew')
-            Banks.objects.create(name=self.bank_name, binance_name=binance_name)
         bank = Banks.objects.get(name=self.bank_name)
         new_update = BanksExchangeRatesUpdates.objects.create(bank=bank)
         records_to_update = []
@@ -394,10 +390,6 @@ class CryptoExchangesParser(BankParser):
 
     def main(self):
         start_time = datetime.now()
-        if not CryptoExchanges.objects.filter(
-                name=self.crypto_exchange_name
-        ).exists():
-            CryptoExchanges.objects.create(name=self.crypto_exchange_name)
         crypto_exchange = CryptoExchanges.objects.get(
             name=self.crypto_exchange_name
         )
