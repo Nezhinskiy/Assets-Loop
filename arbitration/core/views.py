@@ -25,7 +25,11 @@ def get_all_exchanges(request):
 
 
 def start(request):
-    if InfoLoop.objects.last().value == 0:
+    try:
+        if InfoLoop.objects.last().value == 0:
+            InfoLoop.objects.create(value=True)
+            all_exchanges()
+    except AttributeError:
         InfoLoop.objects.create(value=True)
         all_exchanges()
     return redirect('core:home')

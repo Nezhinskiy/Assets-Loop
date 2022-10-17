@@ -11,7 +11,8 @@ from crypto_exchanges.multithreading import all_crypto_exchanges
 def all_exchanges():
     first_loop = InfoLoop.objects.latest('value')
     value = first_loop.value
-    while value:
+    count = 5
+    while value and count:
         new_loop = InfoLoop.objects.create(value=True)
         start_time = datetime.now()
         crypto_exchanges = Thread(target=all_crypto_exchanges, args=(new_loop,))
@@ -22,6 +23,7 @@ def all_exchanges():
         banks_exchanges.join()
         get_inter_exchanges_calculate()
         value = InfoLoop.objects.last().value
+        count -= 1
         duration = datetime.now() - start_time
         new_loop.all_exchanges = duration
         new_loop.save()
