@@ -61,10 +61,12 @@ class BankParser(object):
         try:
             response = requests.get(self.endpoint, params)
         except Exception as error:
-            message = f'Ошибка при запросе к основному API: {error}'
+            message = (f'Ошибка при запросе к основному API: {error}, '
+                       f'params: {params}, endpoint: {self.endpoint}')
             raise Exception(message)
         if response.status_code != HTTPStatus.OK:
-            message = f'Ошибка {response.status_code}, params: {params}, endpoint: {self.endpoint}'
+            message = (f'Ошибка {response.status_code}, params: {params},' 
+                       f' endpoint: {self.endpoint}')
             raise Exception(message)
         return response.json()
 
@@ -881,7 +883,9 @@ class BankInvestParser(object):
                     continue
                 ticker = instrument.get('ticker')
                 if ticker == link_end:
-                    price = instrument['price']
+                    relative_yield = instrument['relativeYield']
+                    pre_price = instrument['price']
+                    price = pre_price + pre_price / 100 * relative_yield
                     break
         if link_end[0:3] == 'KZT':
             price /= 100
