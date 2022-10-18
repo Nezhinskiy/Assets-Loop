@@ -2,10 +2,8 @@ from multiprocessing import cpu_count
 
 
 def max_workers():
-    return cpu_count()
+    return cpu_count() * 2 + 1
 
 
-TIMEOUT = 300
+TIMEOUT = 600
 workers = max_workers()
-max_requests = 1000
-worker_class = 'gevent'
