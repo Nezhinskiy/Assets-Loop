@@ -1,6 +1,7 @@
 from django.urls import path
 
-from core.views import get_all_exchanges, start, stop, InfoLoopList, registration
+from core.views import (InfoLoopList, get_all_exchanges, registration, start,
+                        stop)
 
 app_name = 'core'
 

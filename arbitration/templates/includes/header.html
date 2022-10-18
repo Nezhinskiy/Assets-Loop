@@ -11,12 +11,11 @@
       <div class="collapse navbar-collapse" id="navbarNavDarkDropdown">
         <ul class="navbar-nav">
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle {% if 'internal_exchanges' == request.path|last_url_path:1 or 'internal_triple_exchanges' == request.path|last_url_path:1 or 'currency_markets' == request.path|last_url_path:1 or 'best_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <a class="nav-link dropdown-toggle {% if 'internal_exchanges' == request.path|last_url_path:1 or 'currency_markets' == request.path|last_url_path:1 or 'best_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
               Banks exchanges
             </a>
             <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink">
               <li><a class="dropdown-item {% if 'internal_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'banks:banks_internal_exchanges' %}">Internal exchange rates</a></li>
-              <li><a class="dropdown-item {% if 'internal_triple_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'banks:banks_internal_triple_exchanges' %}">Internal triple exchange rates</a></li>
               <li><a class="dropdown-item {% if 'currency_markets' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'banks:banks_currency_market_exchanges' %}">Exchange rates through the exchange</a></li>
               <li><a class="dropdown-item {% if 'best_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'banks:banks_best_exchanges' %}">The best ways to exchange</a></li>
             </ul>

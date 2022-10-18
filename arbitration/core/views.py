@@ -1,7 +1,8 @@
-from core.models import InfoLoop
-from core.multithreading import all_exchanges
 from django.shortcuts import redirect
 from django.views.generic import ListView
+
+from core.models import InfoLoop
+from core.multithreading import all_exchanges
 from core.registration import all_registration
 
 

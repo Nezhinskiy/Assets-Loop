@@ -15,9 +15,9 @@ from crypto_exchanges.models import (BestCombinationPaymentChannels,
                                      Card2Wallet2CryptoExchanges,
                                      CryptoExchanges,
                                      InterBankAndCryptoExchanges,
+                                     InterBankAndCryptoExchangesUpdates,
                                      IntraCryptoExchanges,
-                                     P2PCryptoExchangesRates,
-                                     InterBankAndCryptoExchangesUpdates)
+                                     P2PCryptoExchangesRates)
 
 
 class CryptoExchangesRatesList(ListView):

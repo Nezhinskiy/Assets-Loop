@@ -47,38 +47,6 @@ class IntraBanksExchanges(models.Model):
     )
 
 
-class IntraBanksNotLoopedExchangesUpdates(UpdatesModel):
-    bank = models.ForeignKey(
-        Banks, related_name='bank_exchanges_not_looped_update',
-        on_delete=models.CASCADE
-    )
-
-
-class IntraBanksNotLoopedExchanges(models.Model):
-    bank = models.ForeignKey(
-        Banks, related_name='bank_exchanges_not_looped',
-        on_delete=models.CASCADE
-    )
-    list_of_transfers = models.JSONField()
-    from_fiat = models.CharField(max_length=3)
-    to_fiat = models.CharField(max_length=3)
-    price = models.FloatField(null=True, blank=True, default=None)
-    marginality_percentage = models.FloatField(
-        null=True, blank=True, default=None
-    )
-    analogous_exchange = models.ForeignKey(
-        BanksExchangeRates, related_name='not_looped', null=True,
-        on_delete=models.SET_NULL
-    )
-    update = models.ForeignKey(
-        IntraBanksNotLoopedExchangesUpdates, related_name='datas',
-        on_delete=models.CASCADE
-    )
-
-    class Meta:
-        ordering = ['-marginality_percentage']
-
-
 class CurrencyMarkets(models.Model):
     name = models.CharField(max_length=15, null=True, blank=True)
 

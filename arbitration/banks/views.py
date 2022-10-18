@@ -7,14 +7,12 @@ from django.views.generic import ListView
 
 from banks.banks_config import BANKS_CONFIG
 from banks.banks_registration.tinkoff import (get_all_tinkoff,
-                                              get_all_tinkoff_exchanges,
-                                              get_tinkoff_not_looped)
-from banks.banks_registration.wise import (get_all_wise_exchanges,
-                                           get_wise_not_looped)
+                                              get_all_tinkoff_exchanges)
+from banks.banks_registration.wise import get_all_wise_exchanges
 from banks.currency_markets_registration.tinkoff_invest import \
     get_tinkoff_invest_exchanges
 from banks.models import (BankInvestExchanges, Banks, BanksExchangeRates,
-                          BestBankExchanges, IntraBanksNotLoopedExchanges)
+                          BestBankExchanges)
 from banks.multithreading import all_banks_exchanges
 from core.django_shortcuts.shurtcuts import get_queryset_or_404
 from core.intra_exchanges import BestBankIntraExchanges
@@ -68,16 +66,6 @@ class BanksInternalExchange(BanksRatesList):
     template_name = 'banks/internal_exchange.html'
 
 
-class BankInternalTripleExchange(BankRatesList):
-    model = IntraBanksNotLoopedExchanges
-    template_name = 'banks/internal_triple_exchange.html'
-
-
-class BanksInternalTripleExchange(BanksRatesList):
-    model = IntraBanksNotLoopedExchanges
-    template_name = 'banks/internal_triple_exchange.html'
-
-
 class BankInvestExchange(BankRatesList):
     template_name = 'banks/currency_market_exchanges.html'
     model = BankInvestExchanges
@@ -104,14 +92,6 @@ class BankBestExchange(BankRatesList):
 class BanksBestExchange(BanksRatesList):
     model = BestBankExchanges
     template_name = 'banks/best_exchange.html'
-
-
-def tinkoff_not_looped(request):
-    return get_tinkoff_not_looped()
-
-
-def wise_not_looped(request):
-    return get_wise_not_looped()
 
 
 def tinkoff(request):
