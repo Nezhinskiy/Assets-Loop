@@ -81,6 +81,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'arbitration.wsgi.application'
 
+MULTITHREADING_MODE = os.getenv("MULTITHREADING_MODE", "True") == "True"
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases

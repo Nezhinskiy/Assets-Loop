@@ -5,6 +5,10 @@ from core.models import InfoLoop
 from core.multithreading import all_exchanges
 from core.registration import all_registration
 
+from core.singlethreading import all_exchanges_singlethreading
+
+from arbitration.settings import MULTITHREADING_MODE
+
 
 class InfoLoopList(ListView):
     model = InfoLoop
@@ -30,10 +34,16 @@ def start(request):
     try:
         if InfoLoop.objects.last().value == 0:
             InfoLoop.objects.create(value=True)
-            all_exchanges()
+            if MULTITHREADING_MODE:
+                all_exchanges()
+            else:
+                all_exchanges_singlethreading()
     except AttributeError:
         InfoLoop.objects.create(value=True)
-        all_exchanges()
+        if MULTITHREADING_MODE:
+            all_exchanges()
+        else:
+            all_exchanges_singlethreading()
     return redirect('core:home')
 
 
