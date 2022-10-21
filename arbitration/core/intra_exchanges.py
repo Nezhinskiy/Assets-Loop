@@ -143,10 +143,11 @@ class IntraBanks(object):
 
 
 class BestCryptoExchanges(object):
-    def __init__(self, crypto_exchange_name):
-        self.crypto_exchange_name = crypto_exchange_name
+    crypto_exchange_name = None
+
+    def __init__(self):
         self.crypto_exchange = CryptoExchanges.objects.get(
-            name=crypto_exchange_name
+            name=self.crypto_exchange_name
         )
 
     def add_to_bulk_update_or_create(
@@ -254,10 +255,11 @@ class BestCryptoExchanges(object):
 
 
 class BestTotalCryptoExchanges(object):
-    def __init__(self, crypto_exchange_name):
-        self.crypto_exchange_name = crypto_exchange_name
+    crypto_exchange_name = None
+
+    def __init__(self):
         self.crypto_exchange = CryptoExchanges.objects.get(
-            name=crypto_exchange_name
+            name=self.crypto_exchange_name
         )
 
     def add_to_bulk_update_or_create(
@@ -388,10 +390,11 @@ class BestTotalCryptoExchanges(object):
 
 
 class InterExchangesCalculate(object):
-    def __init__(self, crypto_exchange_name):
-        self.crypto_exchange_name = crypto_exchange_name
+    crypto_exchange_name = None
+
+    def __init__(self):
         self.crypto_exchange = CryptoExchanges.objects.get(
-            name=crypto_exchange_name
+            name=self.crypto_exchange_name
         )
 
     def get_list_crypt(self, crypto_rate):

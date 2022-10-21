@@ -119,6 +119,14 @@ class BinanceP2PParser(P2PParser):
         return float(price)
 
 
+class TinkoffBinanceP2PParser(BinanceP2PParser):
+    bank = 'Tinkoff'
+
+
+class WiseBinanceP2PParser(BinanceP2PParser):
+    bank = 'Wise'
+
+
 class BinanceCryptoParser(CryptoExchangesParser):
     crypto_exchange_name = CRYPTO_EXCHANGES_NAME
     fiats = ASSETS
@@ -199,6 +207,21 @@ class BinanceListsFiatCryptoParser(ListsFiatCryptoParser):
     endpoint_buy = 'https://www.binance.com/bapi/fiat/v2/friendly/ocbs/buy/list-crypto'
 
 
+class BinanceBestCryptoExchanges(BestCryptoExchanges):
+    crypto_exchange_name = CRYPTO_EXCHANGES_NAME
+
+
+class BinanceCard2Wallet2CryptoExchangesParser(Card2Wallet2CryptoExchangesParser):
+    crypto_exchange_name = CRYPTO_EXCHANGES_NAME
+
+
+class BinanceBestTotalCryptoExchanges(BestTotalCryptoExchanges):
+    crypto_exchange_name = CRYPTO_EXCHANGES_NAME
+
+class BinanceInterExchangesCalculate(InterExchangesCalculate):
+    crypto_exchange_name = CRYPTO_EXCHANGES_NAME
+
+
 def get_binance_card_2_crypto_exchanges():
     binance_card_2_crypto_exchanges_parser = BinanceCard2CryptoExchangesParser()
     message = binance_card_2_crypto_exchanges_parser.main()
@@ -224,28 +247,25 @@ def get_all_p2p_binance_exchanges():
 
 
 def get_all_card_2_wallet_2_crypto_exchanges():
-    card_2_wallet_2_crypto_exchanges_parser = Card2Wallet2CryptoExchangesParser(
-        CRYPTO_EXCHANGES_NAME)
+    card_2_wallet_2_crypto_exchanges_parser = BinanceCard2Wallet2CryptoExchangesParser()
     message = card_2_wallet_2_crypto_exchanges_parser.main()
     return message
 
 
 def get_best_crypto_exchanges():
-    best_intra_crypto_exchanges = BestCryptoExchanges(CRYPTO_EXCHANGES_NAME)
+    best_intra_crypto_exchanges = BinanceBestCryptoExchanges
     message = best_intra_crypto_exchanges.main()
     return message
 
 
 def get_best_card_2_card_crypto_exchanges():
-    best_intra_card_2_card_crypto_exchanges = BestTotalCryptoExchanges(
-        CRYPTO_EXCHANGES_NAME
-    )
+    best_intra_card_2_card_crypto_exchanges = BinanceBestTotalCryptoExchanges()
     message = best_intra_card_2_card_crypto_exchanges.main()
     return message
 
 
 def get_inter_exchanges_calculate():
-    inter_exchanges_calculate = InterExchangesCalculate(CRYPTO_EXCHANGES_NAME)
+    inter_exchanges_calculate = BinanceInterExchangesCalculate()
     message = inter_exchanges_calculate.main()
     return message
 
