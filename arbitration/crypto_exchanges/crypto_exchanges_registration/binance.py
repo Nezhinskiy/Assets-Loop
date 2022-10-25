@@ -9,7 +9,7 @@ import requests
 from banks.banks_config import BANKS_CONFIG
 from core.intra_exchanges import (BestCryptoExchanges,
                                   BestTotalCryptoExchanges,
-                                  InterExchangesCalculate)
+                                  InterExchangesCalculate, InterExchangesCalculated)
 from core.parsers import (Card2CryptoExchangesParser,
                           Card2Wallet2CryptoExchangesParser,
                           CryptoExchangesParser, ListsFiatCryptoParser,
@@ -91,15 +91,15 @@ class BinanceP2PParser(P2PParser):
     page = 1
     rows = 1
 
-    def create_body(self, asset, bank, fiat, pay_types):
+    def create_body(self, asset, fiat, pay_types):
         return {
             "page": self.page,
             "rows": self.rows,
             "publisherType": None,
             "asset": asset,
-            "tradeType": bank,
+            "tradeType": pay_types,
             "fiat": fiat,
-            "payTypes": [pay_types]
+            "payTypes": [self.bank.binance_name]
         }
 
     def create_headers(self, body):
@@ -111,20 +111,18 @@ class BinanceP2PParser(P2PParser):
     def extract_price_from_json(self, json_data: dict) -> float | None:
         data = json_data.get('data')
         if len(data) == 0:
-            price = None
-            return price
+            return None
         internal_data = data[0]
         adv = internal_data.get('adv')
-        price = adv.get('price')
-        return float(price)
+        return float(adv.get('price'))
 
 
 class TinkoffBinanceP2PParser(BinanceP2PParser):
-    bank = 'Tinkoff'
+    bank_name = 'Tinkoff'
 
 
 class WiseBinanceP2PParser(BinanceP2PParser):
-    bank = 'Wise'
+    bank_name = 'Wise'
 
 
 class BinanceCryptoParser(CryptoExchangesParser):
@@ -218,8 +216,20 @@ class BinanceCard2Wallet2CryptoExchangesParser(Card2Wallet2CryptoExchangesParser
 class BinanceBestTotalCryptoExchanges(BestTotalCryptoExchanges):
     crypto_exchange_name = CRYPTO_EXCHANGES_NAME
 
+
 class BinanceInterExchangesCalculate(InterExchangesCalculate):
     crypto_exchange_name = CRYPTO_EXCHANGES_NAME
+
+
+class SimplBinanceTinkoffInterExchangesCalculate(InterExchangesCalculated):
+    crypto_exchange_name = CRYPTO_EXCHANGES_NAME
+    bank_name = 'Wise'
+    simpl = True
+
+
+def get_simpl_binance_tinkoff_inter_exchanges_calculate():
+    simpl_binance_tinkoff_inter_exchanges_calculate = SimplBinanceTinkoffInterExchangesCalculate()
+    simpl_binance_tinkoff_inter_exchanges_calculate.main()
 
 
 def get_binance_card_2_crypto_exchanges():

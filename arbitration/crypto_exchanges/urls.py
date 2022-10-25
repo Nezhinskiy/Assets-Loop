@@ -14,7 +14,11 @@ from crypto_exchanges.views import (
     LoopInterCombinationsBanksAndCryptoExchanges, all,
     binance_best_card_2_card_crypto_exchanges, binance_best_crypto_exchanges,
     binance_card_2_crypto_exchanges, binance_crypto, binance_fiat_crypto_list,
-    binance_inter_exchanges_calculate, card_2_wallet_2_crypto, p2p_binance)
+    binance_inter_exchanges_calculate, card_2_wallet_2_crypto, p2p_binance,
+    simpl_binance_tinkoff_inter_exchanges_calculate)
+
+from crypto_exchanges.views import get_wise_p2p_binance_exchanges, \
+    get_tinkoff_p2p_binance_exchanges
 
 app_name = 'crypto_exchanges'
 
@@ -73,7 +77,8 @@ urlpatterns = [
          'loop_banks_and_crypto_exchanges/',
          LoopInterCombinationsBankAndCryptoExchange.as_view(),
          name='loop_inter_bank_and_crypto_exchange'),
-    path('1/', p2p_binance, name="p2p_binance"),
+    path('1/', get_tinkoff_p2p_binance_exchanges, name="get_tinkoff_p2p_binance_exchanges"),
+    path('2/', get_wise_p2p_binance_exchanges, name="get_wise_p2p_binance_exchanges"),
     path('100/', binance_crypto, name="binance_crypto"),
     path('200/', card_2_wallet_2_crypto, name="binance_card_2_wallet_2_crypto"),
     path('300/', binance_fiat_crypto_list, name="binance_fiat_crypto_list"),
@@ -85,5 +90,7 @@ urlpatterns = [
          name="binance_best_card_2_card_crypto_exchanges"),
     path('700/', binance_inter_exchanges_calculate,
          name="binance_inter_exchanges_calculate"),
-    path('1000/', all, name="all")
+    path('1000/', all, name="all"),
+    path('simpltin/', simpl_binance_tinkoff_inter_exchanges_calculate,
+         name="simpl_binance_tinkoff_inter_exchanges_calculate")
 ]

@@ -8,30 +8,6 @@ class CryptoExchanges(models.Model):
     name = models.CharField(max_length=10, null=True, blank=True)
 
 
-class P2PCryptoExchangesRatesUpdates(UpdatesModel):
-    crypto_exchange = models.ForeignKey(
-        CryptoExchanges, related_name='p2p_rates_update',
-        on_delete=models.CASCADE
-    )
-
-
-class P2PCryptoExchangesRates(models.Model):
-    crypto_exchange = models.ForeignKey(
-        CryptoExchanges, related_name='p2p_rates', on_delete=models.CASCADE
-    )
-    asset = models.CharField(max_length=4)
-    fiat = models.CharField(max_length=3)
-    trade_type = models.CharField(max_length=4)
-    bank = models.ForeignKey(
-        Banks, related_name='p2p_rates', on_delete=models.CASCADE
-    )
-    price = models.FloatField(null=True, blank=True, default=None)
-    update = models.ForeignKey(
-        P2PCryptoExchangesRatesUpdates, related_name='datas',
-        on_delete=models.CASCADE
-    )
-
-
 class IntraCryptoExchangesUpdates(UpdatesModel):
     crypto_exchange = models.ForeignKey(
         CryptoExchanges, related_name='crypto_exchanges_update',
@@ -49,6 +25,44 @@ class IntraCryptoExchanges(models.Model):
     price = models.FloatField(null=True, blank=True, default=None)
     update = models.ForeignKey(
         IntraCryptoExchangesUpdates, related_name='datas',
+        on_delete=models.CASCADE
+    )
+
+
+class P2PCryptoExchangesRatesUpdates(UpdatesModel):
+    crypto_exchange = models.ForeignKey(
+        CryptoExchanges, related_name='p2p_rates_update',
+        on_delete=models.CASCADE
+    )
+    bank = models.ForeignKey(
+        Banks, related_name='p2p_rates_update',
+        blank=True, null=True, on_delete=models.CASCADE
+    )
+    payment_channel = models.CharField(max_length=30, null=True, blank=True)
+
+
+class P2PCryptoExchangesRates(models.Model):
+    crypto_exchange = models.ForeignKey(
+        CryptoExchanges, related_name='p2p_rates', on_delete=models.CASCADE
+    )
+    asset = models.CharField(max_length=4)
+    fiat = models.CharField(max_length=3)
+    trade_type = models.CharField(max_length=4)
+    bank = models.ForeignKey(
+        Banks, related_name='p2p_rates', on_delete=models.CASCADE
+    )
+    price = models.FloatField(null=True, blank=True, default=None)
+    payment_channel = models.CharField(max_length=30, null=True, blank=True)
+    transaction_method = models.CharField(max_length=35, null=True, blank=True)
+    transaction_fee = models.FloatField(null=True, blank=True, default=None)
+    pre_price = models.FloatField(null=True, blank=True, default=None)
+    intra_crypto_exchange = models.ForeignKey(
+        IntraCryptoExchanges,
+        related_name='card_2_wallet_2_crypto_exchange_rates',
+        blank=True, null=True, on_delete=models.CASCADE
+    )
+    update = models.ForeignKey(
+        P2PCryptoExchangesRatesUpdates, related_name='datas',
         on_delete=models.CASCADE
     )
 
@@ -241,3 +255,64 @@ class InterBankAndCryptoExchanges(models.Model):
 
     class Meta:
         ordering = ['-marginality_percentage']
+
+
+class InterExchangesUpdates(UpdatesModel):
+    crypto_exchange = models.ForeignKey(
+        CryptoExchanges,
+        related_name='inter_exchanges_update',
+        on_delete=models.CASCADE
+    )
+    bank = models.ForeignKey(
+        Banks,
+        related_name='inter_exchanges_update',
+        on_delete=models.CASCADE
+    )
+
+
+class InterExchanges(models.Model):
+    crypto_exchange = models.ForeignKey(
+        CryptoExchanges, related_name='inter_exchanges',
+        on_delete=models.CASCADE
+    )
+    input_bank = models.ForeignKey(
+        Banks, related_name='input_bank_inter_exchanges',
+        on_delete=models.CASCADE
+    )
+    output_bank = models.ForeignKey(
+        Banks, related_name='output_bank_inter_exchanges',
+        on_delete=models.CASCADE
+    )
+    input_crypto_exchange = models.ForeignKey(
+        P2PCryptoExchangesRates,
+        related_name='input_crypto_exchange_inter_exchanges',
+        on_delete=models.CASCADE
+    )
+    interim_crypto_exchange = models.ForeignKey(
+        IntraCryptoExchanges,
+        related_name='interim_exchange_best_inter_exchanges',
+        blank=True, null=True, on_delete=models.CASCADE
+    )
+    output_crypto_exchange = models.ForeignKey(
+        P2PCryptoExchangesRates,
+        related_name='output_crypto_exchange_inter_exchanges',
+        on_delete=models.CASCADE
+    )
+    update = models.ForeignKey(
+        InterExchangesUpdates, related_name='datas',
+        on_delete=models.CASCADE
+    )
+
+
+class RelatedMarginalityPercentages(models.Model):
+    updated = models.DateTimeField(
+        'Update date', auto_now_add=True, db_index=True
+    )
+    marginality_percentage = models.FloatField(
+        null=True, blank=True, default=None
+    )
+    inter_exchange = models.ForeignKey(
+        InterExchanges,
+        related_name='marginality_percentages',
+        on_delete=models.CASCADE
+    )

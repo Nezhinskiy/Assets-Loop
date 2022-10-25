@@ -19,7 +19,10 @@ from crypto_exchanges.models import (BestCombinationPaymentChannels,
                                      InterBankAndCryptoExchanges,
                                      InterBankAndCryptoExchangesUpdates,
                                      IntraCryptoExchanges,
-                                     P2PCryptoExchangesRates)
+                                     P2PCryptoExchangesRates,
+                                     InterExchangesUpdates,
+                                     InterExchanges,
+                                     RelatedMarginalityPercentages)
 
 
 def get_related_exchange(meta_exchange):
@@ -29,7 +32,9 @@ def get_related_exchange(meta_exchange):
         except AttributeError:
             model = meta_exchange.bank_exchange_model
         exchange_id = meta_exchange.exchange_id
-        return getattr(sys.modules[__name__], model).objects.get(id=exchange_id)
+        return getattr(sys.modules[__name__], model).objects.get(
+            id=exchange_id
+        )
 
 
 class IntraBanks(object):
@@ -55,7 +60,9 @@ class IntraBanks(object):
         return iteration_combinations
 
     def create_marginality_percentage(self, combination, all_exchanges):
-        iteration_combinations = self.create_iteration_combinations(combination)
+        iteration_combinations = self.create_iteration_combinations(
+            combination
+        )
         iteration_prices = []
         for fiat_pair in iteration_combinations:
             fiat_pair_exchange = all_exchanges.get(from_fiat=fiat_pair[0],
@@ -114,8 +121,9 @@ class IntraBanks(object):
                     combination = list(body_combination)
                     combination.insert(0, initial_end_fiat)
                     combination.append(initial_end_fiat)
-                    marginality_percentage = self.create_marginality_percentage(
-                        combination, all_exchanges
+                    marginality_percentage = (
+                        self.create_marginality_percentage(combination,
+                                                           all_exchanges)
                     )
                     self.add_to_bulk_update_or_create(
                         bank, new_update, records_to_update, records_to_create,
@@ -280,8 +288,10 @@ class BestTotalCryptoExchanges(object):
         )
         if target_object.exists():
             updated_object = target_object.get()
-            if (updated_object.input_exchange == input_meta_exchange
-                    and updated_object.output_exchange == output_meta_exchange):
+            if (
+                    updated_object.input_exchange == input_meta_exchange
+                    and updated_object.output_exchange == output_meta_exchange
+            ):
                 if updated_object.price == best_total_price:
                     return
                 new_update = updated_object.update
@@ -525,8 +535,8 @@ class InterExchangesCalculate(object):
                 marginality_percentage = (crypto_rate_price *
                                           bank_rate_price - 1) * 100
                 self.add_to_bulk_create(
-                    new_update, records_to_create, crypto_rate, bank, bank_rate,
-                    marginality_percentage
+                    new_update, records_to_create, crypto_rate, bank,
+                    bank_rate, marginality_percentage
                 )
 
     def main(self):
@@ -633,6 +643,187 @@ class BestBankIntraExchanges(object):
             records_to_update,
             ['price', 'bank_exchange_model', 'exchange_id', 'update']
         )
+        duration = datetime.now() - start_time
+        new_update.duration = duration
+        new_update.save()
+
+
+class InterExchangesCalculated(object):
+    crypto_exchange_name = None
+    bank_name = None
+    simpl = None
+
+    def __init__(self):
+        self.crypto_exchange = CryptoExchanges.objects.get(
+            name=self.crypto_exchange_name
+        )
+        self.bank = Banks.objects.get(name=self.bank_name)
+
+    def get_inter_exchanges(self, new_update, records_to_create):
+        if self.simpl:
+            self.get_simpl_inter_exchanges(new_update, records_to_create)
+        else:
+            pass
+
+    def get_complex_interbank_exchange(self, new_update, records_to_create):
+        from banks.banks_config import BANKS_CONFIG
+        banks = BANKS_CONFIG.keys()
+        input_bank_config = BANKS_CONFIG.get(self.bank_name)
+        all_input_fiats = input_bank_config.get('currencies')
+        for output_bank_name in banks:
+            output_bank = Banks.objects.get(name=output_bank_name)
+            output_bank_config = BANKS_CONFIG.get(output_bank_name)
+            all_output_fiats = output_bank_config.get('currencies')
+            for fiat in all_input_fiats:
+                if fiat not in all_output_fiats:
+                    continue
+                input_crypto_exchanges = (
+                    P2PCryptoExchangesRates.objects.filter(
+                        crypto_exchange=self.crypto_exchange, bank=self.bank,
+                        trade_type='BUY', fiat=fiat, price__isnull=False
+                    )
+                )
+                output_crypto_exchanges = (
+                    P2PCryptoExchangesRates.objects.filter(
+                        crypto_exchange=self.crypto_exchange, bank=output_bank,
+                        trade_type='SELL', fiat=fiat, price__isnull=False
+                    )
+                )
+                for input_crypto_exchange, output_crypto_exchange in product(
+                        input_crypto_exchanges, output_crypto_exchanges
+                ):
+                    if (input_crypto_exchange.asset
+                            != output_crypto_exchange.asset):
+                        target_interim_exchange = (
+                            IntraCryptoExchanges.objects.filter(
+                                crypto_exchange=self.crypto_exchange,
+                                from_asset=input_crypto_exchange.asset,
+                                to_asset=output_crypto_exchange.asset
+                            )
+                        )
+                        if target_interim_exchange.exists():
+                            interim_crypto_exchange = (
+                                target_interim_exchange.get()
+                            )
+                        else:
+                            print('Нет такого среднего обмена_'
+                                  + input_crypto_exchange.asset + '_'
+                                  + output_crypto_exchange.asset)
+                            continue
+                    else:
+                        interim_crypto_exchange = None
+                    self.add_to_update_or_create_and_bulk_create(
+                        new_update, records_to_create, output_bank,
+                        input_crypto_exchange, interim_crypto_exchange,
+                        output_crypto_exchange
+                    )
+
+
+    def get_simpl_inter_exchanges(self, new_update, records_to_create):
+        from banks.banks_config import BANKS_CONFIG
+        banks = BANKS_CONFIG.keys()
+        input_bank_config = BANKS_CONFIG.get(self.bank_name)
+        all_input_fiats = input_bank_config.get('currencies')
+        for output_bank_name in banks:
+            output_bank = Banks.objects.get(name=output_bank_name)
+            output_bank_config = BANKS_CONFIG.get(output_bank_name)
+            all_output_fiats = output_bank_config.get('currencies')
+            for fiat in all_input_fiats:
+                if fiat not in all_output_fiats:
+                    continue
+                input_crypto_exchanges = (
+                    P2PCryptoExchangesRates.objects.filter(
+                        crypto_exchange=self.crypto_exchange, bank=self.bank,
+                        trade_type='BUY', fiat=fiat, price__isnull=False
+                    )
+                )
+                output_crypto_exchanges = (
+                    P2PCryptoExchangesRates.objects.filter(
+                        crypto_exchange=self.crypto_exchange, bank=output_bank,
+                        trade_type='SELL', fiat=fiat, price__isnull=False
+                    )
+                )
+
+                for input_crypto_exchange, output_crypto_exchange in product(
+                    input_crypto_exchanges, output_crypto_exchanges
+                ):
+
+                    if (input_crypto_exchange.asset
+                            != output_crypto_exchange.asset):
+                        target_interim_exchange = (
+                            IntraCryptoExchanges.objects.filter(
+                                crypto_exchange=self.crypto_exchange,
+                                from_asset=input_crypto_exchange.asset,
+                                to_asset=output_crypto_exchange.asset
+                            )
+                        )
+                        if target_interim_exchange.exists():
+                            interim_crypto_exchange = (
+                                target_interim_exchange.get()
+                            )
+                        else:
+                            # print('Нет такого среднего обмена_'
+                            #       + input_crypto_exchange.asset + '_'
+                            #       + output_crypto_exchange.asset)
+                            continue
+                    else:
+                        interim_crypto_exchange = None
+                    marginality_percentage = (
+                        self.calculate_marginality_percentage(
+                            input_crypto_exchange, interim_crypto_exchange,
+                            output_crypto_exchange
+                        )
+                    )
+
+                    self.add_to_update_or_create_and_bulk_create(
+                        new_update, records_to_create, output_bank,
+                        input_crypto_exchange, interim_crypto_exchange,
+                        output_crypto_exchange, marginality_percentage
+                    )
+
+    def calculate_marginality_percentage(
+            self, input_crypto_exchange, interim_crypto_exchange,
+            output_crypto_exchange
+    ):
+        interim_crypto_exchange_price = (
+            interim_crypto_exchange.price if interim_crypto_exchange else 1
+        )
+        marginality_percentage = (
+            input_crypto_exchange.price * interim_crypto_exchange_price
+            * output_crypto_exchange.price - 1
+        ) * 100
+
+        return marginality_percentage
+
+    def add_to_update_or_create_and_bulk_create(
+            self, new_update, records_to_create, output_bank,
+            input_crypto_exchange, interim_crypto_exchange,
+            output_crypto_exchange, marginality_percentage
+    ):
+        inter_exchange = InterExchanges.objects.update_or_create(
+                crypto_exchange=self.crypto_exchange, input_bank=self.bank,
+                output_bank=output_bank,
+                input_crypto_exchange=input_crypto_exchange,
+                interim_crypto_exchange=interim_crypto_exchange,
+                output_crypto_exchange=output_crypto_exchange,
+                defaults={'update': new_update}
+            )
+
+        inter_exchange = inter_exchange[0] or inter_exchange[1]
+        related_marginality_percentage = RelatedMarginalityPercentages(
+            marginality_percentage=marginality_percentage,
+            inter_exchange=inter_exchange
+        )
+        records_to_create.append(related_marginality_percentage)
+
+    def main(self):
+        start_time = datetime.now()
+        new_update = InterExchangesUpdates.objects.create(
+            crypto_exchange=self.crypto_exchange, bank=self.bank
+        )
+        records_to_create = []
+        self.get_simpl_inter_exchanges(new_update, records_to_create)
+        RelatedMarginalityPercentages.objects.bulk_create(records_to_create)
         duration = datetime.now() - start_time
         new_update.duration = duration
         new_update.save()

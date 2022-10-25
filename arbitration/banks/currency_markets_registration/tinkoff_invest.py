@@ -16,13 +16,6 @@ class TinkoffCurrencyMarketParser(BankInvestParser):
 
 
 def get_tinkoff_invest_exchanges():
-    endpoint = ('https://www.tinkoff.ru/api/invest-gw/'
-                'social/post/feed/v1/post/instrument/')
-    link_ends = (
-        'USDRUB', 'EURRUB'
-    ) # 'GBPRUB', 'HKDRUB', 'TRYRUB', 'KZTRUB_TOM', 'BYNRUB_TOM', 'AMDRUB_TOM' # 'CHFRUB', 'JPYRUB',
-    tinkoff_invest_parser = BankInvestParser(
-        CURRENCY_MARKET_NAME, endpoint, link_ends
-    )
+    tinkoff_invest_parser = TinkoffCurrencyMarketParser()
     message = tinkoff_invest_parser.main()
     return message

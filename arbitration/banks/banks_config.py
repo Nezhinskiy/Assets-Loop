@@ -25,7 +25,7 @@ BANKS_CONFIG = {
         'intra_exchange': IntraWise,
         'currencies': WISE_CURRENCIES,
         'payment_channels': (
-            Card2CryptoExchanges, Card2Wallet2CryptoExchanges,
+            'Card2CryptoExchange', 'Card2Wallet2CryptoExchange',
             P2PCryptoExchangesRates
         ),
         'transaction_methods': (

@@ -9,7 +9,7 @@ from crypto_exchanges.crypto_exchanges_registration.binance import (
     get_all_card_2_wallet_2_crypto_exchanges, get_all_p2p_binance_exchanges,
     get_best_card_2_card_crypto_exchanges, get_best_crypto_exchanges,
     get_binance_card_2_crypto_exchanges, get_binance_fiat_crypto_list,
-    get_inter_exchanges_calculate)
+    get_inter_exchanges_calculate, get_simpl_binance_tinkoff_inter_exchanges_calculate)
 from crypto_exchanges.models import (BestCombinationPaymentChannels,
                                      BestPaymentChannels, Card2CryptoExchanges,
                                      Card2Wallet2CryptoExchanges,
@@ -18,6 +18,9 @@ from crypto_exchanges.models import (BestCombinationPaymentChannels,
                                      InterBankAndCryptoExchangesUpdates,
                                      IntraCryptoExchanges,
                                      P2PCryptoExchangesRates)
+
+from crypto_exchanges.crypto_exchanges_registration.binance import \
+    TinkoffBinanceP2PParser, WiseBinanceP2PParser
 
 
 class CryptoExchangesRatesList(ListView):
@@ -434,3 +437,17 @@ def binance_inter_exchanges_calculate(request):
 
 def all(request):
     return get_all()
+
+
+def simpl_binance_tinkoff_inter_exchanges_calculate(request):
+    return get_simpl_binance_tinkoff_inter_exchanges_calculate()
+
+
+def get_tinkoff_p2p_binance_exchanges(request):
+    binance_parser = TinkoffBinanceP2PParser()
+    binance_parser.main()
+
+
+def get_wise_p2p_binance_exchanges(request):
+    binance_parser = WiseBinanceP2PParser()
+    binance_parser.main()

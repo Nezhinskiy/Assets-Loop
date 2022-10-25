@@ -23,8 +23,7 @@ CRYPTO_EXCHANGES_CONFIG = {
         'deposit_fiats': DEPOSIT_FIATS,
         'withdraw_fiats': WITHDRAW_FIATS,
         'payment_channels': (
-            P2PCryptoExchangesRates, Card2CryptoExchanges,
-            Card2Wallet2CryptoExchanges
+            P2PCryptoExchangesRates
         )
     },
 }

@@ -8,15 +8,28 @@ class Banks(models.Model):
     binance_name = models.CharField(max_length=15, null=True, blank=True)
 
 
+class CurrencyMarkets(models.Model):
+    name = models.CharField(max_length=15, null=True, blank=True)
+
+
 class BanksExchangeRatesUpdates(UpdatesModel):
     bank = models.ForeignKey(
-        Banks, related_name='bank_rates_update', on_delete=models.CASCADE
+        Banks, related_name='bank_rates_update',
+        blank=True, null=True, on_delete=models.CASCADE
+    )
+    currency_market = models.ForeignKey(
+        CurrencyMarkets, related_name='currency_market_rates_update',
+        blank=True, null=True, on_delete=models.CASCADE
     )
 
 
 class BanksExchangeRates(models.Model):
     bank = models.ForeignKey(
         Banks, related_name='bank_rates', on_delete=models.CASCADE
+    )
+    currency_market = models.ForeignKey(
+        CurrencyMarkets, related_name='currency_market_rates',
+        blank=True, null=True, on_delete=models.CASCADE
     )
     from_fiat = models.CharField(max_length=3)
     to_fiat = models.CharField(max_length=3)
@@ -45,10 +58,6 @@ class IntraBanksExchanges(models.Model):
         IntraBanksExchangesUpdates, related_name='datas',
         on_delete=models.CASCADE
     )
-
-
-class CurrencyMarkets(models.Model):
-    name = models.CharField(max_length=15, null=True, blank=True)
 
 
 class BankInvestExchangesUpdates(UpdatesModel):
