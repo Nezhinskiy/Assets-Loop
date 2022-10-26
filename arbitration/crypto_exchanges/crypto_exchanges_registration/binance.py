@@ -9,7 +9,8 @@ import requests
 from banks.banks_config import BANKS_CONFIG
 from core.intra_exchanges import (BestCryptoExchanges,
                                   BestTotalCryptoExchanges,
-                                  InterExchangesCalculate, InterExchangesCalculated)
+                                  InterExchangesCalculate, InterSimplExchangesCalculate,
+                                  )
 from core.parsers import (Card2CryptoExchangesParser,
                           Card2Wallet2CryptoExchangesParser,
                           CryptoExchangesParser, ListsFiatCryptoParser,
@@ -221,15 +222,60 @@ class BinanceInterExchangesCalculate(InterExchangesCalculate):
     crypto_exchange_name = CRYPTO_EXCHANGES_NAME
 
 
-class SimplBinanceTinkoffInterExchangesCalculate(InterExchangesCalculated):
+class SimplBinanceTinkoffInterExchangesCalculate(InterSimplExchangesCalculate):
+    crypto_exchange_name = CRYPTO_EXCHANGES_NAME
+    bank_name = 'Tinkoff'
+    simpl = True
+
+
+class SimplBinanceWiseInterExchangesCalculate(InterSimplExchangesCalculate):
     crypto_exchange_name = CRYPTO_EXCHANGES_NAME
     bank_name = 'Wise'
     simpl = True
 
 
+class ComplexBinanceTinkoffInterExchangesCalculate(
+    InterSimplExchangesCalculate
+):
+    crypto_exchange_name = CRYPTO_EXCHANGES_NAME
+    bank_name = 'Tinkoff'
+    simpl = False
+
+
+class ComplexBinanceWiseInterExchangesCalculate(
+    InterSimplExchangesCalculate
+):
+    crypto_exchange_name = CRYPTO_EXCHANGES_NAME
+    bank_name = 'Wise'
+    simpl = False
+
+
 def get_simpl_binance_tinkoff_inter_exchanges_calculate():
-    simpl_binance_tinkoff_inter_exchanges_calculate = SimplBinanceTinkoffInterExchangesCalculate()
+    simpl_binance_tinkoff_inter_exchanges_calculate = (
+        SimplBinanceTinkoffInterExchangesCalculate()
+    )
     simpl_binance_tinkoff_inter_exchanges_calculate.main()
+
+
+def get_simpl_binance_wise_inter_exchanges_calculate():
+    simpl_binance_wise_inter_exchanges_calculate = (
+        SimplBinanceWiseInterExchangesCalculate()
+    )
+    simpl_binance_wise_inter_exchanges_calculate.main()
+
+
+def get_complex_binance_tinkoff_inter_exchanges_calculate():
+    complex_binance_tinkoff_inter_exchanges_calculate = (
+        ComplexBinanceTinkoffInterExchangesCalculate()
+    )
+    complex_binance_tinkoff_inter_exchanges_calculate.main()
+
+
+def get_complex_binance_wise_inter_exchanges_calculate():
+    complex_binance_wise_inter_exchanges_calculate = (
+        ComplexBinanceWiseInterExchangesCalculate()
+    )
+    complex_binance_wise_inter_exchanges_calculate.main()
 
 
 def get_binance_card_2_crypto_exchanges():

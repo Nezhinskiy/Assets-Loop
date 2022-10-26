@@ -116,14 +116,11 @@ class BankParser(object):
         target_object = BanksExchangeRates.objects.filter(
             bank=bank,
             from_fiat=value_dict['from_fiat'],
-            to_fiat=value_dict['to_fiat']
+            to_fiat=value_dict['to_fiat'],
+            currency_market__isnull=True
         )
         if target_object.exists():
-            updated_object = BanksExchangeRates.objects.get(
-                bank=bank,
-                from_fiat=value_dict['from_fiat'],
-                to_fiat=value_dict['to_fiat']
-            )
+            updated_object = target_object.get()
             if updated_object.price == price:
                 return
             updated_object.price = price
@@ -327,8 +324,6 @@ class P2PParser(object):
         """Делает запрос к эндпоинту API Tinfoff."""
         body = self.create_body(asset, trade_type, fiat)
         headers = self.create_headers(body)
-        print(body)
-        print(headers)
         try:
             response = requests.post(self.endpoint, headers=headers, json=body)
         except Exception as error:
@@ -337,7 +332,6 @@ class P2PParser(object):
         if response.status_code != HTTPStatus.OK:
             message = f'Ошибка {response.status_code}'
             raise Exception(message)
-        print(response.json())
         return response.json()
 
     def get_exception(self, fiat, pay_type):
@@ -611,7 +605,6 @@ class Card2Wallet2CryptoExchangesParser:
         for name, value in BANKS_CONFIG.items():
             if self.payment_channel in value['payment_channels']:
                 bank_names.append(name)
-        print(bank_names)
         for bank_name in bank_names:
             bank = Banks.objects.get(name=bank_name)
             target_object = P2PCryptoExchangesRates.objects.filter(

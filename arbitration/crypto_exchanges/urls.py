@@ -15,7 +15,9 @@ from crypto_exchanges.views import (
     binance_best_card_2_card_crypto_exchanges, binance_best_crypto_exchanges,
     binance_card_2_crypto_exchanges, binance_crypto, binance_fiat_crypto_list,
     binance_inter_exchanges_calculate, card_2_wallet_2_crypto, p2p_binance,
-    simpl_binance_tinkoff_inter_exchanges_calculate)
+    simpl_binance_tinkoff_inter_exchanges_calculate,
+    complex_binance_tinkoff_inter_exchanges_calculate,
+    complex_binance_wise_inter_exchanges_calculate)
 
 from crypto_exchanges.views import get_wise_p2p_binance_exchanges, \
     get_tinkoff_p2p_binance_exchanges
@@ -92,5 +94,9 @@ urlpatterns = [
          name="binance_inter_exchanges_calculate"),
     path('1000/', all, name="all"),
     path('simpltin/', simpl_binance_tinkoff_inter_exchanges_calculate,
+         name="simpl_binance_tinkoff_inter_exchanges_calculate"),
+    path('complextin/', complex_binance_tinkoff_inter_exchanges_calculate,
+         name="complex_binance_tinkoff_inter_exchanges_calculate"),
+    path('complexwise/', complex_binance_wise_inter_exchanges_calculate,
          name="simpl_binance_tinkoff_inter_exchanges_calculate")
 ]

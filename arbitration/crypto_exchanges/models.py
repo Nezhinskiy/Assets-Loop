@@ -290,13 +290,23 @@ class InterExchanges(models.Model):
     )
     interim_crypto_exchange = models.ForeignKey(
         IntraCryptoExchanges,
-        related_name='interim_exchange_best_inter_exchanges',
+        related_name='interim_exchange_inter_exchanges',
+        blank=True, null=True, on_delete=models.CASCADE
+    )
+    second_interim_crypto_exchange = models.ForeignKey(
+        IntraCryptoExchanges,
+        related_name='second_interim_exchange_inter_exchanges',
         blank=True, null=True, on_delete=models.CASCADE
     )
     output_crypto_exchange = models.ForeignKey(
         P2PCryptoExchangesRates,
         related_name='output_crypto_exchange_inter_exchanges',
         on_delete=models.CASCADE
+    )
+    bank_exchange = models.ForeignKey(
+        BanksExchangeRates,
+        related_name='bank_rate_inter_exchanges',
+        blank=True, null=True, on_delete=models.CASCADE
     )
     update = models.ForeignKey(
         InterExchangesUpdates, related_name='datas',

@@ -9,7 +9,9 @@ from crypto_exchanges.crypto_exchanges_registration.binance import (
     get_all_card_2_wallet_2_crypto_exchanges, get_all_p2p_binance_exchanges,
     get_best_card_2_card_crypto_exchanges, get_best_crypto_exchanges,
     get_binance_card_2_crypto_exchanges, get_binance_fiat_crypto_list,
-    get_inter_exchanges_calculate, get_simpl_binance_tinkoff_inter_exchanges_calculate)
+    get_inter_exchanges_calculate, get_simpl_binance_tinkoff_inter_exchanges_calculate,
+    get_complex_binance_wise_inter_exchanges_calculate,
+    get_complex_binance_tinkoff_inter_exchanges_calculate)
 from crypto_exchanges.models import (BestCombinationPaymentChannels,
                                      BestPaymentChannels, Card2CryptoExchanges,
                                      Card2Wallet2CryptoExchanges,
@@ -441,6 +443,14 @@ def all(request):
 
 def simpl_binance_tinkoff_inter_exchanges_calculate(request):
     return get_simpl_binance_tinkoff_inter_exchanges_calculate()
+
+
+def complex_binance_tinkoff_inter_exchanges_calculate(request):
+    return get_complex_binance_tinkoff_inter_exchanges_calculate()
+
+
+def complex_binance_wise_inter_exchanges_calculate(request):
+    return get_complex_binance_wise_inter_exchanges_calculate()
 
 
 def get_tinkoff_p2p_binance_exchanges(request):

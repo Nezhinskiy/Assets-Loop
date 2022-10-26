@@ -3,7 +3,6 @@ from banks.banks_registration.tinkoff import TinkoffParser
 from banks.banks_registration.wise import WiseParser
 from arbitration.celery import app
 from banks.currency_markets_registration.tinkoff_invest import TinkoffCurrencyMarketParser
-from core.intra_exchanges import BestBankIntraExchanges
 from core.models import InfoLoop
 from dateutil import parser
 
@@ -43,9 +42,6 @@ def parse_currency_market_tinkoff_rates():
 def best_bank_intra_exchanges(str_start_time):
     start_time = parser.parse(str_start_time[0])
     print('!!!!!!!!!!!!!!!!!!!!!1___', start_time)
-    get_best_bank_intra_exchanges = BestBankIntraExchanges()
-    print('best_bank_rates')
-    get_best_bank_intra_exchanges.main()
     print('banks_end')
     duration = datetime.now() - start_time
     new_loop = InfoLoop.objects.filter(value=True).last()

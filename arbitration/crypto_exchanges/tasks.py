@@ -4,8 +4,7 @@ from dateutil import parser
 
 from core.models import InfoLoop
 from crypto_exchanges.crypto_exchanges_registration.binance import TinkoffBinanceP2PParser, WiseBinanceP2PParser, BinanceCryptoParser, \
-    BinanceListsFiatCryptoParser, BinanceCard2CryptoExchangesParser, BinanceCard2Wallet2CryptoExchangesParser, \
-    BinanceBestCryptoExchanges, BinanceBestTotalCryptoExchanges
+    BinanceListsFiatCryptoParser, BinanceCard2CryptoExchangesParser, BinanceCard2Wallet2CryptoExchangesParser
 
 
 # Crypto exchanges time
@@ -51,10 +50,6 @@ def get_all_card_2_wallet_2_crypto_exchanges(_):
 @app.task
 def best_crypto_exchanges_intra_exchanges(str_start_time):
     start_time = parser.parse(str_start_time[0])
-    best_intra_crypto_exchanges = BinanceBestCryptoExchanges()
-    best_intra_crypto_exchanges.main()
-    best_intra_card_2_card_crypto_exchanges = BinanceBestTotalCryptoExchanges()
-    best_intra_card_2_card_crypto_exchanges.main()
     print('crypto_exchanges_end')
     duration = datetime.now() - start_time
     new_loop = InfoLoop.objects.filter(value=True).last()
