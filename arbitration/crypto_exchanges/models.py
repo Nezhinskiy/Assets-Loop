@@ -308,19 +308,21 @@ class InterExchanges(models.Model):
         related_name='bank_rate_inter_exchanges',
         blank=True, null=True, on_delete=models.CASCADE
     )
+    marginality_percentage = models.FloatField()
     update = models.ForeignKey(
         InterExchangesUpdates, related_name='datas',
         on_delete=models.CASCADE
     )
+
+    class Meta:
+        ordering = ['-marginality_percentage']
 
 
 class RelatedMarginalityPercentages(models.Model):
     updated = models.DateTimeField(
         'Update date', auto_now_add=True, db_index=True
     )
-    marginality_percentage = models.FloatField(
-        null=True, blank=True, default=None
-    )
+    marginality_percentage = models.FloatField()
     inter_exchange = models.ForeignKey(
         InterExchanges,
         related_name='marginality_percentages',

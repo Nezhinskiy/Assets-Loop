@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from datetime import datetime
 from http import HTTPStatus
 from itertools import combinations, permutations, product
@@ -325,13 +326,23 @@ class P2PParser(object):
         body = self.create_body(asset, trade_type, fiat)
         headers = self.create_headers(body)
         try:
-            response = requests.post(self.endpoint, headers=headers, json=body)
+            with requests.session() as session:
+                response = session.post(
+                    self.endpoint, headers=headers, json=body
+                )
         except Exception as error:
             message = f'Ошибка при запросе к основному API: {error}'
-            raise Exception(message)
+            print(message)
+            # raise Exception(message)
         if response.status_code != HTTPStatus.OK:
             message = f'Ошибка {response.status_code}'
-            raise Exception(message)
+            print(message)
+            time.sleep(10)
+            with requests.session() as session:
+                response = session.post(
+                    self.endpoint, headers=headers, json=body
+                )
+            # raise Exception(message)
         return response.json()
 
     def get_exception(self, fiat, pay_type):

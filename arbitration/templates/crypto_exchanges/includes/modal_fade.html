@@ -1,0 +1,31 @@
+<!-- Кнопка-триггер модального окна -->
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal{{ forloop.counter }}">
+  Запустите демо модального окна
+</button>
+
+<!-- Модальное окно -->
+<div class="modal fade" id="exampleModal{{ forloop.counter }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Инструкция к связке</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body">
+      !{{ loop_rate.bank_exchange.bank.name }}! ?? {{ loop_rate.input_bank.name }}
+        {% if loop_rate.input_bank == loop_rate.bank_exchange.bank %}
+          {% if not loop_rate.bank_exchange.currency_market %}
+            1. Сначала внутри банка {{ loop_rate.input_bank.name }} нужно поменять {{ loop_rate.bank_exchange.from_fiat }} на {{ loop_rate.bank_exchange.to_fiat }} по курсу {{ loop_rate.bank_exchange.price }}, с учётом комиссии.
+          {% else %}
+            1. Сначала внутри банка {{ loop_rate.input_bank.name }} нужно поменять {{ loop_rate.bank_exchange.from_fiat }} на {{ loop_rate.bank_exchange.to_fiat }} через биржу {{ loop_rate.bank_exchange.currency_market.name }}, по курсу {{ loop_rate.bank_exchange.price }}, с учётом комиссии.
+          {% endif %}
+          2. Далее, на криптобирже {{ loop_rate.crypto_exchange.name }} следует купить {{ loop_rate.crypto_exchange.name }}
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+        <button type="button" class="btn btn-primary">Сохранить изменения</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,4 +1,5 @@
 from django import template
+from datetime import datetime
 
 from banks.models import BankInvestExchanges, BankInvestExchangesUpdates
 from core.intra_exchanges import get_related_exchange
@@ -94,3 +95,12 @@ def payment_channel_name(value, trade_type):
             return 'Card-Crypto'
         else:
             return 'Crypto-Card'
+
+
+@register.filter
+def updated_time(value):
+    seconds = int((datetime.now()
+                   - value.replace(tzinfo=None)).total_seconds())
+    if seconds > 999:
+        seconds = 999
+    return seconds

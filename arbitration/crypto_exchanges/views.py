@@ -1,4 +1,4 @@
-from django.db.models import Count, F
+from django.db.models import Count, F, Prefetch
 from django.http import Http404
 from django.views.generic import ListView
 
@@ -12,14 +12,16 @@ from crypto_exchanges.crypto_exchanges_registration.binance import (
     get_inter_exchanges_calculate, get_simpl_binance_tinkoff_inter_exchanges_calculate,
     get_complex_binance_wise_inter_exchanges_calculate,
     get_complex_binance_tinkoff_inter_exchanges_calculate)
-from crypto_exchanges.models import (BestCombinationPaymentChannels,
+from crypto_exchanges.models import \
+    (BestCombinationPaymentChannels,
                                      BestPaymentChannels, Card2CryptoExchanges,
                                      Card2Wallet2CryptoExchanges,
                                      CryptoExchanges,
                                      InterBankAndCryptoExchanges,
                                      InterBankAndCryptoExchangesUpdates,
                                      IntraCryptoExchanges,
-                                     P2PCryptoExchangesRates)
+                                     P2PCryptoExchangesRates,
+                                     InterExchanges)
 
 from crypto_exchanges.crypto_exchanges_registration.binance import \
     TinkoffBinanceP2PParser, WiseBinanceP2PParser
@@ -461,3 +463,29 @@ def get_tinkoff_p2p_binance_exchanges(request):
 def get_wise_p2p_binance_exchanges(request):
     binance_parser = WiseBinanceP2PParser()
     binance_parser.main()
+
+
+class InterExchangesList(ListView):
+    model = InterExchanges
+    template_name = ('crypto_exchanges/inter_exchanges.html')
+
+    def get_queryset(self):
+        return self.model.objects.prefetch_related(
+            'input_bank', 'output_bank', 'bank_exchange',
+            'input_crypto_exchange', 'output_crypto_exchange',
+            'interim_crypto_exchange', 'second_interim_crypto_exchange',
+            'update'
+        ).filter(marginality_percentage__gt=0)
+
+    def get_context_data(self, **kwargs):
+        from crypto_exchanges.crypto_exchanges_config import \
+            CRYPTO_EXCHANGES_CONFIG
+        context = super(InterExchangesList,
+                        self).get_context_data(**kwargs)
+        context['bank_names'] = list(BANKS_CONFIG.keys())
+        context['crypto_exchange_names'] = list(CRYPTO_EXCHANGES_CONFIG.keys()
+                                                )[1:]
+        context['loop_rates'] = self.get_queryset()
+        context['last_update'] = self.get_queryset().latest(
+            'update').update.updated
+        return context

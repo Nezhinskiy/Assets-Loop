@@ -62,7 +62,9 @@ def start(request):
         get_complex_binance_wise_inter_exchanges_calculate.s()
     )
     all = chord(general_group, end_group)
-    main = chord(group(all_start_time.s(), all), best_get_inter_exchanges_calculate.s())
+    main = chord(
+        group(all_start_time.s(), all), best_get_inter_exchanges_calculate.s()
+    )
     main.delay()
     return redirect('core:home')
 
