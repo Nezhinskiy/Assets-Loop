@@ -26,6 +26,9 @@ from crypto_exchanges.models import \
 from crypto_exchanges.crypto_exchanges_registration.binance import \
     TinkoffBinanceP2PParser, WiseBinanceP2PParser
 
+from crypto_exchanges.filters import ExchangesFilter
+from django_filters.views import FilterView
+
 
 class CryptoExchangesRatesList(ListView):
     def get_queryset(self):
@@ -465,17 +468,20 @@ def get_wise_p2p_binance_exchanges(request):
     binance_parser.main()
 
 
-class InterExchangesList(ListView):
+class InterExchangesList(FilterView):
     model = InterExchanges
     template_name = ('crypto_exchanges/inter_exchanges.html')
+    filterset_class = ExchangesFilter
 
     def get_queryset(self):
-        return self.model.objects.prefetch_related(
+        qs = self.model.objects.prefetch_related(
             'input_bank', 'output_bank', 'bank_exchange',
             'input_crypto_exchange', 'output_crypto_exchange',
             'interim_crypto_exchange', 'second_interim_crypto_exchange',
             'update'
         ).filter(marginality_percentage__gt=0)
+        self.filter = self.filterset_class(self.request.GET, queryset=qs)
+        return self.filter.qs
 
     def get_context_data(self, **kwargs):
         from crypto_exchanges.crypto_exchanges_config import \
