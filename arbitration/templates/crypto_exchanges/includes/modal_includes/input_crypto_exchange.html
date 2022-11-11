@@ -1,0 +1,2 @@
+{% load custom_filters %}
+со счёта {{ loop_rate.input_crypto_exchange.bank.name }} нужно купить активы на криптобирже {{ loop_rate.crypto_exchange.name }}. За {{ loop_rate.input_crypto_exchange.fiat }} следует купить {{ loop_rate.input_crypto_exchange.asset }} методом {{ loop_rate.input_crypto_exchange.payment_channel }} по курсу {{ loop_rate.input_crypto_exchange.price|round_up }}.

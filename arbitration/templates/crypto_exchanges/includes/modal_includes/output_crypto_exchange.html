@@ -1,0 +1,3 @@
+{% load custom_filters %}
+нужно перевести активы с {{ loop_rate.output_crypto_exchange.crypto_exchange.name }} на счёт {{ loop_rate.output_crypto_exchange.bank.name }} по методу {{ loop_rate.output_crypto_exchange.payment_channel }}.
+Перевести {{ loop_rate.output_crypto_exchange.asset }} в {{ loop_rate.output_crypto_exchange.fiat }} по курсу {{ loop_rate.output_crypto_exchange.price|round_up }}.

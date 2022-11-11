@@ -1,6 +1,7 @@
+{% load custom_filters %}
 <!-- Кнопка-триггер модального окна -->
-<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal{{ forloop.counter }}">
-  Запустите демо модального окна
+<button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#exampleModal{{ forloop.counter }}">
+  Подробнее
 </button>
 
 <!-- Модальное окно -->
@@ -12,14 +13,62 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
       </div>
       <div class="modal-body">
-      !{{ loop_rate.bank_exchange.bank.name }}! ?? {{ loop_rate.input_bank.name }}
-        {% if loop_rate.input_bank == loop_rate.bank_exchange.bank %}
-          {% if not loop_rate.bank_exchange.currency_market %}
-            1. Сначала внутри банка {{ loop_rate.input_bank.name }} нужно поменять {{ loop_rate.bank_exchange.from_fiat }} на {{ loop_rate.bank_exchange.to_fiat }} по курсу {{ loop_rate.bank_exchange.price }}, с учётом комиссии.
-          {% else %}
-            1. Сначала внутри банка {{ loop_rate.input_bank.name }} нужно поменять {{ loop_rate.bank_exchange.from_fiat }} на {{ loop_rate.bank_exchange.to_fiat }} через биржу {{ loop_rate.bank_exchange.currency_market.name }}, по курсу {{ loop_rate.bank_exchange.price }}, с учётом комиссии.
+        <p>
+          {% include 'crypto_exchanges/includes/modal_includes/diagram.html' %}
+        <p/>
+        {% if loop_rate.input_bank == loop_rate.bank_exchange.bank %} <!-- Если внутрибанковский обмен в начале -->
+          <p>
+            1. Сначала {% include 'crypto_exchanges/includes/modal_includes/bank_exchange.html' %}
+          <p/>
+          <p>
+            2. Далее, {% include 'crypto_exchanges/includes/modal_includes/input_crypto_exchange.html' %}
+          <p/>
+          {% if loop_rate.interim_crypto_exchange %} <!-- Если внутрибанковский обмен в начале + Если есть внутрибирживой омен -->
+            <p>
+              3. {% include 'crypto_exchanges/includes/modal_includes/interim_crypto_exchange.html' %}
+            </p>
+            <p>
+              4. Последнее, {% include 'crypto_exchanges/includes/modal_includes/output_crypto_exchange.html' %}
+            <p/>
+          {% else %} <!-- Если внутрибанковский обмен в начале + Если нет внутрибирживого омена -->
+            <p>
+              3. Последнее, {% include 'crypto_exchanges/includes/modal_includes/output_crypto_exchange.html' %}
+            </p>
           {% endif %}
-          2. Далее, на криптобирже {{ loop_rate.crypto_exchange.name }} следует купить {{ loop_rate.crypto_exchange.name }}
+        {% else %} <!-- Если в начале нет внутрибанковского обмена -->
+          <p>
+            1. Сначала {% include 'crypto_exchanges/includes/modal_includes/input_crypto_exchange.html' %}
+          </p>
+          {% if loop_rate.interim_crypto_exchange %} <!-- Если в начале нет внутрибанковского обмена + Если есть внутрибирживой обмен -->
+            <p>
+              2. {% include 'crypto_exchanges/includes/modal_includes/interim_crypto_exchange.html' %}
+            </p>
+            {% if not loop_rate.bank_exchange %} <!-- Если внутрибанковского обмена нет совсем + Если есть внутрибирживой обмен -->
+              <p>
+                3. Последнее, {% include 'crypto_exchanges/includes/modal_includes/output_crypto_exchange.html' %}
+              </p>
+            {% else %} <!-- Если внутрибанковский обмен в конце + Если есть внутрибирживой обмен -->
+              <p>
+                3. Далее {% include 'crypto_exchanges/includes/modal_includes/output_crypto_exchange.html' %}
+              </p>
+              <p>
+                4. Последнее, {% include 'crypto_exchanges/includes/modal_includes/bank_exchange.html' %}
+              </p>
+            {% endif %}
+          {% else %} <!-- Если в начале нет внутрибанковского обмена + Если нет внутрибирживого обмена -->
+            {% if not loop_rate.bank_exchange %} <!-- Если внутрибанковского обмена нет совсем + Если нет внутрибирживого обмена -->
+              <p>
+                2. Последнее, {% include 'crypto_exchanges/includes/modal_includes/output_crypto_exchange.html' %}
+              </p>
+            {% else %} <!-- Если внутрибанковский обмен в конце + Если нет внутрибирживого обмена -->
+              <p>
+                2. Далее, {% include 'crypto_exchanges/includes/modal_includes/output_crypto_exchange.html' %}
+              </p>
+              <p>
+                3. Последнее, {% include 'crypto_exchanges/includes/modal_includes/bank_exchange.html' %}
+              </p>
+            {% endif %}
+          {% endif %}
         {% endif %}
       </div>
       <div class="modal-footer">

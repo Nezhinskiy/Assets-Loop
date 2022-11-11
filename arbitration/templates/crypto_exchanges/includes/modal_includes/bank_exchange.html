@@ -1,0 +1,6 @@
+{% load custom_filters %}
+{% if not loop_rate.bank_exchange.currency_market %}
+  внутри банка {{ loop_rate.input_bank.name }} нужно поменять {{ loop_rate.bank_exchange.from_fiat }} на {{ loop_rate.bank_exchange.to_fiat }} по курсу {{ loop_rate.bank_exchange.price|round_up }}, с учётом комиссии.
+{% else %}
+  внутри банка {{ loop_rate.input_bank.name }} нужно поменять {{ loop_rate.bank_exchange.from_fiat }} на {{ loop_rate.bank_exchange.to_fiat }} через биржу {{ loop_rate.bank_exchange.currency_market.name }}, по курсу {{ loop_rate.bank_exchange.price|round_up }}, с учётом комиссии.
+{% endif %}

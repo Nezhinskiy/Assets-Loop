@@ -1,0 +1,6 @@
+{% load custom_filters %}
+{% if loop_rate.second_interim_crypto_exchange %}
+  Теперь внутри {{ loop_rate.crypto_exchange.name }} через Спот надо сначала конвертировать {{ loop_rate.interim_crypto_exchange.from_asset }} в {{ loop_rate.interim_crypto_exchange.to_asset }} по курсу {{ loop_rate.interim_crypto_exchange.price|round_up }}, а потом {{ loop_rate.interim_crypto_exchange.to_asset }} в {{ loop_rate.second_interim_crypto_exchange.to_asset }} по курсу {{ loop_rate.second_interim_crypto_exchange.price|round_up }}, комиссии учтены.
+{% else %}
+  Теперь внутри {{ loop_rate.crypto_exchange.name }} через Спот надо конвертировать {{ loop_rate.interim_crypto_exchange.from_asset }} в {{ loop_rate.interim_crypto_exchange.to_asset }} по курсу {{ loop_rate.interim_crypto_exchange.price|round_up }}, комиссия учтена.
+{% endif %}
