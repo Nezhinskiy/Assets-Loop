@@ -1,21 +1,44 @@
+{% csrf_token %}
 отображение фильтра в моем шаблоне:
+{% load bootstrap5 %}
 
-<form class="" action="" method="get">
-
-  {% for field in Filter.form %}
-    <div class="fieldWrapper">
-        {{ field.errors }}
-        {{ field.label_tag }} {{ field }}
-        {% if field.help_text %}
-        <p class="help">{{ field.help_text|safe }}</p>
-        {% endif %}
-    </div>
+<form action="" method="get" class="form form-inline">
+{% for field in filter.form %}
+    {% if forloop.counter == 3 %}
+        <div class="col-md-12 dropdown">
+            <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">{{ field.label }}
+                <span class="caret"></span>
+            </button>
+            <div class="dropdown-menu">
+                <div><a href="#">{{ field }}</a></div>
+            </div>
+        </div>
+    {% else %}
+        {{ field }}
+    {% endif %}
 {% endfor %}
-<button class="btn btn-primary" type="submit" name="button">Recherche</button>
+{% bootstrap_button 'Поиск' %}
+
 </form>
 
 
-<form action="" method="get">
-        {{ filter.form.as_p }}
-        <input type="submit" />
-    </form>
+
+{#<form class="" action="" method="get">#}
+{##}
+{#  {% for field in Filter.form %}#}
+{#    <div class="fieldWrapper">#}
+{#        {{ field.errors }}#}
+{#        {{ field.label_tag }} {{ field }}#}
+{#        {% if field.help_text %}#}
+{#        <p class="help">{{ field.help_text|safe }}</p>#}
+{#        {% endif %}#}
+{#    </div>#}
+{#{% endfor %}#}
+{#<button class="btn btn-primary" type="submit" name="button">Recherche</button>#}
+{#</form>#}
+{##}
+{##}
+{#<form action="" method="get">#}
+{#        {{ filter.form.as_p }}#}
+{#        <input type="submit" />#}
+{#    </form>#}
