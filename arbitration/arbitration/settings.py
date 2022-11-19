@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'django_filters',
     'rest_framework',
     'bootstrap5',
+    'django_select2',
+    'widget_tweaks',
     'crypto_exchanges.apps.CryptoExchangesConfig',
     'banks.apps.BanksConfig',
     'core.apps.CoreConfig',
@@ -152,3 +154,17 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Celery settings
 CELERY_BROKER_URL = "redis://localhost:6379"
 CELERY_RESULT_BACKEND = "redis://localhost:6379"
+
+# CACHES = {
+#     # … default cache config and others
+#     "select2": {
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": "redis://127.0.0.1:6379/2",
+#         "OPTIONS": {
+#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+#         }
+#     }
+# }
+#
+# # Tell select2 which cache configuration to use:
+# SELECT2_CACHE_BACKEND = "select2"

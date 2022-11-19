@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Create Book</title>
+        {{ filter.form.media.css }}
+
+    <style>
+        input, select {width: 100%}
+    </style>
+</head>
+<body>
+    <h1>Create a new Book</h1>
+    <form method="GET">
+        {{ filter.form.as_p }}
+        <input type="submit">
+    </form>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    {{ filter.form.media.js }}
+</html>

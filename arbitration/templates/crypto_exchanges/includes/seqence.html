@@ -1,0 +1,15 @@
+{% if loop_rate.input_bank == loop_rate.bank_exchange.bank %}
+  {% if loop_rate.bank_exchange.currency_market %}{{ loop_rate.bank_exchange.currency_market.name }}{% else %}{{ loop_rate.input_bank.name }}{% endif %} {{ loop_rate.bank_exchange.from_fiat }} ⇨
+{% endif %}
+{{ loop_rate.input_bank.name }}
+{{ loop_rate.input_crypto_exchange.fiat }} ⇨ {{ loop_rate.input_crypto_exchange.asset }} ⇨
+{% if loop_rate.interim_crypto_exchange %}
+  {{ loop_rate.interim_crypto_exchange.to_asset }} ⇨
+{% endif %}
+{% if loop_rate.second_interim_crypto_exchange %}
+  {{ loop_rate.second_interim_crypto_exchange.from_asset }} ⇨
+{% endif %}
+{{ loop_rate.output_bank.name }} {{ loop_rate.output_crypto_exchange.fiat }}
+{% if loop_rate.output_bank == loop_rate.bank_exchange.bank %}
+   ⇨ {% if loop_rate.bank_exchange.currency_market %}{{ loop_rate.bank_exchange.currency_market.name }}{% else %}{{ loop_rate.output_bank.name }}{% endif %} {{ loop_rate.bank_exchange.to_fiat }}
+{% endif %}

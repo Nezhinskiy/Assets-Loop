@@ -479,7 +479,7 @@ class InterExchangesList(FilterView):
             'input_crypto_exchange', 'output_crypto_exchange',
             'interim_crypto_exchange', 'second_interim_crypto_exchange',
             'update'
-        ).filter(marginality_percentage__gt=0)
+        ).filter(marginality_percentage__gt=-1)
         self.filter = self.filterset_class(self.request.GET, queryset=qs)
         return self.filter.qs
 

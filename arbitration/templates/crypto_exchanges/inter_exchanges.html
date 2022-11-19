@@ -9,14 +9,14 @@
   <div class="container">
     <div class="row">
       <div class="col-sm-4">
-        <h1>
-          The best possible Intra-bank exchanges through crypto-exchanges
-        </h1>
+        <h2>
+          Расширенный фильтр:
+        </h2>
         {% include 'crypto_exchanges/includes/product_filter.html' %}
       </div>
       <div class="col-sm-8">
         <h1>
-          The best possible Intra-bank exchanges through crypto-exchanges
+          Все актуальные арбитражные связки:
         </h1>
         <p>
           Связок: {{ loop_rates.count }}
@@ -24,46 +24,40 @@
         <table id="dataTable" class="table">
           <thead>
             <tr>
-              <th scope="col">#</th>
               <th scope="col">Связка</th>
-              <th scope="col"><br>% маржинальности</th>
+              <th scope="col">Маржинальность</th>
               <th scope="col">Обновлено</th>
             </tr>
           </thead>
           {% for loop_rate in loop_rates %}
             <tr>
-              <th scope="row">{{ forloop.counter }}</th>
               <td>
-                {% if loop_rate.input_bank == loop_rate.bank_exchange.bank %}
-                  {% if loop_rate.bank_exchange.currency_market %}{{ loop_rate.bank_exchange.currency_market.name }}{% else %}{{ loop_rate.input_bank.name }}{% endif %} {{ loop_rate.bank_exchange.from_fiat }} ->
-                {% endif %}
-                {{ loop_rate.input_bank.name }}
-                {{ loop_rate.input_crypto_exchange.fiat }} -> {{ loop_rate.input_crypto_exchange.asset }} ->
-                {% if loop_rate.interim_crypto_exchange %}
-                  {{ loop_rate.interim_crypto_exchange.to_asset }} ->
-                {% endif %}
-                {% if loop_rate.second_interim_crypto_exchange %}
-                  {{ loop_rate.second_interim_crypto_exchange.from_asset }} ->
-                {% endif %}
-                {{ loop_rate.output_bank.name }} {{ loop_rate.output_crypto_exchange.fiat }}
-                {% if loop_rate.output_bank == loop_rate.bank_exchange.bank %}
-                   -> {% if loop_rate.bank_exchange.currency_market %}{{ loop_rate.bank_exchange.currency_market.name }}{% else %}{{ loop_rate.output_bank.name }}{% endif %} {{ loop_rate.bank_exchange.to_fiat }}
-                {% endif %}
+                {% include 'crypto_exchanges/includes/modal_fade.html' %}
+
               </td>
-              <td>{{ loop_rate.marginality_percentage|floatformat:2 }} % {% include 'crypto_exchanges/includes/modal_fade.html' %}</td>
-              <td>> {{ loop_rate.update.updated|updated_time }}cек.</td>
+              <td><span style="color:{% if loop_rate.marginality_percentage > 0 %}green{% else %}red{% endif %}">{{ loop_rate.marginality_percentage|floatformat:2 }}%</span></td>
+              <td><p class="fw-light fs-15">< {{ loop_rate.update.updated|updated_time }} cек.</p></td>
             </tr>
           {% endfor %}
         </table>
       </div>
     </div>
   </div>
-  <script>
+  {% block script %}
+    <script>
       $(document).ready(function() {
             $('#dataTable').DataTable({
+                processing: true,
+        serverSide: true,
+                        ajax: '../server_side/scripts/server_processing.php',
+        "pageLength": 10,
         "searching": false,
         "info": false,
+                "aaSorting": [],
+                {#"ordering": false,#}
+        {#"order": [[1, 'desc']]#}
         });
       });
-  </script>
+    </script>
+  {% endblock %}
 {% endblock %}

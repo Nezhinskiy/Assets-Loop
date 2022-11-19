@@ -1,44 +1,92 @@
-{% csrf_token %}
-отображение фильтра в моем шаблоне:
+{% block style %}
+   {{ filter.form.media.css }}
+{% endblock %}
+
 {% load bootstrap5 %}
+{% load widget_tweaks %}
 
-<form action="" method="get" class="form form-inline">
-{% for field in filter.form %}
-    {% if forloop.counter == 3 %}
-        <div class="col-md-12 dropdown">
-            <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">{{ field.label }}
-                <span class="caret"></span>
-            </button>
-            <div class="dropdown-menu">
-                <div><a href="#">{{ field }}</a></div>
-            </div>
-        </div>
-    {% else %}
-        {{ field }}
-    {% endif %}
-{% endfor %}
-{% bootstrap_button 'Поиск' %}
-
+<form method="get" action="">
+  <div class="container">
+    <div class="row">
+      {% for field in filter.form %}
+        {% if forloop.counter == 1 %}
+          <p>Процент маржинальности:</p>
+          <div class="col-sm-6">
+            <p>
+              <label class="form-control-label" title="{{ field.help_text }}" for="{{ field.id_for_label }}">{% render_field field class="form-control" placeholder=field.help_text %}</label>
+            </p>
+          </div>
+        {% elif forloop.counter == 2 %}
+          <div class="col-sm-6">
+            <p>
+              <label class="form-control-label" title="{{ field.help_text }}" for="{{ field.id_for_label }}">{% render_field field class="form-control" placeholder=field.help_text %}</label>
+            </p>
+          </div>
+          <hr/>
+        {% else %}
+          <div class="col-sm-5">
+            <p>
+              <label class="form-control-label" for="{{ field.id_for_label }}">{{ field.label }}:</label>
+            </p>
+          </div>
+          <div class="col-sm-7">
+            <p>
+              {% render_field field class="form-control" %}
+            </p>
+          </div>
+          {% if forloop.counter == 4 %}
+            <hr/>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    </div>
+    <div class="modal-footer">
+      {% bootstrap_button 'Поиск' %}
+    </div>
+  </div>
 </form>
 
 
-
-{#<form class="" action="" method="get">#}
-{##}
-{#  {% for field in Filter.form %}#}
-{#    <div class="fieldWrapper">#}
-{#        {{ field.errors }}#}
-{#        {{ field.label_tag }} {{ field }}#}
-{#        {% if field.help_text %}#}
-{#        <p class="help">{{ field.help_text|safe }}</p>#}
-{#        {% endif %}#}
+{#<form method="get" action="">#}
+{#    <div class="row">#}
+{#      Процент маржинальности:#}
+{#      {% if forloop.counter == 1 %}#}
+{#        <div class="modal-body">#}
+{#      <div class="col-sm-2">#}
+{#        <label class="form-control-label" title="{{ field.help_text }}" for="{{ field.id_for_label }}">{% render_field field class="form-control" placeholder=field.help_text %}</label>#}
+{#      </div>#}
+{#        </div>#}
+{#      {% elif forloop.counter == 2 %}#}
+{#        <div class="modal-body">#}
+{#      <div class="col-sm-2">#}
+{#        <label class="form-control-label" title="{{ field.help_text }}" for="{{ field.id_for_label }}">{% render_field field class="form-control" placeholder=field.help_text %}</label>#}
+{#      </div>#}
+{#        </div>#}
+{#      {% else %}#}
+{#        <label class="form-control-label" for="{{ field.id_for_label }}">{{ field.label }}:</label>#}
+{#          {% render_field field class="form-control" %}#}
+{#      {% endif %}#}
 {#    </div>#}
-{#{% endfor %}#}
-{#<button class="btn btn-primary" type="submit" name="button">Recherche</button>#}
+
+
+{#    Процент маржинальности:#}
+{#    {% for field in filter.form %}#}
+{#      {% if forloop.counter == 1 or forloop.counter == 2 %}#}
+{#        <label class="form-control-label" title="{{ field.help_text }}" for="{{ field.id_for_label }}">{% render_field field class="form-control" placeholder=field.help_text %}</label>#}
+{#      {{ field.help_text }}#}
+{#      {% else %}#}
+{#        <div class="form-group{% if field.errors %} has-danger{% endif %}">#}
+{#          <label class="form-control-label" for="{{ field.id_for_label }}">{{ field.label }}:</label>#}
+{#          {% render_field field class="form-control" %}#}
+{#        </div>#}
+{#      {% endif %}#}
+{#    {% endfor %}#}
+{#  </div>#}
+{#    <div class="modal-footer">#}
+{#      {% bootstrap_button 'Поиск' %}#}
+{#    </div>#}
 {#</form>#}
-{##}
-{##}
-{#<form action="" method="get">#}
-{#        {{ filter.form.as_p }}#}
-{#        <input type="submit" />#}
-{#    </form>#}
+
+{% block script %}
+  {{ filter.form.media.js }}
+{% endblock %}

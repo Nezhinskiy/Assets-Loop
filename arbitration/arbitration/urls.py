@@ -21,4 +21,5 @@ urlpatterns = [
      path('', include('core.urls')),
      path('', include('crypto_exchanges.urls', namespace='crypto_exchanges')),
      path('', include('banks.urls', namespace='banks')),
+     path("select2/", include("django_select2.urls")),
  ]

@@ -101,5 +101,7 @@ urlpatterns = [
     path('complextin/', complex_binance_tinkoff_inter_exchanges_calculate,
          name="complex_binance_tinkoff_inter_exchanges_calculate"),
     path('complexwise/', complex_binance_wise_inter_exchanges_calculate,
-         name="simpl_binance_tinkoff_inter_exchanges_calculate")
+         name="simpl_binance_tinkoff_inter_exchanges_calculate"),
+    path('z/', InterExchangesList.as_view(),
+         name="z")
 ]
