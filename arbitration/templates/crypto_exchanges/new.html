@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block content %}
+  <div class="container">
+    <div class="row">
+      <div class="col-sm-4">
+        <h2>
+          Расширенный фильтр:
+        </h2>
+        {% include 'crypto_exchanges/includes/product_filter.html' %}
+      </div>
+      <div class="col-sm-8">
+        <h1>
+          Все актуальные арбитражные связки:
+        </h1>
+        <p>
+          Связок: {{ count }}
+        </p>
+        <table id="myStaticDatatable" class="table">
+          <thead>
+          <tr>
+            <th>Связка</th>
+            <th>Маржинальность</th>
+            <th>Обновлено</th>
+          </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+
+{% block extra_js %}
+    <script>
+        let data_url = '{% url "crypto_exchanges:inter-exchanges_data" %}'  + '{{ request.get_full_path|last_url_path:0 | safe }}';
+        function updateTime(value) {
+            let seconds = Math.ceil((new Date() - new Date(value)) / 1000);
+            return seconds > 999 ? 999 : seconds;
+        }
+        $(document).ready(function () {
+            $('#myStaticDatatable').DataTable({
+                "searching": false,
+                "pageLength": 10000,
+                "info": false,
+                {#"aaSorting": [],#}
+                'order': [[1, 'desc']],
+                'processing': true,
+                'serverSide': true,
+                'ajax': {
+                    url: data_url,
+                    dataSrc: 'data',
+                },
+                columns: [
+                    {
+                        data: null,
+                        render: function (data, type, row){
+                            return `<p>${row.input_bank.name}</p>`
+                        },
+                        orderable: true
+                    },
+                    {
+                        data: null,
+                        render: function (data, type, row){
+                            return `<p>${row.marginality_percentage}%</p>`
+                        },
+                        orderable: true
+                    },
+                    {
+                        data:null,
+                        render: function (data, type, row){
+                            return `<p class="fw-light fs-15">< ${updateTime(row.update.updated)} cек.</p>`
+                        },
+                        orderable: false
+                    },
+
+                ]
+            });
+        });
+    </script>
+{% endblock %}

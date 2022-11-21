@@ -1,3 +1,4 @@
+from django.contrib.postgres.search import SearchVector
 from django.db.models import Count, F, Prefetch
 from django.http import Http404
 from django.views.generic import ListView
@@ -28,6 +29,10 @@ from crypto_exchanges.crypto_exchanges_registration.binance import \
 
 from crypto_exchanges.filters import ExchangesFilter
 from django_filters.views import FilterView
+from rest_framework.generics import ListAPIView
+
+from crypto_exchanges.serializers import InterExchangesSerializer
+from rest_framework.response import Response
 
 
 class CryptoExchangesRatesList(ListView):
@@ -495,3 +500,80 @@ class InterExchangesList(FilterView):
         context['last_update'] = self.get_queryset().latest(
             'update').update.updated
         return context
+
+
+class InterExchangesListNew(FilterView):
+    model = InterExchanges
+    template_name = ('crypto_exchanges/new.html')
+    filterset_class = ExchangesFilter
+
+    def get_queryset(self):
+        qs = self.model.objects.all()
+        self.filter = self.filterset_class(self.request.GET, queryset=qs)
+        return self.filter.qs
+
+    def get_context_data(self, **kwargs):
+        from crypto_exchanges.crypto_exchanges_config import \
+            CRYPTO_EXCHANGES_CONFIG
+        context = super(InterExchangesListNew,
+                        self).get_context_data(**kwargs)
+        context['bank_names'] = list(BANKS_CONFIG.keys())
+        context['crypto_exchange_names'] = list(CRYPTO_EXCHANGES_CONFIG.keys()
+                                                )[1:]
+        context['count'] = self.get_queryset().count()
+        return context
+
+
+class InterExchangesAPIView(ListAPIView, FilterView):
+    model = InterExchanges
+    serializer_class = InterExchangesSerializer
+    filterset_class = ExchangesFilter
+
+    def get_queryset(self):
+        qs = self.model.objects.prefetch_related(
+            'input_bank', 'output_bank', 'bank_exchange',
+            'input_crypto_exchange', 'output_crypto_exchange',
+            'interim_crypto_exchange', 'second_interim_crypto_exchange',
+            'update'
+        ).all()
+        self.filter = self.filterset_class(self.request.GET, queryset=qs)
+        return self.filter.qs
+
+    def filter_for_datatable(self, queryset):
+        # ordering
+        ordering_column = self.request.query_params.get('order[0][column]')
+        ordering_direction = self.request.query_params.get('order[0][dir]')
+        ordering = None
+        if ordering_column == '0':
+            ordering = 'bank_exchange'
+        if ordering_column == '1':
+            ordering = 'marginality_percentage'
+        if ordering and ordering_direction == 'desc':
+            ordering = f"-{ordering}"
+        if ordering:
+            queryset = queryset.order_by(ordering)
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        draw = request.query_params.get('draw')
+        queryset = self.get_queryset()
+        recordsTotal = queryset.count()
+        filtered_queryset = self.filter_for_datatable(queryset)
+        try:
+            start = int(request.query_params.get('start'))
+        except ValueError:
+            start = 0
+        try:
+            length = int(request.query_params.get('length'))
+        except ValueError:
+            length = 10
+        end = length + start
+        serializer = self.get_serializer(filtered_queryset[start:end],
+                                         many=True)
+        response = {
+            'draw': draw,
+            'recordsTotal': recordsTotal,
+            'recordsFiltered': filtered_queryset.count(),
+            'data': serializer.data
+        }
+        return Response(response)

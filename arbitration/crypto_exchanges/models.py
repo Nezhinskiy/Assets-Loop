@@ -308,7 +308,7 @@ class InterExchanges(models.Model):
         related_name='bank_rate_inter_exchanges',
         blank=True, null=True, on_delete=models.CASCADE
     )
-    marginality_percentage = models.FloatField()
+    marginality_percentage = models.FloatField('Marginality percentage')
     update = models.ForeignKey(
         InterExchangesUpdates, related_name='datas',
         on_delete=models.CASCADE

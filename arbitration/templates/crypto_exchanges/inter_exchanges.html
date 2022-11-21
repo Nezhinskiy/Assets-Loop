@@ -47,15 +47,13 @@
     <script>
       $(document).ready(function() {
             $('#dataTable').DataTable({
-                processing: true,
-        serverSide: true,
-                        ajax: '../server_side/scripts/server_processing.php',
         "pageLength": 10,
         "searching": false,
         "info": false,
                 "aaSorting": [],
                 {#"ordering": false,#}
         {#"order": [[1, 'desc']]#}
+
         });
       });
     </script>
