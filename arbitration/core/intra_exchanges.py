@@ -842,6 +842,31 @@ class InterSimplExchangesCalculate(object):
         ) * 100
         return marginality_percentage
 
+    def create_diagram(self, bank_exchange, input_crypto_exchange,
+                       interim_crypto_exchange, second_interim_crypto_exchange,
+                       output_bank, output_crypto_exchange):
+        diagram = ''
+        if bank_exchange and self.bank == bank_exchange.bank:
+            if bank_exchange.currency_market:
+                diagram += f'{bank_exchange.currency_market.name} '
+            else:
+                diagram += f'{self.bank.name} '
+            diagram += f'{bank_exchange.from_fiat} ⇨ '
+        diagram += (f'{self.bank.name} {input_crypto_exchange.fiat} ⇨ '
+                   f'{input_crypto_exchange.asset} ⇨ ')
+        if interim_crypto_exchange:
+            diagram += f'{interim_crypto_exchange.to_asset} ⇨ '
+            if second_interim_crypto_exchange:
+                diagram += f'{second_interim_crypto_exchange.to_asset} ⇨ '
+        diagram += f'{output_bank.name} {output_crypto_exchange.fiat}'
+        if bank_exchange and output_bank == bank_exchange.bank:
+            if bank_exchange.currency_market:
+                diagram += f' ⇨ {bank_exchange.currency_market.name} '
+            else:
+                diagram += f' ⇨ {output_bank.name} '
+            diagram += f'{bank_exchange.to_fiat}'
+        return diagram
+
     def add_to_bulk_update_or_create_and_bulk_create(
             self, new_update, records_to_update, records_to_create,
             output_bank, input_crypto_exchange, interim_crypto_exchange,
@@ -872,6 +897,11 @@ class InterSimplExchangesCalculate(object):
                 output_crypto_exchange=output_crypto_exchange,
                 bank_exchange=bank_exchange,
                 marginality_percentage=marginality_percentage,
+                diagram=self.create_diagram(
+                    bank_exchange, input_crypto_exchange,
+                    interim_crypto_exchange, second_interim_crypto_exchange,
+                    output_bank, output_crypto_exchange
+                ),
                 update=new_update
             )
         related_marginality_percentage = RelatedMarginalityPercentages(

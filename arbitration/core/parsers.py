@@ -321,8 +321,10 @@ class P2PParser(object):
     def extract_price_from_json(self, json_data: dict) -> float | None:
         pass
 
-    def get_api_answer(self, asset, trade_type, fiat):
+    def get_api_answer(self, asset, trade_type, fiat, count=0):
         """Делает запрос к эндпоинту API Tinfoff."""
+        if count == 2:
+            return False
         body = self.create_body(asset, trade_type, fiat)
         headers = self.create_headers(body)
         try:
@@ -333,15 +335,13 @@ class P2PParser(object):
         except Exception as error:
             message = f'Ошибка при запросе к основному API: {error}'
             print(message)
+            time.sleep(10)
+            count += 1
+            self.get_api_answer(asset, trade_type, fiat, count)
             # raise Exception(message)
         if response.status_code != HTTPStatus.OK:
             message = f'Ошибка {response.status_code}'
             print(message)
-            time.sleep(10)
-            with requests.session() as session:
-                response = session.post(
-                    self.endpoint, headers=headers, json=body
-                )
             # raise Exception(message)
         return response.json()
 
@@ -390,6 +390,8 @@ class P2PParser(object):
                 assets = crypto_exchanges_configs['assets_for_fiats']['all']
             for trade_type, asset in product(trade_types, assets):
                 response = self.get_api_answer(asset, fiat, trade_type)
+                if response is False:
+                    continue
                 price = (
                     1 / self.extract_price_from_json(response)
                     if trade_type == 'BUY'

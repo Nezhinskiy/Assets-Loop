@@ -11,7 +11,7 @@ from crypto_exchanges.crypto_exchanges_registration.binance import (
     get_best_card_2_card_crypto_exchanges, get_best_crypto_exchanges,
     get_binance_card_2_crypto_exchanges, get_binance_fiat_crypto_list,
     get_inter_exchanges_calculate, get_simpl_binance_tinkoff_inter_exchanges_calculate,
-    get_complex_binance_wise_inter_exchanges_calculate,
+    get_complex_binance_wise_inter_exchanges_calculate, get_simpl_binance_wise_inter_exchanges_calculate,
     get_complex_binance_tinkoff_inter_exchanges_calculate)
 from crypto_exchanges.models import \
     (BestCombinationPaymentChannels,
@@ -455,6 +455,10 @@ def simpl_binance_tinkoff_inter_exchanges_calculate(request):
     return get_simpl_binance_tinkoff_inter_exchanges_calculate()
 
 
+def simpl_binance_wise_inter_exchanges_calculate(request):
+    return get_simpl_binance_wise_inter_exchanges_calculate()
+
+
 def complex_binance_tinkoff_inter_exchanges_calculate(request):
     return get_complex_binance_tinkoff_inter_exchanges_calculate()
 
@@ -545,7 +549,7 @@ class InterExchangesAPIView(ListAPIView, FilterView):
         ordering_direction = self.request.query_params.get('order[0][dir]')
         ordering = None
         if ordering_column == '0':
-            ordering = 'bank_exchange'
+            ordering = 'diagram'
         if ordering_column == '1':
             ordering = 'marginality_percentage'
         if ordering and ordering_direction == 'desc':

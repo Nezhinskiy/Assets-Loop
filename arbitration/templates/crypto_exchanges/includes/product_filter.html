@@ -8,6 +8,10 @@
 <form method="get" action="">
   <div class="container">
     <div class="row">
+      <h2>
+        Расширенный фильтр:
+      </h2>
+      <hr/>
       {% for field in filter.form %}
         {% if forloop.counter == 1 %}
           <p>Процент маржинальности:</p>
@@ -34,7 +38,7 @@
               {% render_field field class="form-control" %}
             </p>
           </div>
-          {% if forloop.counter == 4 %}
+          {% if forloop.counter == 5 %}
             <hr/>
           {% endif %}
         {% endif %}
