@@ -23,7 +23,66 @@ from crypto_exchanges.models import (Card2CryptoExchanges,
                                      P2PCryptoExchangesRatesUpdates)
 
 
-class BankParser(object):
+class Parser(object):
+    TIMEOUT = 10
+    LIMIT_TRY = 2
+    endpoint = None
+
+    def get_api_answer_post(self, body, headers, count_try=0, endpoint=None):
+        if count_try == self.LIMIT_TRY:
+            return False
+        if endpoint is None:
+            endpoint = self.endpoint
+        try:
+            with requests.session() as session:
+                response = session.post(
+                    endpoint, headers=headers, json=body
+                )
+        except Exception as error:
+            message = f'Ошибка при запросе к основному API: {error}'
+            print(message)
+            time.sleep(self.TIMEOUT)
+            count_try += 1
+            self.get_api_answer_post(body, headers, count_try, endpoint)
+            # raise Exception(message)
+        if response.status_code != HTTPStatus.OK:
+            message = f'Ошибка {response.status_code}'
+            print(message)
+            time.sleep(self.TIMEOUT)
+            count_try += 1
+            self.get_api_answer_post(body, headers, count_try, endpoint)
+            # raise Exception(message)
+        return response.json()
+
+    def get_api_answer_get(self, params=None, count_try=0, endpoint=None):
+        if count_try == self.LIMIT_TRY:
+            return False
+        if endpoint is None:
+            endpoint = self.endpoint
+        try:
+            with requests.session() as session:
+                if params is None:
+                    response = session.get(endpoint)
+                else:
+                    response = session.get(endpoint, params=params)
+        except Exception as error:
+            message = f'Ошибка при запросе к основному API: {error}'
+            print(message)
+            time.sleep(self.TIMEOUT)
+            count_try += 1
+            self.get_api_answer_get(params, count_try, endpoint)
+            # raise Exception(message)
+        if response.status_code != HTTPStatus.OK:
+            message = f'Ошибка {response.status_code}'
+            print(message)
+            time.sleep(self.TIMEOUT)
+            count_try += 1
+            self.get_api_answer_get(params, count_try, endpoint)
+            # raise Exception(message)
+        return response.json()
+
+
+class BankParser(Parser):
     bank_name = None
     endpoint = None
     fiats = None
@@ -59,17 +118,8 @@ class BankParser(object):
 
     def get_api_answer(self, params):
         """Делает запрос к эндпоинту API Tinfoff."""
-        try:
-            response = requests.get(self.endpoint, params)
-        except Exception as error:
-            message = (f'Ошибка при запросе к основному API: {error}, '
-                       f'params: {params}, endpoint: {self.endpoint}')
-            raise Exception(message)
-        if response.status_code != HTTPStatus.OK:
-            message = (f'Ошибка {response.status_code}, params: {params},' 
-                       f' endpoint: {self.endpoint}')
-            raise Exception(message)
-        return response.json()
+        response = self.get_api_answer_get(params)
+        return response
 
     def extract_buy_and_sell_from_json(self, json_data: dict) -> tuple[float,
                                                                        float]:
@@ -98,12 +148,15 @@ class BankParser(object):
 
     def calculates_price_data(self, params) -> list[dict]:
         price = self.extract_price_from_json(self.get_api_answer(params))
-        price_data = {
-            'from_fiat': params[self.name_from],
-            'to_fiat': params[self.name_to],
-            'price': price
-        }
-        return [price_data]
+        try:
+            price_data = {
+                'from_fiat': params[self.name_from],
+                'to_fiat': params[self.name_to],
+                'price': price
+            }
+            return [price_data]
+        except BaseException as err:
+            print(err, params)
 
     def choice_buy_and_sell_or_price(self, params):
         if self.buy_and_sell:
@@ -164,7 +217,7 @@ class BankParser(object):
         new_update.save()
 
 
-class BankInvestParser(object):
+class BankInvestParser(Parser):
     currency_markets_name = None
     endpoint = None
     link_ends = None
@@ -175,15 +228,9 @@ class BankInvestParser(object):
 
     def get_api_answer(self, link_end):
         """Делает запрос к эндпоинту API Tinfoff."""
-        try:
-            response = requests.get(self.endpoint + link_end)
-        except Exception as error:
-            message = f'Ошибка при запросе к основному API: {error}'
-            raise Exception(message)
-        if response.status_code != HTTPStatus.OK:
-            message = f'Ошибка {response.status_code}'
-            raise Exception(message)
-        return response.json()
+        endpoint = self.endpoint + link_end
+        response = self.get_api_answer_get(endpoint=endpoint)
+        return response
 
     def extract_buy_and_sell_from_json(self, json_data: dict, link_end):
         items = json_data['payload']['items']
@@ -262,6 +309,8 @@ class BankInvestParser(object):
                             records_to_create):
         for link_end in self.link_ends:
             answer = self.get_api_answer(link_end)
+            if answer is False:
+                continue
             buy_and_sell_data = self.calculates_buy_and_sell_data(link_end,
                                                                   answer)
             for buy_or_sell_data in buy_and_sell_data:
@@ -287,7 +336,7 @@ class BankInvestParser(object):
         new_update.save()
 
 
-class P2PParser(object):
+class P2PParser(Parser):
     crypto_exchange_name = None
     bank_name = None
     assets = None
@@ -321,29 +370,12 @@ class P2PParser(object):
     def extract_price_from_json(self, json_data: dict) -> float | None:
         pass
 
-    def get_api_answer(self, asset, trade_type, fiat, count=0):
+    def get_api_answer(self, asset, trade_type, fiat):
         """Делает запрос к эндпоинту API Tinfoff."""
-        if count == 2:
-            return False
         body = self.create_body(asset, trade_type, fiat)
         headers = self.create_headers(body)
-        try:
-            with requests.session() as session:
-                response = session.post(
-                    self.endpoint, headers=headers, json=body
-                )
-        except Exception as error:
-            message = f'Ошибка при запросе к основному API: {error}'
-            print(message)
-            time.sleep(10)
-            count += 1
-            self.get_api_answer(asset, trade_type, fiat, count)
-            # raise Exception(message)
-        if response.status_code != HTTPStatus.OK:
-            message = f'Ошибка {response.status_code}'
-            print(message)
-            # raise Exception(message)
-        return response.json()
+        response = self.get_api_answer_post(body, headers)
+        return response
 
     def get_exception(self, fiat, pay_type):
         if fiat == 'RUB' and pay_type == 'Wise':
@@ -692,7 +724,7 @@ class Card2Wallet2CryptoExchangesParser:
         new_update.save()
 
 
-class ListsFiatCryptoParser(object):
+class ListsFiatCryptoParser(Parser):
     crypto_exchange_name = None
     endpoint_sell = None
     endpoint_buy = None
@@ -750,15 +782,8 @@ class ListsFiatCryptoParser(object):
             body = self.create_body_buy(fiat)
             endpoint = self.endpoint_buy
         headers = self.create_headers(body)
-        try:
-            response = requests.post(endpoint, headers=headers, json=body)
-        except Exception as error:
-            message = f'Ошибка при запросе к основному API: {error}'
-            raise Exception(message)
-        if response.status_code != HTTPStatus.OK:
-            message = f'Ошибка {response.status_code}'
-            raise Exception(message)
-        return response.json()
+        response = self.get_api_answer_post(body, headers, endpoint=endpoint)
+        return response
 
     def add_to_update_or_create(
             self, crypto_exchange, new_update, list_fiat_crypto, trade_type
@@ -796,11 +821,15 @@ class ListsFiatCryptoParser(object):
 
         for asset in assets:
             response_sell = self.get_api_answer(asset=asset)
+            if response_sell is False:
+                continue
             sell_list = self.extract_sell_list_from_json(response_sell, fiats)
             sell_dict[asset] = sell_list
 
         for fiat in fiats:
             response_buy = self.get_api_answer(fiat=fiat)
+            if response_buy is False:
+                continue
             buy_list = self.extract_buy_list_from_json(response_buy, assets)
             for asset_info in buy_list:
                 fiat_list = []
@@ -829,7 +858,7 @@ class ListsFiatCryptoParser(object):
         new_update.save()
 
 
-class Card2CryptoExchangesParser(object):
+class Card2CryptoExchangesParser(Parser):
     crypto_exchange_name = None
     endpoint_sell = None
     endpoint_buy = None
@@ -899,26 +928,16 @@ class Card2CryptoExchangesParser(object):
             body = self.create_body_sell(fiat, asset, amount)
             endpoint = self.endpoint_sell
             headers = self.create_headers(body)
-            try:
-                with requests.session() as session:
-                    response = session.post(
-                        endpoint, headers=headers, json=body
-                    )
-            except Exception as error:
-                message = f'Ошибка при запросе к основному API: {error}'
-                raise Exception(message)
+            response = self.get_api_answer_post(
+                body, headers, endpoint=endpoint
+            )
         else:
             params = self.create_params_buy(fiat, asset)
             endpoint = self.endpoint_buy
-            try:
-                response = requests.get(endpoint, params)
-            except Exception as error:
-                message = f'Ошибка при запросе к основному API: {error}'
-                raise Exception(message)
-        if response.status_code != HTTPStatus.OK:
-            message = f'Ошибка {response.status_code}'
-            raise Exception(message)
-        return response.json()
+            response = self.get_api_answer_get(
+                params, endpoint=endpoint
+            )
+        return response
 
     def add_to_bulk_update_or_create(
             self, crypto_exchange, new_update, records_to_update,
@@ -994,6 +1013,8 @@ class Card2CryptoExchangesParser(object):
                         continue
                     response = self.get_api_answer(asset, trade_type, fiat,
                                                    amount)
+                    if response is False:
+                        continue
                     price, pre_price, commission = (
                         self.extract_values_from_json(response, amount,
                                                       trade_type))

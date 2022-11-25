@@ -21,4 +21,14 @@ class InfoLoop(models.Model):
     all_banks_exchanges = models.DurationField(default=timedelta())
     all_crypto_exchanges = models.DurationField(default=timedelta())
     all_exchanges = models.DurationField(default=timedelta())
+    start_banks_exchanges = models.DateTimeField(
+        null=True, blank=True, default=None
+    )
+    start_crypto_exchanges = models.DateTimeField(
+        null=True, blank=True, default=None
+    )
+    start_all_exchanges = models.DateTimeField(
+        null=True, blank=True, default=None
+    )
+
     # check = models.BooleanField(null=True, blank=True, default=None)

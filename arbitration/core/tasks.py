@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from arbitration.celery import app
 from dateutil import parser
 from core.models import InfoLoop
@@ -12,8 +12,46 @@ from crypto_exchanges.crypto_exchanges_registration.binance import \
 
 
 @app.task
-def all_start_time():
-    return datetime.now()
+def start_crypto_exchanges():
+    info = InfoLoop.objects.last()
+    info.start_crypto_exchanges = datetime.now(timezone.utc)
+    info.save()
+    print('start_crypto_exchanges')
+
+
+@app.task
+def start_bank_exchanges():
+    info = InfoLoop.objects.last()
+    info.start_banks_exchanges = datetime.now(timezone.utc)
+    info.save()
+    print('start_banks_exchanges')
+
+
+@app.task
+def end_all_exchanges(_):
+    info = InfoLoop.objects.filter(value=True).last()
+    duration = datetime.now(timezone.utc) - info.updated
+    info.all_exchanges = duration
+    info.save()
+    print('end_all_exchanges')
+
+
+@app.task
+def end_crypto_exchanges(_):
+    info = InfoLoop.objects.filter(value=True).last()
+    duration = datetime.now(timezone.utc) - info.updated
+    info.all_crypto_exchanges = duration
+    info.save()
+    print('end_crypto_exchanges')
+
+
+@app.task
+def end_banks_exchanges(_):
+    info = InfoLoop.objects.filter(value=True).last()
+    duration = datetime.now(timezone.utc) - info.updated
+    info.all_banks_exchanges = duration
+    info.save()
+    print('end_banks_exchanges')
 
 
 @app.task
@@ -22,6 +60,7 @@ def get_simpl_binance_tinkoff_inter_exchanges_calculate(_):
         SimplBinanceTinkoffInterExchangesCalculate()
     )
     simpl_binance_tinkoff_inter_exchanges_calculate.main()
+    print('simpl_binance_tinkoff')
 
 
 @app.task
@@ -30,6 +69,7 @@ def get_simpl_binance_wise_inter_exchanges_calculate(_):
         SimplBinanceWiseInterExchangesCalculate()
     )
     simpl_binance_wise_inter_exchanges_calculate.main()
+    print('simpl_binance_wise')
 
 
 @app.task
@@ -38,6 +78,7 @@ def get_complex_binance_tinkoff_inter_exchanges_calculate(_):
         ComplexBinanceTinkoffInterExchangesCalculate()
     )
     complex_binance_tinkoff_inter_exchanges_calculate.main()
+    print('complex_binance_tinkoff')
 
 
 @app.task
@@ -46,19 +87,4 @@ def get_complex_binance_wise_inter_exchanges_calculate(_):
         ComplexBinanceWiseInterExchangesCalculate()
     )
     complex_binance_wise_inter_exchanges_calculate.main()
-
-
-# Best crypto exchanges
-@app.task
-def all_end(_):
-    print('all end')
-
-
-@app.task
-def best_get_inter_exchanges_calculate(str_start_time):
-    start_time = parser.parse(str_start_time[0])
-    print('crypto_exchanges_end')
-    duration = datetime.now() - start_time
-    new_loop = InfoLoop.objects.filter(value=True).last()
-    new_loop.all_exchanges = duration
-    new_loop.save()
+    print('complex_binance_wise')

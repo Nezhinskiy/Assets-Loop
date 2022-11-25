@@ -904,11 +904,11 @@ class InterSimplExchangesCalculate(object):
                 ),
                 update=new_update
             )
-        related_marginality_percentage = RelatedMarginalityPercentages(
-            marginality_percentage=marginality_percentage,
-            inter_exchange=inter_exchange
-        )
-        records_to_create.append(related_marginality_percentage)
+        # related_marginality_percentage = RelatedMarginalityPercentages(
+        #     marginality_percentage=marginality_percentage,
+        #     inter_exchange=inter_exchange
+        # )
+        # records_to_create.append(related_marginality_percentage)
 
     def main(self):
         start_time = datetime.now()
@@ -928,9 +928,9 @@ class InterSimplExchangesCalculate(object):
         InterExchanges.objects.bulk_update(
             records_to_update, ['marginality_percentage', 'update']
         )
-        RelatedMarginalityPercentages.objects.bulk_create(
-            records_to_create
-        )
+        # RelatedMarginalityPercentages.objects.bulk_create(
+        #     records_to_create
+        # )
         duration = datetime.now() - start_time
         new_update.duration = duration
         new_update.save()
