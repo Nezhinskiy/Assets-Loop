@@ -164,8 +164,8 @@ def start(request):
                     and InfoLoop.objects.last().all_banks_exchanges
             ):
                 InfoLoop.objects.create(value=True)
-            elif InfoLoop.objects.last().value is True:
-                InfoLoop.objects.create(value=False)
+            else:
+                return redirect('core:home')
     return redirect('core:home')
 
 
