@@ -48,3 +48,4 @@ wcwidth==0.2.5
 wrapt==1.14.1
 zope.event==4.5.0
 zope.interface==5.5.0
+python-dotenv~=0.21.0

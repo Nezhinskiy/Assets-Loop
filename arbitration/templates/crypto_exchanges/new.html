@@ -97,7 +97,7 @@
           });
       });
       $(document).ready(function () {
-          var refreshTable = $('#myStaticDatatable').dataTable({
+          var refreshTable = $('#myStaticDatatable').DataTable({
               "searching": false,
               "pageLength": 10,
               "info": false,
@@ -109,6 +109,10 @@
                   url: data_url,
                   dataSrc: 'data',
               },
+          {#    "rowCallback": function( row, data, index ) {#}
+          {#        if ($(`#modal${row.id}`).not('.visible')) {#}
+          {#    (`#modal${row.id}`).modal.show();#}
+          {# }},#}
               {#"rowCallback": function( row, data, index ) {#}
               {#    if ( updateTime(data.update.updated) == 999 )#}
               {#    {#}
@@ -172,9 +176,9 @@
 
               ]
           });
-          setInterval (function test() {
-              refreshTable.fnDraw();
-       },     10000);
+          setInterval( function () {
+              refreshTable.ajax.reload( null, false );
+              }, 15000 );
       });
       {#setTimeout(function() {#}
       {#    location.reload();#}

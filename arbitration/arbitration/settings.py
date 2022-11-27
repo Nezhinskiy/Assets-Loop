@@ -15,6 +15,9 @@ from pathlib import Path
 
 import dj_database_url
 from django.core.management.utils import get_random_secret_key
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -103,7 +106,14 @@ elif len(sys.argv) > 0 and sys.argv[1] != 'collectstatic':
     if os.getenv("DATABASE_URL", None) is None:
         raise Exception("DATABASE_URL environment variable not defined")
     DATABASES = {
-        "default": dj_database_url.parse(os.environ.get("DATABASE_URL")),
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DATABASE_NAME'),
+            'USER': os.getenv('DATABASE_USER'),
+            'PASSWORD': os.getenv('DATABASE_PASSWORD'),
+            'HOST': os.getenv('DATABASE_HOST'),
+            'PORT': os.getenv('DATABASE_PORT'),
+            },
     }
 
 
@@ -154,6 +164,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Celery settings
 CELERY_BROKER_URL = "redis://localhost:6379"
 CELERY_RESULT_BACKEND = "redis://localhost:6379"
+
+
 
 # CACHES = {
 #     # … default cache config and others
