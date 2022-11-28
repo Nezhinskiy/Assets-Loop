@@ -1,53 +1,23 @@
 {% load static %}
-{% load custom_filters %}
 {% with request.resolver_match.view_name as view_name %}
 <header>
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark navbar-active-deepskyblue">
     <div class="container-fluid">
-      <a class="navbar-brand" href="{% url 'core:home' %}">Asset L<span style="color:deepskyblue">∞</span>p</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDarkDropdown" aria-controls="navbarNavDarkDropdown" aria-expanded="false" aria-label="Toggle navigation">
+      <a class="navbar-brand" href="{% url 'crypto_exchanges:InterExchangesListNew' %}">Asset L<span style="color:deepskyblue">∞</span>p</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDark" aria-controls="navbarNavDark" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
-      <div class="collapse navbar-collapse" id="navbarNavDarkDropdown">
+      <div class="collapse navbar-collapse" id="navbarNavDark">
         <ul class="navbar-nav">
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle {% if 'internal_exchanges' == request.path|last_url_path:1 or 'currency_markets' == request.path|last_url_path:1 or 'best_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              Banks exchanges
+          <li class="nav-item">
+            <a class="nav-link {% if '/' == request.path  %}active{% endif %}" href="{% url 'crypto_exchanges:InterExchangesListNew' %}" id="navbarDarkMenuLink" role="button" aria-expanded="false">
+              Все связки
             </a>
-            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink">
-              <li><a class="dropdown-item {% if 'internal_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'banks:banks_internal_exchanges' %}">Internal exchange rates</a></li>
-              <li><a class="dropdown-item {% if 'currency_markets' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'banks:banks_currency_market_exchanges' %}">Exchange rates through the exchange</a></li>
-              <li><a class="dropdown-item {% if 'best_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'banks:banks_best_exchanges' %}">The best ways to exchange</a></li>
-            </ul>
           </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle {% if 'internal_crypto_exchanges' == request.path|last_url_path:1 or 'p2p_exchanges' == request.path|last_url_path:1 or 'card_2_wallet_2_crypto_exchanges' == request.path|last_url_path:1 or 'card_2_crypto_exchanges' == request.path|last_url_path:1 or 'best_payment_channels_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="#" id="navbarDarkDropdownMenuLink2" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              Crypto exchanges
+          <li class="nav-item">
+            <a class="nav-link {% if '/info' == request.path %}active{% endif %}" href="{% url 'core:info' %}" id="navbarDarkMenuLink2" role="button" aria-expanded="false">
+              Слжебная информация
             </a>
-            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink">
-              <li><a class="dropdown-item {% if 'internal_crypto_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'crypto_exchanges:crypto_exchanges_internal_exchanges' %}">Internal exchange rates</a></li>
-              <li><a class="dropdown-item {% if 'p2p_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'crypto_exchanges:crypto_exchanges_p2p_exchanges' %}">Deposit and withdrawal through p2p</a></li>
-              <li><a class="dropdown-item {% if 'card_2_wallet_2_crypto_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'crypto_exchanges:crypto_exchanges_card_2_wallet_2_crypto_exchanges' %}">Deposit and withdrawal through a fiat crypto wallet</a></li>
-              <li><a class="dropdown-item {% if 'card_2_crypto_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'crypto_exchanges:crypto_exchanges_card_2_crypto_exchanges' %}">Deposit and withdrawal directly to crypto</a></li>
-              <li><a class="dropdown-item {% if 'best_payment_channels_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'crypto_exchanges:crypto_exchanges_best_payment_channels_exchanges' %}">The best ways to deposit and withdrawal</a></li>
-            </ul>
-          </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle {% if 'intra_banks_exchanges_via_crypto_exchanges' == request.path|last_url_path:1 or 'inter_banks_exchanges_via_crypto_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="#" id="navbarDarkDropdownMenuLink3" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              Inter-exchange exchanges
-            </a>
-            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink">
-              <li><a class="dropdown-item {% if 'intra_banks_exchanges_via_crypto_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'crypto_exchanges:intra_banks_exchanges_via_crypto_exchanges_best_combinations' %}">Best intrabank exchanges via crypto exchange</a></li>
-              <li><a class="dropdown-item {% if 'inter_banks_exchanges_via_crypto_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'crypto_exchanges:inter_banks_exchanges_via_crypto_exchanges_best_combinations' %}">Best interbank exchanges via crypto exchange</a></li>
-            </ul>
-          </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle {% if 'loop_banks_and_crypto_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="#" id="navbarDarkDropdownMenuLink4" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              L<span style="color:deepskyblue">∞</span>ped exchanges
-            </a>
-            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink">
-              <li><a class="dropdown-item {% if 'loop_banks_and_crypto_exchanges' == request.path|last_url_path:1 %}active{% endif %}" href="{% url 'crypto_exchanges:loop_inter_banks_and_crypto_exchanges' %}">Best intrabank looped exchanges via crypto exchange</a></li>
-            </ul>
           </li>
         </ul>
         <form class="form-inline">
