@@ -15,6 +15,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.conf import settings
 
 urlpatterns = [
      path('select2/', include('django_select2.urls')),
@@ -23,3 +25,5 @@ urlpatterns = [
      path('', include('crypto_exchanges.urls', namespace='crypto_exchanges')),
      path('', include('banks.urls', namespace='banks')),
  ]
+
+urlpatterns += staticfiles_urlpatterns()
