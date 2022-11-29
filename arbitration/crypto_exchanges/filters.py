@@ -1,6 +1,7 @@
 import time
 
 import django_filters
+from django import forms
 from django.db.models import Q
 
 from crypto_exchanges.models import InterExchanges
@@ -8,6 +9,7 @@ from banks.banks_config import BANKS_CONFIG
 from crypto_exchanges.crypto_exchanges_config import CRYPTO_EXCHANGES_CONFIG
 from django_select2.forms import Select2MultipleWidget
 
+from core.parsers import check_work_time
 
 BANK_CHOICES = tuple((bank, bank) for bank in BANKS_CONFIG.keys())
 CRYPTO_EXCHANGE_CHOICES = tuple(
@@ -18,8 +20,22 @@ CRYPTO_EXCHANGE_ASSET_CHOICES = tuple(
     (asset, asset)
     for asset in ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'SHIB', 'RUB', 'ADA')
 )
-ALL_FIATS = tuple(
+PAYMENT_CHANNEL_CHOICES = (
+    ('P2P', 'P2P'),
+    ('Card2CryptoExchange', 'Card2CryptoExchange'),
+    ('Card2Wallet2CryptoExchange', 'Card2Wallet2CryptoExchange')
+)
+ALL_FIAT_CHOICES = tuple(
     (fiat, fiat) for fiat in CRYPTO_EXCHANGES_CONFIG['all_fiats']
+)
+BANK_EXCHANGE_CHOICES = (
+    (0, 'Присутсвует'),
+    (1, 'Отсутствует'),
+) if not check_work_time() else (
+    (0, 'Присутсвует'),
+    (1, 'Отсутствует'),
+    ('banks', 'Только внутри банков'),
+    ('Tinkoff invest', 'Только через Тинькофф инвестиции')
 )
 
 
@@ -41,6 +57,22 @@ class ExchangesFilter(django_filters.FilterSet):
         method='asset_filter',
         widget=Select2MultipleWidget, label='Криптоактивы'
     )
+    payment_channel = django_filters.MultipleChoiceFilter(
+        choices=PAYMENT_CHANNEL_CHOICES,
+        method='payment_channel_filter',
+        widget=Select2MultipleWidget, label='Платёжные методы',
+        help_text=(
+            '•P2P (peer-to-peer) — прямая торговля пользователей '
+            'друг с другом на бирже. Комиссия не взымается. '
+            '•Card2CryptoExchange — ввод / вывод криптоактивов '
+            'напрямую через биржу. Предусмотрена комиссия. '
+            '•Card2Wallet2CryptoExchange — ввод на биржу сначала '
+            'фиатных денег, с последующим обменом на СПОТовой бирже '
+            'в криптоактивы или наоборот вывод с предворительным '
+            'обменом криптоактивов в фиатные деньги. '
+            'Предусмотрена комиссия.'
+        )
+    )
     input_bank = django_filters.MultipleChoiceFilter(
         choices=BANK_CHOICES, field_name='input_bank__name',
         widget=Select2MultipleWidget, label='Банки в начале'
@@ -50,16 +82,17 @@ class ExchangesFilter(django_filters.FilterSet):
         widget=Select2MultipleWidget, label='Банки в конце',
     )
     fiats = django_filters.MultipleChoiceFilter(
-        choices=ALL_FIATS,
+        choices=ALL_FIAT_CHOICES,
         method='fiat_filter',
         widget=Select2MultipleWidget, label='Валюты'
     )
-    #
-    # release_year = django_filters.NumberFilter(field_name='release_date', lookup_expr='year')
-    # release_year__gt = django_filters.NumberFilter(field_name='release_date', lookup_expr='year__gt')
-    # release_year__lt = django_filters.NumberFilter(field_name='release_date', lookup_expr='year__lt')
-    #
-    # manufacturer__name = django_filters.CharFilter(lookup_expr='icontains')
+    bank_exchange = django_filters.ChoiceFilter(
+        choices=BANK_EXCHANGE_CHOICES, method='bank_exchange_filter',
+        label='Внутрибанковский обмен', empty_label='', help_text=(
+            'Через валютные биржи можно обменивать только по рабочим дням '
+            'с 7:00 до 19:00 по Мск, в остальное время этот фильтр недоступен'
+        )
+    )
 
     def asset_filter(self, queryset, _, values):
         return queryset.filter(
@@ -67,15 +100,38 @@ class ExchangesFilter(django_filters.FilterSet):
             output_crypto_exchange__asset__in=values
         )
 
+    def payment_channel_filter(self, queryset, _, values):
+        return queryset.filter(
+            input_crypto_exchange__payment_channel__in=values,
+            output_crypto_exchange__payment_channel__in=values
+        )
+
     def fiat_filter(self, queryset, _, values):
         return queryset.filter(
-            bank_exchange__from_fit__in=values,
-            bank_exchange__to_fit__in=values
+            input_crypto_exchange__fiat__in=values,
+            output_crypto_exchange__fiat__in=values
         )
+
+    def bank_exchange_filter(self, queryset, _, values):
+        if values in ('1', '0'):
+            qs = queryset.filter(
+                bank_exchange__isnull=bool(int(values))
+            )
+        elif values == 'banks':
+            qs = queryset.filter(
+                bank_exchange__isnull=False,
+                bank_exchange__currency_market__isnull=True
+            )
+        else:
+            qs = queryset.filter(
+                bank_exchange__isnull=False,
+                bank_exchange__currency_market__isnull=False
+            )
+        return qs
 
     class Meta:
         model = InterExchanges
         fields = [
             'gte', 'lte', 'input_bank', 'output_bank', 'fiats',
-            'crypto_exchange', 'assets'
+            'bank_exchange', 'crypto_exchange', 'assets', 'payment_channel'
         ]

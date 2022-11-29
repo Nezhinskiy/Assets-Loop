@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from datetime import datetime
+from datetime import datetime, timezone, timedelta, time
 from http import HTTPStatus
 from itertools import combinations, permutations, product
 from sys import getsizeof
@@ -22,6 +22,17 @@ from crypto_exchanges.models import (Card2CryptoExchanges,
                                      P2PCryptoExchangesRates,
                                      P2PCryptoExchangesRatesUpdates)
 
+
+def check_work_time():
+    START_TIME = time(hour=7)
+    END_TIME = time(hour=19)
+
+    def msk_datetime():
+        return datetime.now(timezone.utc) + timedelta(hours=3)
+    return (
+        msk_datetime().weekday() in range(0, 5)
+        and START_TIME <= msk_datetime().time() < END_TIME
+    )
 
 class Parser(object):
     TIMEOUT = 10
@@ -320,6 +331,8 @@ class BankInvestParser(Parser):
                 )
 
     def main(self):
+        if not check_work_time():
+            return
         start_time = datetime.now()
         new_update = BanksExchangeRatesUpdates.objects.create(
             currency_market=self.currency_market
@@ -845,6 +858,9 @@ class ListsFiatCryptoParser(Parser):
         )
 
     def main(self):
+        if (ListsFiatCryptoUpdates.objects.last().updated.date()
+                == datetime.now(timezone.utc).date()):
+            return
         start_time = datetime.now()
         crypto_exchange = CryptoExchanges.objects.get(
             name=self.crypto_exchange_name

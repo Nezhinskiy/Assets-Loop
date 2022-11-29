@@ -72,6 +72,7 @@ def get_all_exchanges(request):
 
 
 def start(request):
+    redirect('crypto_exchanges:InterExchangesListNew')
     # 1. Crypto exchanges
     # 1.1 Binance
     # 1.1.1 Tinkoff
@@ -154,27 +155,32 @@ def start(request):
                           end_all_exchanges.s())
     if InfoLoop.objects.last().value == 0:
         InfoLoop.objects.create(value=True)
-        while InfoLoop.objects.last().value is True:
+        count_loop = 0
+        while InfoLoop.objects.last().value == 1:
             general_chord.delay()
-            while (InfoLoop.objects.last().value is True
+            while (InfoLoop.objects.last().value == 1
                     and not InfoLoop.objects.last().all_exchanges):
                 time.sleep(1)
             if (
                     InfoLoop.objects.last().all_crypto_exchanges
                     and InfoLoop.objects.last().all_banks_exchanges
             ):
-                InfoLoop.objects.create(value=True)
+                count_loop += 1
+                if count_loop > 10:
+                    InfoLoop.objects.create(value=False)
+                else:
+                    InfoLoop.objects.create(value=True)
             else:
-                return redirect('core:home')
-    return redirect('core:home')
+                InfoLoop.objects.create(value=False)
+    return redirect('crypto_exchanges:InterExchangesListNew')
 
 
 def stop(request):
     if InfoLoop.objects.last().value == 1:
         InfoLoop.objects.create(value=False)
-    return redirect('core:home')
+    return redirect('core:info')
 
 
 def registration(request):
     all_registration()
-    return redirect('core:home')
+    return redirect('core:info')
