@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load custom_filters %}
+{% load i18n static %}
 
 {% block content %}
   <div class="container">
@@ -34,6 +35,29 @@
 {% block extra_js %}
   <script src="//cdn.datatables.net/plug-ins/725b2a2115b/api/fnReloadAjax.js"></script>
   <script>
+      let dt_language = {
+            "emptyTable":     "{% trans "No data available in table" %}",
+            "info":           "{% trans "Showing _START_ to _END_ of _TOTAL_ entries" %}",
+            "infoEmpty":      "{% trans "Showing 0 to 0 of 0 entries" %}",
+            "infoFiltered":   "{% trans "(filtered from _MAX_ total entries)" %}",
+            "infoPostFix":    "",
+            "thousands":      ",",
+            "lengthMenu":     "{% trans "Показать _MENU_ связок на странице" %}",
+            "loadingRecords": "{% trans "Loading..." %}",
+            "processing":     "{% trans "Квантовые вычисления..." %}",
+            "search":         "{% trans "Search:" %}",
+            "zeroRecords":    "{% trans "No matching records found" %}",
+            "paginate": {
+                "first":      "{% trans "Первая" %}",
+                "last":       "{% trans "Последняя" %}",
+                "next":       "{% trans "Следующая" %}",
+                "previous":   "{% trans "Предидущая" %}"
+            },
+            "aria": {
+                "sortAscending":  "{% trans ": activate to sort column ascending" %}",
+                "sortDescending": "{% trans ": activate to sort column descending" %}"
+            }
+        }
       let data_url = '{% url "crypto_exchanges:inter-exchanges_data" %}'  + '{{ request.get_full_path|last_url_path:0 | safe }}';
       function updateTime(updated) {
           let seconds = Math.ceil((new Date() - new Date(updated)) / 1000);
@@ -98,17 +122,19 @@
       });
       $(document).ready(function () {
           var refreshTable = $('#myStaticDatatable').DataTable({
+              "language": dt_language,
               "searching": false,
               "pageLength": 10,
               "info": false,
               {#"aaSorting": [],#}
               'order': [[1, 'desc']],
-              'processing': false,
+              'processing': true,
               'serverSide': true,
               'ajax': {
                   url: data_url,
                   dataSrc: 'data',
               },
+
           {#    "rowCallback": function( row, data, index ) {#}
           {#        if ($(`#modal${row.id}`).not('.visible')) {#}
           {#    (`#modal${row.id}`).modal.show();#}

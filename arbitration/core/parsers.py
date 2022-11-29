@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import time
+from time import sleep
 from datetime import datetime, timezone, timedelta, time
 from http import HTTPStatus
 from itertools import combinations, permutations, product
@@ -52,14 +52,14 @@ class Parser(object):
         except Exception as error:
             message = f'Ошибка при запросе к основному API: {error}'
             print(message)
-            time.sleep(self.TIMEOUT)
+            sleep(self.TIMEOUT)
             count_try += 1
             self.get_api_answer_post(body, headers, count_try, endpoint)
             # raise Exception(message)
         if response.status_code != HTTPStatus.OK:
             message = f'Ошибка {response.status_code}'
             print(message)
-            time.sleep(self.TIMEOUT)
+            sleep(self.TIMEOUT)
             count_try += 1
             self.get_api_answer_post(body, headers, count_try, endpoint)
             # raise Exception(message)
@@ -79,14 +79,14 @@ class Parser(object):
         except Exception as error:
             message = f'Ошибка при запросе к основному API: {error}'
             print(message)
-            time.sleep(self.TIMEOUT)
+            sleep(self.TIMEOUT)
             count_try += 1
             self.get_api_answer_get(params, count_try, endpoint)
             # raise Exception(message)
         if response.status_code != HTTPStatus.OK:
             message = f'Ошибка {response.status_code}'
             print(message)
-            time.sleep(self.TIMEOUT)
+            sleep(self.TIMEOUT)
             count_try += 1
             self.get_api_answer_get(params, count_try, endpoint)
             # raise Exception(message)
@@ -368,6 +368,7 @@ class P2PParser(Parser):
             name=self.crypto_exchange_name
         )
         self.bank = Banks.objects.get(name=self.bank_name)
+        self.full_update = None
 
     def converts_choices_to_set(self, choices: tuple[tuple[str, str]]
                                 ) -> set[str]:
@@ -434,6 +435,16 @@ class P2PParser(Parser):
             if not assets:
                 assets = crypto_exchanges_configs['assets_for_fiats']['all']
             for trade_type, asset in product(trade_types, assets):
+                if not self.full_update:
+                    target_rates = P2PCryptoExchangesRates.objects.filter(
+                        crypto_exchange=self.crypto_exchange,
+                        asset=asset, trade_type=trade_type, fiat=fiat,
+                        bank=self.bank,
+                        payment_channel=self.payment_channel
+                    )
+                    if target_rates.exists() and not target_rates.get().price:
+                        print('azazazaza')
+                        continue
                 response = self.get_api_answer(asset, fiat, trade_type)
                 if response is False:
                     continue
@@ -450,6 +461,12 @@ class P2PParser(Parser):
 
     def main(self):
         start_time = datetime.now()
+        if (
+                datetime.now(timezone.utc).time().hour
+                != P2PCryptoExchangesRatesUpdates.objects.last(
+                ).updated.time().hour
+        ):
+            self.full_update = True
         new_update = P2PCryptoExchangesRatesUpdates.objects.create(
             crypto_exchange=self.crypto_exchange, bank=self.bank,
             payment_channel=self.payment_channel
