@@ -328,6 +328,17 @@ class InterExchanges(models.Model):
 
     class Meta:
         ordering = ['-marginality_percentage']
+        constraints = [
+            models.UniqueConstraint(
+                fields=(
+                    'crypto_exchange', 'input_bank', 'output_bank',
+                    'input_crypto_exchange', 'interim_crypto_exchange',
+                    'second_interim_crypto_exchange', 'output_crypto_exchange',
+                    'bank_exchange'
+                ),
+                name='unique_inter_exchanges'
+            )
+        ]
 
 
 class RelatedMarginalityPercentages(models.Model):
