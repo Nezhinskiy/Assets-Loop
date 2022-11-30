@@ -529,7 +529,7 @@ class InterExchangesAPIView(ListAPIView, FilterView):
             'update'
         ).filter(
             update__updated__gte=(
-                    datetime.now(timezone.utc) - timedelta(minutes=115)
+                    datetime.now(timezone.utc) - timedelta(minutes=15)
             )
         )
         self.filter = self.filterset_class(self.request.GET, queryset=qs)
