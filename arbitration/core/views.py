@@ -34,43 +34,6 @@ def get_all_exchanges(request):
     return all_exchanges()
 
 
-# def start(request):
-#     InfoLoop.objects.create(value=True)
-#
-#     group_crypto_exchanges = group(
-#         crypto_exchanges_start_time.s(), get_tinkoff_p2p_binance_exchanges.s(),
-#         get_wise_p2p_binance_exchanges.s(),
-#         chord(
-#             get_all_binance_crypto_exchanges.s(),
-#             get_all_card_2_wallet_2_crypto_exchanges.s()
-#         ),
-#         get_binance_card_2_crypto_exchanges.s(),
-#     )
-#     crypto_exchanges = chord(group_crypto_exchanges,
-#                              best_crypto_exchanges_intra_exchanges.s())
-#
-#     group_banks = group(
-#         bank_start_time.s(), parse_internal_tinkoff_rates.s(),
-#         parse_internal_wise_rates.s(), parse_currency_market_tinkoff_rates.s()
-#     )
-#     banks = chord(group_banks, best_bank_intra_exchanges.s())
-#
-#     general_group = group(crypto_exchanges, banks)
-#
-#     end_group = group(
-#         get_simpl_binance_tinkoff_inter_exchanges_calculate.s(),
-#         get_simpl_binance_wise_inter_exchanges_calculate.s(),
-#         get_complex_binance_tinkoff_inter_exchanges_calculate.s(),
-#         get_complex_binance_wise_inter_exchanges_calculate.s()
-#     )
-#     all = chord(general_group, end_group)
-#     main = chord(
-#         group(all_start_time.s(), all), best_get_inter_exchanges_calculate.s()
-#     )
-#     main.delay()
-#     return redirect('core:home')
-
-
 def start(request):
     redirect('crypto_exchanges:InterExchangesListNew')
     # 1. Crypto exchanges
