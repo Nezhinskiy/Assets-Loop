@@ -876,11 +876,12 @@ class ListsFiatCryptoParser(Parser):
         )
 
     def main(self):
-        if (
-                ListsFiatCryptoUpdates.objects.all().count() != 0
-                or ListsFiatCryptoUpdates.objects.last().updated.date()
-                == datetime.now(timezone.utc).date()):
-            return
+        if ListsFiatCryptoUpdates.objects.all().count() != 0:
+            if (
+                    ListsFiatCryptoUpdates.objects.last().updated.date()
+                    == datetime.now(timezone.utc).date()
+            ):
+                return
         start_time = datetime.now()
         crypto_exchange = CryptoExchanges.objects.get(
             name=self.crypto_exchange_name
