@@ -138,14 +138,24 @@ class BinanceCryptoParser(CryptoExchangesParser):
             response = requests.get(self.endpoint, params)
         except Exception as error:
             message = f'Ошибка при запросе к основному API: {error}'
-            raise Exception(message)
-        if response.status_code != HTTPStatus.OK:
-            params = {
-                self.name_from:
-                    params[self.name_from][4:] + params[self.name_from][:4]
-            }
-            response = requests.get(self.endpoint, params)
-        return response.json(), params
+            print(message)
+            # raise Exception(message)
+        try:
+            if response.status_code != HTTPStatus.OK:
+                params = {
+                    self.name_from:
+                        params[self.name_from][4:] + params[self.name_from][:4]
+                }
+                try:
+                    response = requests.get(self.endpoint, params)
+                except Exception as error:
+                    message = f'Ошибка при запросе к основному API: {error}'
+                    print(message)
+                return response.json(), params
+        except Exception as error:
+            message = f'Ошибка при запросе к основному API: {error}'
+            print(message)
+            return False
 
     def converts_choices_to_set(self, choices: tuple[tuple[str, str]]
                                 ) -> list[str]:
@@ -164,6 +174,8 @@ class BinanceCryptoParser(CryptoExchangesParser):
         return params
 
     def calculates_buy_and_sell_data(self, params) -> tuple[dict, dict]:
+        if not self.get_api_answer(params):
+            return
         json_data, valid_params = self.get_api_answer(params)
         price = self.extract_price_from_json(json_data)
         for from_fiat in BINANCE_ASSETS + BINANCE_CRYPTO_FIATS:
@@ -186,12 +198,19 @@ class BinanceCryptoParser(CryptoExchangesParser):
             self, bank, new_update, records_to_update, records_to_create
     ):
         for params in self.generate_unique_params():
-            for value_dict in self.choice_buy_and_sell_or_price(params):
-                price = value_dict.pop('price')
-                self.add_to_bulk_update_or_create(
-                    bank, new_update, records_to_update, records_to_create,
-                    value_dict, price
-                )
+            if not self.choice_buy_and_sell_or_price(params):
+                continue
+            try:
+                for value_dict in self.choice_buy_and_sell_or_price(params):
+                    price = value_dict.pop('price')
+                    self.add_to_bulk_update_or_create(
+                        bank, new_update, records_to_update, records_to_create,
+                        value_dict, price
+                    )
+            except Exception as error:
+                message = f'Ошибка при извлечении данных binance: {error}'
+                print(message)
+                continue
 
 
 class BinanceCard2CryptoExchangesParser(Card2CryptoExchangesParser):

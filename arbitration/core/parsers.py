@@ -57,14 +57,20 @@ class Parser(object):
             count_try += 1
             self.get_api_answer_post(body, headers, count_try, endpoint)
             # raise Exception(message)
-        if response.status_code != HTTPStatus.OK:
-            message = f'Ошибка {response.status_code}'
+        try:
+            if response.status_code != HTTPStatus.OK:
+                message = f'Ошибка {response.status_code}'
+                print(message)
+                sleep(self.TIMEOUT)
+                count_try += 1
+                self.get_api_answer_post(body, headers, count_try, endpoint)
+                # raise Exception(message)
+            return response.json()
+        except Exception as error:
+            message = f'Ошибка при запросе к основному API: {error}'
             print(message)
-            sleep(self.TIMEOUT)
-            count_try += 1
-            self.get_api_answer_post(body, headers, count_try, endpoint)
-            # raise Exception(message)
-        return response.json()
+            return False
+
 
     def get_api_answer_get(self, params=None, count_try=0, endpoint=None):
         if count_try == self.LIMIT_TRY:
@@ -84,14 +90,19 @@ class Parser(object):
             count_try += 1
             self.get_api_answer_get(params, count_try, endpoint)
             # raise Exception(message)
-        if response.status_code != HTTPStatus.OK:
-            message = f'Ошибка {response.status_code}'
+        try:
+            if response.status_code != HTTPStatus.OK:
+                message = f'Ошибка {response.status_code}'
+                print(message)
+                sleep(self.TIMEOUT)
+                count_try += 1
+                self.get_api_answer_get(params, count_try, endpoint)
+                # raise Exception(message)
+            return response.json()
+        except Exception as error:
+            message = f'Ошибка при запросе к основному API: {error}'
             print(message)
-            sleep(self.TIMEOUT)
-            count_try += 1
-            self.get_api_answer_get(params, count_try, endpoint)
-            # raise Exception(message)
-        return response.json()
+            return False
 
 
 class BankParser(Parser):
@@ -138,37 +149,40 @@ class BankParser(Parser):
         pass
 
     def calculates_buy_and_sell_data(self, params) -> tuple[dict, dict]:
-        buy_and_sell = self.extract_buy_and_sell_from_json(
-            self.get_api_answer(params))
         try:
-            buy_data = {
-                'from_fiat': params[self.name_from],
-                'to_fiat': params[self.name_to],
-                'price': buy_and_sell[0]
-            }
-            sell_data = {
-                'from_fiat': params[self.name_to],
-                'to_fiat': params[self.name_from],
-                'price': 1 / buy_and_sell[1]
-            }
-            return buy_data, sell_data
-        except BaseException as err:
-            print(err, params, buy_and_sell)
+            buy_and_sell = self.extract_buy_and_sell_from_json(
+                self.get_api_answer(params))
+        except Exception as error:
+            message = (f'Ошибка при извлечении данных '
+                       f'{self.bank_name}: {error}')
+            print(message)
+            return
+        buy_data = {
+            'from_fiat': params[self.name_from],
+            'to_fiat': params[self.name_to],
+            'price': buy_and_sell[0]
+        }
+        sell_data = {
+            'from_fiat': params[self.name_to],
+            'to_fiat': params[self.name_from],
+            'price': 1 / buy_and_sell[1]
+        }
+        return buy_data, sell_data
 
     def extract_price_from_json(self, json_data: list) -> float:
         pass
 
     def calculates_price_data(self, params) -> list[dict]:
-        price = self.extract_price_from_json(self.get_api_answer(params))
-        try:
-            price_data = {
-                'from_fiat': params[self.name_from],
-                'to_fiat': params[self.name_to],
-                'price': price
-            }
-            return [price_data]
-        except BaseException as err:
-            print(err, params)
+        answer = self.get_api_answer(params)
+        if not answer:
+            return
+        price = self.extract_price_from_json(answer)
+        price_data = {
+            'from_fiat': params[self.name_from],
+            'to_fiat': params[self.name_to],
+            'price': price
+        }
+        return [price_data]
 
     def choice_buy_and_sell_or_price(self, params):
         if self.buy_and_sell:
@@ -205,13 +219,28 @@ class BankParser(Parser):
     def get_all_api_answers(
             self, bank, new_update, records_to_update, records_to_create
     ):
-        for params in self.generate_unique_params():
-            for value_dict in self.choice_buy_and_sell_or_price(params):
-                price = value_dict.pop('price')
-                self.add_to_bulk_update_or_create(
-                    bank, new_update, records_to_update, records_to_create,
-                    value_dict, price
-                )
+        try:
+            for params in self.generate_unique_params():
+                if not self.choice_buy_and_sell_or_price(params):
+                    continue
+                try:
+                    for value_dict in self.choice_buy_and_sell_or_price(params):
+                        price = value_dict.pop('price')
+                        self.add_to_bulk_update_or_create(
+                            bank, new_update, records_to_update, records_to_create,
+                            value_dict, price
+                        )
+                except Exception as error:
+                    message = (f'Ошибка при извлечении данных '
+                               f'{self.bank_name}: {error}')
+                    print(message)
+                    continue
+        except Exception as error:
+            message = (f'Ошибка при генирации данных '
+                       f'{self.bank_name}: {error}')
+            print(message)
+            return
+
 
     def main(self):
         start_time = datetime.now()
@@ -321,7 +350,7 @@ class BankInvestParser(Parser):
                             records_to_create):
         for link_end in self.link_ends:
             answer = self.get_api_answer(link_end)
-            if answer is False:
+            if not answer:
                 continue
             buy_and_sell_data = self.calculates_buy_and_sell_data(link_end,
                                                                   answer)

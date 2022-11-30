@@ -66,6 +66,17 @@ class P2PCryptoExchangesRates(models.Model):
         on_delete=models.CASCADE
     )
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=(
+                    'crypto_exchange', 'bank', 'asset', 'trade_type',
+                    'fiat', 'transaction_method', 'payment_channel'
+                ),
+                name='unique_p2p'
+            )
+        ]
+
 
 class Card2Wallet2CryptoExchangesUpdates(UpdatesModel):
     crypto_exchange = models.ForeignKey(
