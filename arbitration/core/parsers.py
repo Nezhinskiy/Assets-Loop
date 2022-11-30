@@ -877,7 +877,9 @@ class ListsFiatCryptoParser(Parser):
         )
 
     def main(self):
-        if (ListsFiatCryptoUpdates.objects.last().updated.date()
+        if (
+                ListsFiatCryptoUpdates.objects.all().count() == 0
+                or ListsFiatCryptoUpdates.objects.last().updated.date()
                 == datetime.now(timezone.utc).date()):
             return
         start_time = datetime.now()
