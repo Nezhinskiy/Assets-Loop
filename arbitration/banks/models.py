@@ -23,6 +23,7 @@ class BanksExchangeRatesUpdates(UpdatesModel):
     )
 
 
+
 class BanksExchangeRates(models.Model):
     bank = models.ForeignKey(
         Banks, related_name='bank_rates', on_delete=models.CASCADE
@@ -38,6 +39,16 @@ class BanksExchangeRates(models.Model):
         BanksExchangeRatesUpdates, related_name='datas',
         on_delete=models.CASCADE
     )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=(
+                    'bank', 'from_fiat', 'to_fiat', 'currency_market'
+                ),
+                name='unique_bank_exchanges'
+            )
+        ]
 
 
 class IntraBanksExchangesUpdates(UpdatesModel):
