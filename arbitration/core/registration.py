@@ -4,6 +4,8 @@ from banks.currency_markets_registration.tinkoff_invest import \
 from banks.models import Banks, CurrencyMarkets
 from crypto_exchanges.models import CryptoExchanges
 
+from core.models import InfoLoop
+
 
 def banks():
     for bank_name in BANKS_CONFIG.keys():
@@ -31,6 +33,7 @@ def crypto_exchanges():
 
 
 def all_registration():
+    InfoLoop.objects.create(value=False)
     banks()
     currency_markets()
     crypto_exchanges()
