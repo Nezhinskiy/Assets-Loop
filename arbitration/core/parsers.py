@@ -444,7 +444,6 @@ class P2PParser(Parser):
                         payment_channel=self.payment_channel
                     )
                     if target_rates.exists() and not target_rates.get().price:
-                        print('azazazaza')
                         continue
                 response = self.get_api_answer(asset, fiat, trade_type)
                 if response is False:
@@ -878,7 +877,7 @@ class ListsFiatCryptoParser(Parser):
 
     def main(self):
         if (
-                ListsFiatCryptoUpdates.objects.all().count() == 0
+                ListsFiatCryptoUpdates.objects.all().count() != 0
                 or ListsFiatCryptoUpdates.objects.last().updated.date()
                 == datetime.now(timezone.utc).date()):
             return
