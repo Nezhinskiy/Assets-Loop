@@ -117,21 +117,29 @@ def start(request):
     general_chord = chord(general_group,
                           end_all_exchanges.s())
     if InfoLoop.objects.last().value == 0:
+        print('start')
         InfoLoop.objects.create(value=True)
         count_loop = 0
         while InfoLoop.objects.last().value == 1:
+            print('General')
             general_chord.delay()
             while (InfoLoop.objects.last().value == 1
                     and not InfoLoop.objects.last().all_exchanges):
                 time.sleep(1)
+                print(1)
+            print('конец слип')
             if (
                     InfoLoop.objects.last().all_crypto_exchanges
                     and InfoLoop.objects.last().all_banks_exchanges
             ):
+                print(2)
                 count_loop += 1
+                print(count_loop)
                 if count_loop > 10:
+                    print('>10')
                     InfoLoop.objects.create(value=False)
                 else:
+                    print(3)
                     InfoLoop.objects.create(value=True)
             else:
                 InfoLoop.objects.create(value=False)
