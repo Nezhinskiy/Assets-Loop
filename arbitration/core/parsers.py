@@ -463,7 +463,8 @@ class P2PParser(Parser):
     def main(self):
         start_time = datetime.now()
         if (
-                datetime.now(timezone.utc).time().hour
+                P2PCryptoExchangesRatesUpdates.objects.all().count() == 0
+                or datetime.now(timezone.utc).time().hour
                 != P2PCryptoExchangesRatesUpdates.objects.last(
                 ).updated.time().hour
         ):
