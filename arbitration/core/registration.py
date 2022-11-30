@@ -6,6 +6,9 @@ from crypto_exchanges.models import CryptoExchanges
 
 from core.models import InfoLoop
 
+from crypto_exchanges.crypto_exchanges_registration.binance import \
+    get_all_binance_crypto_exchanges
+
 
 def banks():
     for bank_name in BANKS_CONFIG.keys():
@@ -37,3 +40,4 @@ def all_registration():
     banks()
     currency_markets()
     crypto_exchanges()
+    get_all_binance_crypto_exchanges()

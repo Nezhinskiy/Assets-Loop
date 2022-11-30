@@ -134,11 +134,6 @@
                   url: data_url,
                   dataSrc: 'data',
               },
-
-          {#    "rowCallback": function( row, data, index ) {#}
-          {#        if ($(`#modal${row.id}`).not('.visible')) {#}
-          {#    (`#modal${row.id}`).modal.show();#}
-          {# }},#}
               "rowCallback": function( row, data, index ) {
                   if ( updateTime(data.update.updated) > 300 )
                   {
@@ -214,8 +209,6 @@
             });
 
       });
-      {#setTimeout(function() {#}
-      {#    location.reload();#}
-      {#    }, 3000);#}
+
   </script>
 {% endblock %}

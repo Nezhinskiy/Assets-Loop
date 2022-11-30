@@ -311,8 +311,7 @@ def get_binance_fiat_crypto_list():
 
 def get_all_binance_crypto_exchanges():
     binance_crypto_parser = BinanceCryptoParser()
-    message = binance_crypto_parser.main()
-    return message
+    binance_crypto_parser.main()
 
 
 def get_all_p2p_binance_exchanges():
