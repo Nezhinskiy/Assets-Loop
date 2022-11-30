@@ -658,7 +658,7 @@ class InterSimplExchangesCalculate(object):
             name=self.crypto_exchange_name
         )
         self.bank = Banks.objects.get(name=self.bank_name)
-        self.update_time = datetime.now(timezone.utc) - timedelta(minutes=5)
+        self.update_time = datetime.now(timezone.utc) - timedelta(minutes=10)
 
     def get_complex_interbank_exchange(
             self, new_update, records_to_update, records_to_create
@@ -678,8 +678,7 @@ class InterSimplExchangesCalculate(object):
                     continue
                 bank_exchanges = BanksExchangeRates.objects.filter(
                     bank__in=[self.bank, output_bank],
-                    from_fiat=output_fiat, to_fiat=input_fiat,
-                    update__updated__gte=self.update_time
+                    from_fiat=output_fiat, to_fiat=input_fiat
                 )
                 input_crypto_exchanges = (
                     P2PCryptoExchangesRates.objects.filter(
@@ -707,8 +706,7 @@ class InterSimplExchangesCalculate(object):
                             IntraCryptoExchanges.objects.filter(
                                 crypto_exchange=self.crypto_exchange,
                                 from_asset=input_crypto_exchange.asset,
-                                to_asset=output_crypto_exchange.asset,
-                                update__updated__gte=self.update_time
+                                to_asset=output_crypto_exchange.asset
                             )
                         )
                         second_interim_crypto_exchange = None
@@ -721,16 +719,14 @@ class InterSimplExchangesCalculate(object):
                                 IntraCryptoExchanges.objects.get(
                                     crypto_exchange=self.crypto_exchange,
                                     from_asset=input_crypto_exchange.asset,
-                                    to_asset='USDT',
-                                    update__updated__gte=self.update_time
+                                    to_asset='USDT'
                                 )
                             )
                             second_interim_crypto_exchange = (
                                 IntraCryptoExchanges.objects.get(
                                     crypto_exchange=self.crypto_exchange,
                                     from_asset='USDT',
-                                    to_asset=output_crypto_exchange.asset,
-                                    update__updated__gte=self.update_time
+                                    to_asset=output_crypto_exchange.asset
                                 )
                             )
                     else:
@@ -794,8 +790,7 @@ class InterSimplExchangesCalculate(object):
                             IntraCryptoExchanges.objects.filter(
                                 crypto_exchange=self.crypto_exchange,
                                 from_asset=input_crypto_exchange.asset,
-                                to_asset=output_crypto_exchange.asset,
-                                update__updated__gte=self.update_time
+                                to_asset=output_crypto_exchange.asset
                             )
                         )
                         second_interim_crypto_exchange = None
@@ -808,16 +803,14 @@ class InterSimplExchangesCalculate(object):
                                 IntraCryptoExchanges.objects.get(
                                     crypto_exchange=self.crypto_exchange,
                                     from_asset=input_crypto_exchange.asset,
-                                    to_asset='USDT',
-                                    update__updated__gte=self.update_time
+                                    to_asset='USDT'
                                 )
                             )
                             second_interim_crypto_exchange = (
                                 IntraCryptoExchanges.objects.get(
                                     crypto_exchange=self.crypto_exchange,
                                     from_asset='USDT',
-                                    to_asset=output_crypto_exchange.asset,
-                                    update__updated__gte=self.update_time
+                                    to_asset=output_crypto_exchange.asset
                                 )
                             )
                     else:
