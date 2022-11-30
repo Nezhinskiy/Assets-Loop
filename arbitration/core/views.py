@@ -153,7 +153,8 @@ def start(request):
     )
     general_chord = chord(general_group,
                           end_all_exchanges.s())
-    if InfoLoop.objects.last().value == 0:
+    if (InfoLoop.objects.all().count() == 0
+            or InfoLoop.objects.last().value == 0):
         InfoLoop.objects.create(value=True)
         count_loop = 0
         while InfoLoop.objects.last().value == 1:
