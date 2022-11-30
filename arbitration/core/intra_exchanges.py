@@ -1,6 +1,6 @@
 import math
 import sys
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from itertools import permutations, product
 
 from django.core.exceptions import MultipleObjectsReturned
@@ -658,6 +658,7 @@ class InterSimplExchangesCalculate(object):
             name=self.crypto_exchange_name
         )
         self.bank = Banks.objects.get(name=self.bank_name)
+        self.update_time = datetime.now(timezone.utc) - timedelta(minutes=5)
 
     def get_complex_interbank_exchange(
             self, new_update, records_to_update, records_to_create
@@ -677,31 +678,37 @@ class InterSimplExchangesCalculate(object):
                     continue
                 bank_exchanges = BanksExchangeRates.objects.filter(
                     bank__in=[self.bank, output_bank],
-                    from_fiat=output_fiat, to_fiat=input_fiat
+                    from_fiat=output_fiat, to_fiat=input_fiat,
+                    update__updated__gte=self.update_time
                 )
                 input_crypto_exchanges = (
                     P2PCryptoExchangesRates.objects.filter(
                         crypto_exchange=self.crypto_exchange, bank=self.bank,
-                        trade_type='BUY', fiat=input_fiat, price__isnull=False
+                        trade_type='BUY', fiat=input_fiat, price__isnull=False,
+                        update__updated__gte=self.update_time
                     )
                 )
                 output_crypto_exchanges = (
                     P2PCryptoExchangesRates.objects.filter(
                         crypto_exchange=self.crypto_exchange, bank=output_bank,
                         trade_type='SELL', fiat=output_fiat,
-                        price__isnull=False
+                        price__isnull=False,
+                        update__updated__gte=self.update_time
                     )
                 )
                 for input_crypto_exchange, output_crypto_exchange in product(
                         input_crypto_exchanges, output_crypto_exchanges
                 ):
-                    if (input_crypto_exchange.asset
-                            != output_crypto_exchange.asset):
+                    if (
+                            input_crypto_exchange.asset
+                            != output_crypto_exchange.asset
+                    ):
                         target_interim_exchange = (
                             IntraCryptoExchanges.objects.filter(
                                 crypto_exchange=self.crypto_exchange,
                                 from_asset=input_crypto_exchange.asset,
-                                to_asset=output_crypto_exchange.asset
+                                to_asset=output_crypto_exchange.asset,
+                                update__updated__gte=self.update_time
                             )
                         )
                         second_interim_crypto_exchange = None
@@ -714,14 +721,16 @@ class InterSimplExchangesCalculate(object):
                                 IntraCryptoExchanges.objects.get(
                                     crypto_exchange=self.crypto_exchange,
                                     from_asset=input_crypto_exchange.asset,
-                                    to_asset='USDT'
+                                    to_asset='USDT',
+                                    update__updated__gte=self.update_time
                                 )
                             )
                             second_interim_crypto_exchange = (
                                 IntraCryptoExchanges.objects.get(
                                     crypto_exchange=self.crypto_exchange,
                                     from_asset='USDT',
-                                    to_asset=output_crypto_exchange.asset
+                                    to_asset=output_crypto_exchange.asset,
+                                    update__updated__gte=self.update_time
                                 )
                             )
                     else:
@@ -762,26 +771,31 @@ class InterSimplExchangesCalculate(object):
                 input_crypto_exchanges = (
                     P2PCryptoExchangesRates.objects.filter(
                         crypto_exchange=self.crypto_exchange, bank=self.bank,
-                        trade_type='BUY', fiat=fiat, price__isnull=False
+                        trade_type='BUY', fiat=fiat, price__isnull=False,
+                        update__updated__gte=self.update_time
                     )
                 )
                 output_crypto_exchanges = (
                     P2PCryptoExchangesRates.objects.filter(
                         crypto_exchange=self.crypto_exchange, bank=output_bank,
-                        trade_type='SELL', fiat=fiat, price__isnull=False
+                        trade_type='SELL', fiat=fiat, price__isnull=False,
+                        update__updated__gte=self.update_time
                     )
                 )
 
                 for input_crypto_exchange, output_crypto_exchange in product(
                     input_crypto_exchanges, output_crypto_exchanges
                 ):
-                    if (input_crypto_exchange.asset
-                            != output_crypto_exchange.asset):
+                    if (
+                            input_crypto_exchange.asset
+                            != output_crypto_exchange.asset
+                    ):
                         target_interim_exchange = (
                             IntraCryptoExchanges.objects.filter(
                                 crypto_exchange=self.crypto_exchange,
                                 from_asset=input_crypto_exchange.asset,
-                                to_asset=output_crypto_exchange.asset
+                                to_asset=output_crypto_exchange.asset,
+                                update__updated__gte=self.update_time
                             )
                         )
                         second_interim_crypto_exchange = None
@@ -794,14 +808,16 @@ class InterSimplExchangesCalculate(object):
                                 IntraCryptoExchanges.objects.get(
                                     crypto_exchange=self.crypto_exchange,
                                     from_asset=input_crypto_exchange.asset,
-                                    to_asset='USDT'
+                                    to_asset='USDT',
+                                    update__updated__gte=self.update_time
                                 )
                             )
                             second_interim_crypto_exchange = (
                                 IntraCryptoExchanges.objects.get(
                                     crypto_exchange=self.crypto_exchange,
                                     from_asset='USDT',
-                                    to_asset=output_crypto_exchange.asset
+                                    to_asset=output_crypto_exchange.asset,
+                                    update__updated__gte=self.update_time
                                 )
                             )
                     else:
@@ -888,7 +904,7 @@ class InterSimplExchangesCalculate(object):
             inter_exchange.update = new_update
             records_to_update.append(inter_exchange)
         else:
-            inter_exchange = InterExchanges.objects.create(
+            inter_exchange = InterExchanges(
                 crypto_exchange=self.crypto_exchange, input_bank=self.bank,
                 output_bank=output_bank,
                 input_crypto_exchange=input_crypto_exchange,
@@ -904,6 +920,7 @@ class InterSimplExchangesCalculate(object):
                 ),
                 update=new_update
             )
+            records_to_create.append(inter_exchange)
         # related_marginality_percentage = RelatedMarginalityPercentages(
         #     marginality_percentage=marginality_percentage,
         #     inter_exchange=inter_exchange
@@ -928,6 +945,7 @@ class InterSimplExchangesCalculate(object):
         InterExchanges.objects.bulk_update(
             records_to_update, ['marginality_percentage', 'update']
         )
+        InterExchanges.objects.bulk_create(records_to_create)
         # RelatedMarginalityPercentages.objects.bulk_create(
         #     records_to_create
         # )

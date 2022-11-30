@@ -13,15 +13,12 @@
         <h1>
           Все актуальные арбитражные связки:
         </h1>
-        <p>
-          Связок: {{ count }}
-        </p>
-        <table id="myStaticDatatable" class="table">
-          <thead>
+        <table id="dynamicDatatable" class="table">
+          <thead class="table-dark">
           <tr>
-            <th>Связка</th>
-            <th>Маржинальность</th>
-            <th>Обновлено</th>
+            <th scope="col">Связка</th>
+            <th scope="col">Маржинальность</th>
+            <th scope="col">Обновлено</th>
           </tr>
           </thead>
           <tbody>
@@ -35,10 +32,11 @@
 {% block extra_js %}
   <script src="//cdn.datatables.net/plug-ins/725b2a2115b/api/fnReloadAjax.js"></script>
   <script>
+  $.fn.dataTable.ext.classes.sPageButton = 'button primary_button';
       let dt_language = {
-            "emptyTable":     "{% trans "No data available in table" %}",
-            "info":           "{% trans "Showing _START_ to _END_ of _TOTAL_ entries" %}",
-            "infoEmpty":      "{% trans "Showing 0 to 0 of 0 entries" %}",
+            "emptyTable":     "{% trans "С таким суровым фильтром связок нет, либо все данные устарели" %}",
+            "info":           "{% trans "Всего связок: _TOTAL_ <br>Отображаются с _START_ по _END_" %}",
+            "infoEmpty":      "{% trans "Всё по нулям" %}",
             "infoFiltered":   "{% trans "(filtered from _MAX_ total entries)" %}",
             "infoPostFix":    "",
             "thousands":      ",",
@@ -121,11 +119,13 @@
           });
       });
       $(document).ready(function () {
-          var refreshTable = $('#myStaticDatatable').DataTable({
+          var refreshTable = $('#dynamicDatatable').DataTable({
               "language": dt_language,
               "searching": false,
-              "pageLength": 10,
-              "info": false,
+              "pageLength": 100,
+              "lengthMenu": [[10, 30, 60, 100], [10, 30, 60, 100]],
+              "info": true,
+              {#"sDom": '<"top"<"actions">fpi<"clear">><"clear">rt<"bottom">',#}
               {#"aaSorting": [],#}
               'order': [[1, 'desc']],
               'processing': true,
@@ -139,18 +139,19 @@
           {#        if ($(`#modal${row.id}`).not('.visible')) {#}
           {#    (`#modal${row.id}`).modal.show();#}
           {# }},#}
-              {#"rowCallback": function( row, data, index ) {#}
-              {#    if ( updateTime(data.update.updated) == 999 )#}
-              {#    {#}
-              {#        $('td', row).css('background-color', 'Red');#}
-              {#    } else if ( updateTime(data.update.updated) )#}
-              {#    {#}
-              {#        $('td', row).addClass('stylish');#}
-              {#        setTimeout(function() {#}
-              {#            $('td', row).removeClass('stylish');#}
-              {#            }, 1000);#}
-              {##}
-              {#    }},#}
+              "rowCallback": function( row, data, index ) {
+                  if ( updateTime(data.update.updated) > 300 )
+                  {
+                      $('tr', row).addClass('table-active');
+                      $('td', row).addClass('table-active');
+                  } else if ( updateTime(data.update.updated) < 20 )
+                  {
+                      $('td', row).addClass('stylish');
+                      setTimeout(function() {
+                          $('td', row).removeClass('stylish');
+                          }, 500);
+
+                  }},
               columns: [
                   {
                       data: 'diagram',
@@ -205,6 +206,13 @@
           setInterval( function () {
               refreshTable.ajax.reload( null, false );
               }, 15000 );
+          refreshTable.on('page.dt', function() {
+              $('html, body').animate({
+                scrollTop: $(".dataTables_wrapper").offset().top
+              }, 'slow');
+              $('thead tr th:first-child').focus().blur();
+            });
+
       });
       {#setTimeout(function() {#}
       {#    location.reload();#}

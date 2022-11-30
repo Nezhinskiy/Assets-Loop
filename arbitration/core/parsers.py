@@ -34,6 +34,7 @@ def check_work_time():
         and START_TIME <= msk_datetime().time() < END_TIME
     )
 
+
 class Parser(object):
     TIMEOUT = 10
     LIMIT_TRY = 2

@@ -2,6 +2,7 @@ from django.contrib.postgres.search import SearchVector
 from django.db.models import Count, F, Prefetch
 from django.http import Http404
 from django.views.generic import ListView
+from datetime import datetime, timezone, timedelta, time
 
 from banks.banks_config import BANKS_CONFIG
 from banks.models import Banks
@@ -512,20 +513,7 @@ class InterExchangesListNew(FilterView):
     filterset_class = ExchangesFilter
 
     def get_queryset(self):
-        qs = self.model.objects.all()
-        self.filter = self.filterset_class(self.request.GET, queryset=qs)
-        return self.filter.qs
-
-    def get_context_data(self, **kwargs):
-        from crypto_exchanges.crypto_exchanges_config import \
-            CRYPTO_EXCHANGES_CONFIG
-        context = super(InterExchangesListNew,
-                        self).get_context_data(**kwargs)
-        context['bank_names'] = list(BANKS_CONFIG.keys())
-        context['crypto_exchange_names'] = list(CRYPTO_EXCHANGES_CONFIG.keys()
-                                                )[1:]
-        context['count'] = self.get_queryset().count()
-        return context
+        pass
 
 
 class InterExchangesAPIView(ListAPIView, FilterView):
@@ -539,7 +527,11 @@ class InterExchangesAPIView(ListAPIView, FilterView):
             'input_crypto_exchange', 'output_crypto_exchange',
             'interim_crypto_exchange', 'second_interim_crypto_exchange',
             'update'
-        ).all()
+        ).filter(
+            update__updated__gte=(
+                    datetime.now(timezone.utc) - timedelta(minutes=115)
+            )
+        )
         self.filter = self.filterset_class(self.request.GET, queryset=qs)
         return self.filter.qs
 
