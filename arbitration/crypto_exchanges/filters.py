@@ -31,9 +31,6 @@ ALL_FIAT_CHOICES = tuple(
 BANK_EXCHANGE_CHOICES = (
     (0, 'Присутсвует'),
     (1, 'Отсутствует'),
-) if not check_work_time() else (
-    (0, 'Присутсвует'),
-    (1, 'Отсутствует'),
     ('banks', 'Только внутри банков'),
     ('Tinkoff invest', 'Только через Тинькофф инвестиции')
 )

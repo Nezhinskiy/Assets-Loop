@@ -133,7 +133,10 @@ def start(request):
                 if count_loop > 5:
                     InfoLoop.objects.create(value=False)
                 else:
-                    time.sleep(60)
+                    if count_loop == 1:
+                        time.sleep(60)
+                    else:
+                        time.sleep(120)
                     InfoLoop.objects.create(value=True)
             else:
                 InfoLoop.objects.create(value=False)

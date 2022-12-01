@@ -76,7 +76,7 @@ class IntraBanks(object):
         return marginality_percentage
 
     def add_to_bulk_update_or_create(
-            self, bank, new_update, records_to_update, records_to_create,
+            self, bank, new_update, records_to_update,
             combination, marginality_percentage
     ):
         target_object = IntraBanksExchanges.objects.filter(
@@ -660,9 +660,7 @@ class InterSimplExchangesCalculate(object):
         self.bank = Banks.objects.get(name=self.bank_name)
         self.update_time = datetime.now(timezone.utc) - timedelta(minutes=10)
 
-    def get_complex_interbank_exchange(
-            self, new_update, records_to_update, records_to_create
-    ):
+    def get_complex_interbank_exchange(self, new_update, records_to_update):
         from banks.banks_config import BANKS_CONFIG
         banks = BANKS_CONFIG.keys()
         input_bank_config = BANKS_CONFIG.get(self.bank_name)
@@ -742,7 +740,7 @@ class InterSimplExchangesCalculate(object):
                         )
 
                         self.add_to_bulk_update_or_create_and_bulk_create(
-                            new_update, records_to_update, records_to_create,
+                            new_update, records_to_update,
                             output_bank, input_crypto_exchange,
                             interim_crypto_exchange,
                             second_interim_crypto_exchange,
@@ -750,8 +748,7 @@ class InterSimplExchangesCalculate(object):
                             marginality_percentage
                         )
 
-    def get_simpl_inter_exchanges(self, new_update, records_to_update,
-                                  records_to_create):
+    def get_simpl_inter_exchanges(self, new_update, records_to_update):
         from banks.banks_config import BANKS_CONFIG
         banks = BANKS_CONFIG.keys()
         input_bank_config = BANKS_CONFIG.get(self.bank_name)
@@ -824,7 +821,7 @@ class InterSimplExchangesCalculate(object):
                         )
                     )
                     self.add_to_bulk_update_or_create_and_bulk_create(
-                        new_update, records_to_update, records_to_create,
+                        new_update, records_to_update,
                         output_bank, input_crypto_exchange,
                         interim_crypto_exchange,
                         second_interim_crypto_exchange, output_crypto_exchange,
@@ -879,7 +876,7 @@ class InterSimplExchangesCalculate(object):
         return diagram
 
     def add_to_bulk_update_or_create_and_bulk_create(
-            self, new_update, records_to_update, records_to_create,
+            self, new_update, records_to_update,
             output_bank, input_crypto_exchange, interim_crypto_exchange,
             second_interim_crypto_exchange, output_crypto_exchange,
             bank_exchange, marginality_percentage
@@ -899,7 +896,7 @@ class InterSimplExchangesCalculate(object):
             inter_exchange.update = new_update
             records_to_update.append(inter_exchange)
         else:
-            inter_exchange = InterExchanges(
+            InterExchanges.objects.create(
                 crypto_exchange=self.crypto_exchange, input_bank=self.bank,
                 output_bank=output_bank,
                 input_crypto_exchange=input_crypto_exchange,
@@ -915,7 +912,6 @@ class InterSimplExchangesCalculate(object):
                 ),
                 update=new_update
             )
-            records_to_create.append(inter_exchange)
         # related_marginality_percentage = RelatedMarginalityPercentages(
         #     marginality_percentage=marginality_percentage,
         #     inter_exchange=inter_exchange
@@ -928,19 +924,15 @@ class InterSimplExchangesCalculate(object):
             crypto_exchange=self.crypto_exchange, bank=self.bank
         )
         records_to_update = []
-        records_to_create = []
         if self.simpl:
-            self.get_simpl_inter_exchanges(
-                new_update, records_to_update, records_to_create
-            )
+            self.get_simpl_inter_exchanges(new_update, records_to_update)
         else:
             self.get_complex_interbank_exchange(
-                new_update, records_to_update, records_to_create
+                new_update, records_to_update
             )
         InterExchanges.objects.bulk_update(
             records_to_update, ['marginality_percentage', 'update']
         )
-        InterExchanges.objects.bulk_create(records_to_create)
         # RelatedMarginalityPercentages.objects.bulk_create(
         #     records_to_create
         # )
