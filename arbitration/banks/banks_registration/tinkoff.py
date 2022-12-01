@@ -56,13 +56,9 @@ class TinkoffParser(BankParser):
 
     def extract_buy_and_sell_from_json(self, json_data: dict) -> tuple[float,
                                                                        float]:
-        try:
-            payload = json_data['payload']
-        except Exception as error:
-            message = (f'Ошибка при извлечении данных '
-                       f'{self.bank_name}: {error}')
-            print(message)
+        if not json_data:
             return
+        payload = json_data['payload']
         rates = payload['rates']
         buy = sell = None
         for category in rates:

@@ -27,6 +27,17 @@ class IntraCryptoExchanges(models.Model):
         IntraCryptoExchangesUpdates, related_name='datas',
         on_delete=models.CASCADE
     )
+    spot_fee = models.FloatField(null=True, blank=True, default=None)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=(
+                    'crypto_exchange', 'from_asset', 'to_asset'
+                ),
+                name='unique_intra_crypto_exchanges'
+            )
+        ]
 
 
 class P2PCryptoExchangesRatesUpdates(UpdatesModel):

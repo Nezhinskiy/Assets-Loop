@@ -61,7 +61,7 @@ class WiseParser(BankParser):
         return params
 
     def extract_price_from_json(self, json_data: list) -> float:
-        if len(json_data) > 1:
+        if json_data and len(json_data) > 1:
             for exchange_data in json_data:
                 if (
                         exchange_data.get('payInMethod') ==

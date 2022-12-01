@@ -23,7 +23,6 @@ class BanksExchangeRatesUpdates(UpdatesModel):
     )
 
 
-
 class BanksExchangeRates(models.Model):
     bank = models.ForeignKey(
         Banks, related_name='bank_rates', on_delete=models.CASCADE

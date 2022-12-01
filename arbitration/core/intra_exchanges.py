@@ -836,13 +836,15 @@ class InterSimplExchangesCalculate(object):
             second_interim_crypto_exchange, output_crypto_exchange,
             bank_exchange
     ):
-        interim_crypto_exchange_price = (
-            interim_crypto_exchange.price if interim_crypto_exchange else 1
-        )
-        second_interim_crypto_exchange_price = (
-            second_interim_crypto_exchange.price
-            if second_interim_crypto_exchange else 1
-        )
+        if interim_crypto_exchange is None:
+            interim_crypto_exchange_price = 1
+        else:
+            interim_crypto_exchange_price = interim_crypto_exchange.price
+        if second_interim_crypto_exchange is None:
+            second_interim_crypto_exchange_price = 1
+        else:
+            second_interim_crypto_exchange_price = (
+                second_interim_crypto_exchange.price)
         bank_exchange_price = (bank_exchange.price if bank_exchange else 1)
         marginality_percentage = (
              input_crypto_exchange.price * interim_crypto_exchange_price

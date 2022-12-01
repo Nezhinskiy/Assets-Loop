@@ -71,7 +71,6 @@ class Parser(object):
             print(message)
             return False
 
-
     def get_api_answer_get(self, params=None, count_try=0, endpoint=None):
         if count_try == self.LIMIT_TRY:
             return False
@@ -149,40 +148,37 @@ class BankParser(Parser):
         pass
 
     def calculates_buy_and_sell_data(self, params) -> tuple[dict, dict]:
+        buy_and_sell = self.extract_buy_and_sell_from_json(
+            self.get_api_answer(params))
         try:
-            buy_and_sell = self.extract_buy_and_sell_from_json(
-                self.get_api_answer(params))
-        except Exception as error:
-            message = (f'Ошибка при извлечении данных '
-                       f'{self.bank_name}: {error}')
-            print(message)
-            return
-        buy_data = {
-            'from_fiat': params[self.name_from],
-            'to_fiat': params[self.name_to],
-            'price': buy_and_sell[0]
-        }
-        sell_data = {
-            'from_fiat': params[self.name_to],
-            'to_fiat': params[self.name_from],
-            'price': 1 / buy_and_sell[1]
-        }
-        return buy_data, sell_data
+            buy_data = {
+                'from_fiat': params[self.name_from],
+                'to_fiat': params[self.name_to],
+                'price': buy_and_sell[0]
+            }
+            sell_data = {
+                'from_fiat': params[self.name_to],
+                'to_fiat': params[self.name_from],
+                'price': 1 / buy_and_sell[1]
+            }
+            return buy_data, sell_data
+        except BaseException as err:
+            print(err, params, buy_and_sell)
 
     def extract_price_from_json(self, json_data: list) -> float:
         pass
 
     def calculates_price_data(self, params) -> list[dict]:
-        answer = self.get_api_answer(params)
-        if not answer:
-            return
-        price = self.extract_price_from_json(answer)
-        price_data = {
-            'from_fiat': params[self.name_from],
-            'to_fiat': params[self.name_to],
-            'price': price
-        }
-        return [price_data]
+        price = self.extract_price_from_json(self.get_api_answer(params))
+        try:
+            price_data = {
+                'from_fiat': params[self.name_from],
+                'to_fiat': params[self.name_to],
+                'price': price
+            }
+            return [price_data]
+        except BaseException as err:
+            print(err, params)
 
     def choice_buy_and_sell_or_price(self, params):
         if self.buy_and_sell:
@@ -190,67 +186,48 @@ class BankParser(Parser):
         return self.calculates_price_data(params)
 
     def add_to_bulk_update_or_create(
-            self, bank, new_update, records_to_update, records_to_create,
+            self, bank, new_update, records_to_update,
             value_dict, price
     ):
         target_object = BanksExchangeRates.objects.filter(
-            bank=bank,
-            from_fiat=value_dict['from_fiat'],
-            to_fiat=value_dict['to_fiat'],
-            currency_market__isnull=True
+            bank=bank, from_fiat=value_dict['from_fiat'],
+            to_fiat=value_dict['to_fiat'], currency_market__isnull=True
         )
         if target_object.exists():
-            updated_object = target_object.get()
-            if updated_object.price == price:
-                return
-            updated_object.price = price
-            updated_object.update = new_update
-            records_to_update.append(updated_object)
+            try:
+                updated_object = target_object.get()
+                if updated_object.price == price:
+                    return
+                updated_object.price = price
+                updated_object.update = new_update
+                records_to_update.append(updated_object)
+            except:
+                print(bank, value_dict['from_fiat'], value_dict['to_fiat'])
         else:
-            created_object = BanksExchangeRates(
-                bank=bank,
-                from_fiat=value_dict['from_fiat'],
-                to_fiat=value_dict['to_fiat'],
-                price=price,
-                update=new_update
+            BanksExchangeRates.objects.create(
+                bank=bank, from_fiat=value_dict['from_fiat'],
+                to_fiat=value_dict['to_fiat'], price=price, update=new_update
             )
-            records_to_create.append(created_object)
 
     def get_all_api_answers(
-            self, bank, new_update, records_to_update, records_to_create
+            self, bank, new_update, records_to_update
     ):
-        try:
-            for params in self.generate_unique_params():
-                if not self.choice_buy_and_sell_or_price(params):
-                    continue
-                try:
-                    for value_dict in self.choice_buy_and_sell_or_price(params):
-                        price = value_dict.pop('price')
-                        self.add_to_bulk_update_or_create(
-                            bank, new_update, records_to_update, records_to_create,
-                            value_dict, price
-                        )
-                except Exception as error:
-                    message = (f'Ошибка при извлечении данных '
-                               f'{self.bank_name}: {error}')
-                    print(message)
-                    continue
-        except Exception as error:
-            message = (f'Ошибка при генирации данных '
-                       f'{self.bank_name}: {error}')
-            print(message)
-            return
-
+        for params in self.generate_unique_params():
+            values = self.choice_buy_and_sell_or_price(params)
+            if not values:
+                continue
+            for value_dict in values:
+                price = value_dict.pop('price')
+                self.add_to_bulk_update_or_create(
+                    bank, new_update, records_to_update, value_dict, price
+                )
 
     def main(self):
         start_time = datetime.now()
         bank = Banks.objects.get(name=self.bank_name)
         new_update = BanksExchangeRatesUpdates.objects.create(bank=bank)
         records_to_update = []
-        records_to_create = []
-        self.get_all_api_answers(bank, new_update, records_to_update,
-                                 records_to_create)
-        BanksExchangeRates.objects.bulk_create(records_to_create)
+        self.get_all_api_answers(bank, new_update, records_to_update)
         BanksExchangeRates.objects.bulk_update(records_to_update,
                                                ['price', 'update'])
         duration = datetime.now() - start_time
@@ -350,7 +327,7 @@ class BankInvestParser(Parser):
                             records_to_create):
         for link_end in self.link_ends:
             answer = self.get_api_answer(link_end)
-            if not answer:
+            if answer is False:
                 continue
             buy_and_sell_data = self.calculates_buy_and_sell_data(link_end,
                                                                   answer)
@@ -517,9 +494,10 @@ class CryptoExchangesParser(BankParser):
     crypto_exchange_name = None
 
     def calculates_buy_and_sell_data(self, params) -> tuple[dict, dict]:
-        buy_and_sell = self.extract_buy_and_sell_from_json(
-            self.get_api_answer(params)
-        )
+        answer = self.get_api_answer(params)
+        if not answer:
+            return
+        buy_and_sell = self.extract_buy_and_sell_from_json(answer)
         buy_data = {
             'from_asset': params[self.name_from],
             'to_asset': params[self.name_to],
@@ -567,7 +545,7 @@ class CryptoExchangesParser(BankParser):
 
     def add_to_bulk_update_or_create(
             self, crypto_exchange, new_update, records_to_update,
-            records_to_create, value_dict, price
+            value_dict, price
     ):
         target_object = IntraCryptoExchanges.objects.filter(
             crypto_exchange=crypto_exchange,
@@ -586,25 +564,23 @@ class CryptoExchangesParser(BankParser):
             updated_object.update = new_update
             records_to_update.append(updated_object)
         else:
-            created_object = IntraCryptoExchanges(
+            IntraCryptoExchanges.objects.create(
                 crypto_exchange=crypto_exchange,
                 from_asset=value_dict['from_asset'],
                 to_asset=value_dict['to_asset'],
-                price=price,
+                price=price, spot_fee=value_dict['spot_fee'],
                 update=new_update
             )
-            records_to_create.append(created_object)
 
     def get_all_api_answers(
-            self, crypto_exchange, new_update, records_to_update,
-            records_to_create
+            self, crypto_exchange, new_update, records_to_update
     ):
         for params in self.generate_unique_params():
             for value_dict in self.choice_buy_and_sell_or_price(params):
                 price = value_dict.pop('price')
                 self.add_to_bulk_update_or_create(
                     crypto_exchange, new_update, records_to_update,
-                    records_to_create, value_dict, price
+                    value_dict, price
                 )
 
     def main(self):
@@ -616,10 +592,8 @@ class CryptoExchangesParser(BankParser):
             crypto_exchange=crypto_exchange
         )
         records_to_update = []
-        records_to_create = []
         self.get_all_api_answers(crypto_exchange, new_update,
-                                 records_to_update, records_to_create)
-        IntraCryptoExchanges.objects.bulk_create(records_to_create)
+                                 records_to_update)
         IntraCryptoExchanges.objects.bulk_update(records_to_update,
                                                  ['price', 'update'])
         duration = datetime.now() - start_time
@@ -632,8 +606,9 @@ class Card2Wallet2CryptoExchangesParser:
     ROUND_TO = 10
     payment_channel = 'Card2Wallet2CryptoExchange'
 
-    def calculates_price_and_intra_crypto_exchange(self, fiat, asset,
-                                                   transaction_fee, trade_type):
+    def calculates_price_and_intra_crypto_exchange(
+            self, fiat, asset, transaction_fee, trade_type
+    ):
         fiat_price = 1 - transaction_fee / 100
         if trade_type == 'BUY':
             intra_crypto_exchange = IntraCryptoExchanges.objects.get(

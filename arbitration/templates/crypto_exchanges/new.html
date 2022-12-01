@@ -76,9 +76,9 @@
       }
       function interimCryptoExchange(row) {
           if (row.second_interim_crypto_exchange) {
-              return `Теперь внутри ${row.crypto_exchange.name} через Спот надо сначала конвертировать ${row.interim_crypto_exchange.from_asset} в ${row.interim_crypto_exchange.to_asset} по курсу ${row.interim_crypto_exchange.price}, а потом ${row.interim_crypto_exchange.to_asset} в ${row.second_interim_crypto_exchange.to_asset} по курсу ${row.second_interim_crypto_exchange.price}, комиссии учтены.`;
+              return `Теперь внутри ${row.crypto_exchange.name} через Спот надо сначала конвертировать ${row.interim_crypto_exchange.from_asset} в ${row.interim_crypto_exchange.to_asset} по курсу ${row.interim_crypto_exchange.price} (комиссия ${row.interim_crypto_exchange.spot_fee}%), а потом ${row.interim_crypto_exchange.to_asset} в ${row.second_interim_crypto_exchange.to_asset} по курсу ${row.second_interim_crypto_exchange.price} (комиссия ${row.second_interim_crypto_exchange.spot_fee}%). Комиссии включены в цену.`;
           } else {
-              return `Теперь внутри ${row.crypto_exchange.name} через Спот надо конвертировать ${row.interim_crypto_exchange.from_asset} в ${row.interim_crypto_exchange.to_asset} по курсу ${row.interim_crypto_exchange.price}, комиссия учтена.`;
+              return `Теперь внутри ${row.crypto_exchange.name} через Спот надо конвертировать ${row.interim_crypto_exchange.from_asset} в ${row.interim_crypto_exchange.to_asset} по курсу ${row.interim_crypto_exchange.price} (комиссия ${row.interim_crypto_exchange.spot_fee}%). Комиссия включена в цену.`;
           }
       }
       function outputCryptoExchange(row) {

@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from http import HTTPStatus
 from sys import getsizeof
+from time import sleep
 
 import requests
 
@@ -81,6 +82,12 @@ PAY_TYPES = (
     ('RosBank', 'RosBank'),
     ('RUBfiatbalance', 'RUBfiatbalance')
 )
+SPOT_ZERO_FEES = {
+    'BTC': [
+        'AUD', 'BIDR', 'BRL', 'BUSD', 'EUR', 'GBP', 'RUB', 'TRY', 'TUSD',
+        'UAH', 'USDC', 'USDP', 'USDT'
+    ]
+}
 
 
 class BinanceP2PParser(P2PParser):
@@ -132,30 +139,36 @@ class BinanceCryptoParser(CryptoExchangesParser):
     endpoint = 'https://api.binance.com/api/v3/ticker/price?'
     name_from = 'symbol'
 
+    def __init__(self):
+        self.count = 0
+
     def get_api_answer(self, params):
         """Делает запрос к эндпоинту API Tinfoff."""
         try:
-            response = requests.get(self.endpoint, params)
-        except Exception as error:
-            message = f'Ошибка при запросе к основному API: {error}'
-            print(message)
-            # raise Exception(message)
-        try:
+            try:
+                with requests.session() as session:
+                    response = session.get(self.endpoint, params=params)
+            except Exception as error:
+                message = f'Ошибка при запросе к основному API: {error}'
+                print(message)
+                # raise Exception(message)
             if response.status_code != HTTPStatus.OK:
                 params = {
                     self.name_from:
                         params[self.name_from][4:] + params[self.name_from][:4]
                 }
-                try:
-                    response = requests.get(self.endpoint, params)
-                except Exception as error:
-                    message = f'Ошибка при запросе к основному API: {error}'
-                    print(message)
-                return response.json(), params
+                sleep(1)
+                with requests.session() as session:
+                    response = session.get(self.endpoint, params=params)
+            self.count += 1
+            print(self.count, params)
+            return response.json(), params
         except Exception as error:
             message = f'Ошибка при запросе к основному API: {error}'
             print(message)
+            # raise Exception(message)
             return False
+
 
     def converts_choices_to_set(self, choices: tuple[tuple[str, str]]
                                 ) -> list[str]:
@@ -174,43 +187,51 @@ class BinanceCryptoParser(CryptoExchangesParser):
         return params
 
     def calculates_buy_and_sell_data(self, params) -> tuple[dict, dict]:
-        if not self.get_api_answer(params):
+        answer = self.get_api_answer(params)
+        if not answer:
             return
-        json_data, valid_params = self.get_api_answer(params)
+        json_data, valid_params = answer
         price = self.extract_price_from_json(json_data)
         for from_fiat in BINANCE_ASSETS + BINANCE_CRYPTO_FIATS:
             if from_fiat in valid_params['symbol'][0:4]:
                 for to_fiat in BINANCE_ASSETS + BINANCE_CRYPTO_FIATS:
                     if to_fiat in valid_params['symbol'][-4:]:
+                        if (
+                                to_fiat in SPOT_ZERO_FEES.keys()
+                                and from_fiat in SPOT_ZERO_FEES.get(to_fiat)
+                                or from_fiat in SPOT_ZERO_FEES.keys()
+                                and to_fiat in SPOT_ZERO_FEES.get(from_fiat)
+                        ):
+                            spot_fee = 0
+                        else:
+                            spot_fee = 0.1
                         buy_data = {
                             'from_asset': from_fiat,
                             'to_asset': to_fiat,
-                            'price': round(price, self.ROUND_TO)
+                            'price': price - price / 100 * spot_fee,
+                            'spot_fee': spot_fee
                         }
                         sell_data = {
                             'from_asset': to_fiat,
                             'to_asset': from_fiat,
-                            'price': round(1.0 / price, self.ROUND_TO)
+                            'price': (1.0 / price -
+                                      (1.0 / price) / 100 * spot_fee),
+                            'spot_fee': spot_fee
                         }
                         return buy_data, sell_data
 
     def get_all_api_answers(
-            self, bank, new_update, records_to_update, records_to_create
+            self, bank, new_update, records_to_update
     ):
         for params in self.generate_unique_params():
-            if not self.choice_buy_and_sell_or_price(params):
+            values = self.choice_buy_and_sell_or_price(params)
+            if not values:
                 continue
-            try:
-                for value_dict in self.choice_buy_and_sell_or_price(params):
-                    price = value_dict.pop('price')
-                    self.add_to_bulk_update_or_create(
-                        bank, new_update, records_to_update, records_to_create,
-                        value_dict, price
-                    )
-            except Exception as error:
-                message = f'Ошибка при извлечении данных binance: {error}'
-                print(message)
-                continue
+            for value_dict in values:
+                price = value_dict.pop('price')
+                self.add_to_bulk_update_or_create(
+                    bank, new_update, records_to_update, value_dict, price
+                )
 
 
 class BinanceCard2CryptoExchangesParser(Card2CryptoExchangesParser):
