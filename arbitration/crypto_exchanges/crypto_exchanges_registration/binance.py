@@ -161,7 +161,6 @@ class BinanceCryptoParser(CryptoExchangesParser):
                 with requests.session() as session:
                     response = session.get(self.endpoint, params=params)
             self.count += 1
-            print(self.count, params)
             return response.json(), params
         except Exception as error:
             message = f'Ошибка при запросе к основному API: {error}'

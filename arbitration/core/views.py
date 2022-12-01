@@ -130,9 +130,10 @@ def start(request):
             ):
                 count_loop += 1
                 print(count_loop)
-                if count_loop > 10:
+                if count_loop > 5:
                     InfoLoop.objects.create(value=False)
                 else:
+                    time.sleep(60)
                     InfoLoop.objects.create(value=True)
             else:
                 InfoLoop.objects.create(value=False)
