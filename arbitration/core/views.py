@@ -130,7 +130,7 @@ def start(request):
             ):
                 count_loop += 1
                 print(count_loop)
-                if count_loop > 5:
+                if count_loop >= 5:
                     InfoLoop.objects.create(value=False)
                 else:
                     if count_loop == 1:
