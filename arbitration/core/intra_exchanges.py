@@ -861,13 +861,14 @@ class InterSimplExchangesCalculate(object):
                 diagram += f'{self.bank.name} '
             diagram += f'{bank_exchange.from_fiat} ⇨ '
         diagram += (f'{self.bank.name} {input_crypto_exchange.fiat} ⇨ '
-                   f'{input_crypto_exchange.asset} ⇨ ')
+                    f'{input_crypto_exchange.asset} ⇨ ')
         if interim_crypto_exchange:
             diagram += f'{interim_crypto_exchange.to_asset} ⇨ '
             if second_interim_crypto_exchange:
                 diagram += f'{second_interim_crypto_exchange.to_asset} ⇨ '
         diagram += f'{output_bank.name} {output_crypto_exchange.fiat}'
-        if bank_exchange and output_bank == bank_exchange.bank:
+        if (bank_exchange and output_bank == bank_exchange.bank
+                and self.bank != output_bank):
             if bank_exchange.currency_market:
                 diagram += f' ⇨ {bank_exchange.currency_market.name} '
             else:
