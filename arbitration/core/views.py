@@ -16,7 +16,7 @@ from core.tasks import assets_loop, end_all_exchanges, end_crypto_exchanges, end
 
 class InfoLoopList(ListView):
     model = InfoLoop
-    template_name = 'core/home.html'
+    template_name = 'crypto_exchanges/info.html'
 
     def get_queryset(self):
         return self.model.objects.all()

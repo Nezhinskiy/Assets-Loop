@@ -509,7 +509,7 @@ class InterExchangesList(FilterView):
 
 class InterExchangesListNew(FilterView):
     model = InterExchanges
-    template_name = ('crypto_exchanges/new.html')
+    template_name = 'crypto_exchanges/new.html'
     filterset_class = ExchangesFilter
 
     def get_queryset(self):

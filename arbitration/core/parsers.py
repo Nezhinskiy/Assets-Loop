@@ -392,7 +392,7 @@ class P2PParser(Parser):
         pass
 
     def get_api_answer(self, asset, trade_type, fiat):
-        """Делает запрос к эндпоинту API Tinfoff."""
+        """Делает запрос к эндпоинту API."""
         body = self.create_body(asset, trade_type, fiat)
         headers = self.create_headers(body)
         response = self.get_api_answer_post(body, headers)

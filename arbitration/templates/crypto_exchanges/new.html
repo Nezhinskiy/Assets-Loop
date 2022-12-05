@@ -3,6 +3,10 @@
 {% load custom_filters %}
 {% load i18n static %}
 
+{% block title %}
+  Арбитражные связки
+{% endblock %}
+
 {% block content %}
   <div class="container">
     <div class="row">
@@ -16,7 +20,7 @@
         <table id="dynamicDatatable" class="table">
           <thead class="table-dark">
           <tr>
-            <th style="width:75%" scope="col">Связка</th>
+            <th style="width:80%" scope="col">Связка</th>
             <th style="width:10%" scope="col">Маржинальность</th>
             <th style="width:10%" scope="col">Обновлено</th>
           </tr>
@@ -30,11 +34,10 @@
 {% endblock %}
 
 {% block extra_js %}
-  <script src="//cdn.datatables.net/plug-ins/725b2a2115b/api/fnReloadAjax.js"></script>
   <script>
   $.fn.dataTable.ext.classes.sPageButton = 'button primary_button';
       let dt_language = {
-            "emptyTable":     "{% trans "С таким суровым фильтром связок нет, либо все данные устарели" %}",
+            "emptyTable":     "{% trans "С таким суровым фильтром связок нет. Либо все данные устарели, тогда нажмите кнопку Start в хедере." %}",
             "info":           "{% trans "Всего связок: _TOTAL_ <br>Отображаются с _START_ по _END_" %}",
             "infoEmpty":      "{% trans "Всё по нулям" %}",
             "infoFiltered":   "{% trans "(filtered from _MAX_ total entries)" %}",
@@ -49,7 +52,7 @@
                 "first":      "{% trans "Первая" %}",
                 "last":       "{% trans "Последняя" %}",
                 "next":       "{% trans "Следующая" %}",
-                "previous":   "{% trans "Предидущая" %}"
+                "previous":   "{% trans "Предыдущая" %}"
             },
             "aria": {
                 "sortAscending":  "{% trans ": activate to sort column ascending" %}",

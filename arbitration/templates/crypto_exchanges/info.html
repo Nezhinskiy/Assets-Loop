@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}
+  Инфорация по запускам
+{% endblock %}
+
+{% block content %}
+  <h1>
+    Инфорация по работе сервиса
+  </h1>
+  <div class="container">
+    <div class="row">
+      <div class="col-sm-6">
+        <p>
+          Число итераций: {{ loops_count }}
+        </p>
+        <p>
+          Последний запуск: {{ last_update }} UTC
+        </p>
+      </div>
+      <div class="col-sm-6">
+        <p>
+          Текущее количество процессоров: 2
+        </p>
+        <p>
+          Оптимальное количество процессоров: 5
+        </p>
+      </div>
+    </div>
+  </div>
+  <table id="dynamicDatatable" class="table">
+    <thead class="table-dark">
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Status</th>
+        <th scope="col">Duration for all bank exchanges</th>
+        <th scope="col">Duration for all crypto exchanges</th>
+        <th scope="col">Duration for all exchanges</th>
+        <th scope="col">Updated UTC</th>
+      </tr>
+    </thead>
+    {% for info_loop in info_loops %}
+      <tr>
+        <th scope="row">{{ forloop.counter }}</th>
+        <td>{% if info_loop.value %}Started{% else %}Stopped{% endif %}</td>
+        <td>{% if info_loop.value %}{{ info_loop.all_banks_exchanges }}{% endif %}</td>
+        <td>{% if info_loop.value %}{{ info_loop.all_crypto_exchanges }}{% endif %}</td>
+        <td>{% if info_loop.value %}{{ info_loop.all_exchanges }}{% endif %}</td>
+        <td>{{ info_loop.updated}}</td>
+      </tr>
+    {% endfor %}
+  </table>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    $(document).ready(function () {
+          $('#dynamicDatatable').DataTable({
+              "searching": false,
+              "pageLength": 15,
+              "lengthMenu": [[15, 30, 60, 100], [15, 30, 60, 100]],
+              "info": true,
+              'order': [[0, 'desc']],
+        });
+    });
+  </script>
+{% endblock %}
