@@ -103,7 +103,7 @@ class BinanceP2PParser(P2PParser):
         return {
             "page": self.page,
             "rows": self.rows,
-            "publisherType": None,
+            "publisherType": "merchant",
             "asset": asset,
             "tradeType": pay_types,
             "fiat": fiat,

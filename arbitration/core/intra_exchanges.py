@@ -833,11 +833,11 @@ class InterSimplExchangesCalculate(object):
             second_interim_crypto_exchange, output_crypto_exchange,
             bank_exchange
     ):
-        if interim_crypto_exchange is None:
+        if not interim_crypto_exchange:
             interim_crypto_exchange_price = 1
         else:
             interim_crypto_exchange_price = interim_crypto_exchange.price
-        if second_interim_crypto_exchange is None:
+        if not second_interim_crypto_exchange:
             second_interim_crypto_exchange_price = 1
         else:
             second_interim_crypto_exchange_price = (
