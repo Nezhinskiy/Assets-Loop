@@ -952,12 +952,17 @@ class Card2CryptoExchangesParser(Parser):
         if trade_type == 'SELL':
             data = json_data['data'].get('rows')
             pre_price = data.get('quotePrice')
+            if not pre_price:
+                return
             commission = data.get('totalFee') / amount
             price = pre_price / (1 + commission)
             commission *= 100
         else:  # BUY
             data = json_data['data']
-            pre_price = float(data['price'])
+            pre_price = data['price']
+            if not pre_price:
+                return
+            pre_price = float(pre_price)
             commission = 0.02
             price = 1 / (pre_price * (1 + commission))
             commission *= 100
@@ -1056,9 +1061,11 @@ class Card2CryptoExchangesParser(Parser):
                                                    amount)
                     if response is False:
                         continue
-                    price, pre_price, commission = (
-                        self.extract_values_from_json(response, amount,
-                                                      trade_type))
+                    values = self.extract_values_from_json(response, amount,
+                                                           trade_type)
+                    if not values:
+                        continue
+                    price, pre_price, commission = values
                     self.add_to_bulk_update_or_create(
                         crypto_exchange, new_update, records_to_update,
                         records_to_create, asset, trade_type, fiat, price,
