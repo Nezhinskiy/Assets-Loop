@@ -676,7 +676,8 @@ class InterSimplExchangesCalculate(object):
                     continue
                 bank_exchanges = BanksExchangeRates.objects.filter(
                     bank__in=[self.bank, output_bank],
-                    from_fiat=output_fiat, to_fiat=input_fiat
+                    from_fiat=output_fiat, to_fiat=input_fiat,
+                    update__updated__gte=self.update_time
                 )
                 input_crypto_exchanges = (
                     P2PCryptoExchangesRates.objects.filter(
@@ -704,7 +705,8 @@ class InterSimplExchangesCalculate(object):
                             IntraCryptoExchanges.objects.filter(
                                 crypto_exchange=self.crypto_exchange,
                                 from_asset=input_crypto_exchange.asset,
-                                to_asset=output_crypto_exchange.asset
+                                to_asset=output_crypto_exchange.asset,
+                                update__updated__gte=self.update_time
                             )
                         )
                         second_interim_crypto_exchange = None
@@ -713,20 +715,34 @@ class InterSimplExchangesCalculate(object):
                                 target_interim_exchange.get()
                             )
                         else:
-                            interim_crypto_exchange = (
-                                IntraCryptoExchanges.objects.get(
+                            target_interim_crypto_exchange = (
+                                IntraCryptoExchanges.objects.filter(
                                     crypto_exchange=self.crypto_exchange,
                                     from_asset=input_crypto_exchange.asset,
-                                    to_asset='USDT'
+                                    to_asset='USDT',
+                                    update__updated__gte=self.update_time
                                 )
                             )
-                            second_interim_crypto_exchange = (
-                                IntraCryptoExchanges.objects.get(
+                            target_second_interim_crypto_exchange = (
+                                IntraCryptoExchanges.objects.filter(
                                     crypto_exchange=self.crypto_exchange,
                                     from_asset='USDT',
-                                    to_asset=output_crypto_exchange.asset
+                                    to_asset=output_crypto_exchange.asset,
+                                    update__updated__gte=self.update_time
                                 )
                             )
+                            if (
+                                    target_interim_crypto_exchange.exists() and
+                                    target_second_interim_crypto_exchange.exists()
+                            ):
+                                interim_crypto_exchange = (
+                                    target_interim_crypto_exchange.get()
+                                )
+                                second_interim_crypto_exchange = (
+                                    target_second_interim_crypto_exchange.get()
+                                )
+                            else:
+                                continue
                     else:
                         interim_crypto_exchange = None
                         second_interim_crypto_exchange = None
@@ -787,7 +803,8 @@ class InterSimplExchangesCalculate(object):
                             IntraCryptoExchanges.objects.filter(
                                 crypto_exchange=self.crypto_exchange,
                                 from_asset=input_crypto_exchange.asset,
-                                to_asset=output_crypto_exchange.asset
+                                to_asset=output_crypto_exchange.asset,
+                                update__updated__gte=self.update_time
                             )
                         )
                         second_interim_crypto_exchange = None
@@ -796,20 +813,34 @@ class InterSimplExchangesCalculate(object):
                                 target_interim_exchange.get()
                             )
                         else:
-                            interim_crypto_exchange = (
-                                IntraCryptoExchanges.objects.get(
+                            target_interim_crypto_exchange = (
+                                IntraCryptoExchanges.objects.filter(
                                     crypto_exchange=self.crypto_exchange,
                                     from_asset=input_crypto_exchange.asset,
-                                    to_asset='USDT'
+                                    to_asset='USDT',
+                                    update__updated__gte=self.update_time
                                 )
                             )
-                            second_interim_crypto_exchange = (
-                                IntraCryptoExchanges.objects.get(
+                            target_second_interim_crypto_exchange = (
+                                IntraCryptoExchanges.objects.filter(
                                     crypto_exchange=self.crypto_exchange,
                                     from_asset='USDT',
-                                    to_asset=output_crypto_exchange.asset
+                                    to_asset=output_crypto_exchange.asset,
+                                    update__updated__gte=self.update_time
                                 )
                             )
+                            if (
+                                    target_interim_crypto_exchange.exists() and
+                                    target_second_interim_crypto_exchange.exists()
+                            ):
+                                interim_crypto_exchange = (
+                                    target_interim_crypto_exchange.get()
+                                )
+                                second_interim_crypto_exchange = (
+                                    target_second_interim_crypto_exchange.get()
+                                )
+                            else:
+                                continue
                     else:
                         interim_crypto_exchange = None
                         second_interim_crypto_exchange = None
