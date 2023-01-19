@@ -14,16 +14,18 @@
               Все связки
             </a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link {% if '/info' == request.path %}active{% endif %}" href="{% url 'core:info' %}" id="navbarDarkMenuLink2" role="button" aria-expanded="false">
-              Служебная информация
-            </a>
-          </li>
-        </ul>
-        <form class="form-inline">
-          <a class="btn btn-outline-success " type="button" href="{% url 'core:start' %}">Start</a>
-          <a class="btn btn-outline-secondary" type="button" href="{% url 'core:stop' %}">Stop</a>
-        </form>
+{#          <li class="nav-item">#}
+{#            <a class="nav-link {% if '/info' == request.path %}active{% endif %}" href="{% url 'core:info' %}" id="navbarDarkMenuLink2" role="button" aria-expanded="false">#}
+{#              Служебная информация#}
+{#            </a>#}
+{#          </li>#}
+          <form class="form-inline">
+            <a class="btn btn-outline-success " type="button" href="{% url 'core:start' %}">Start</a>
+          </form>
+          <span style="color:#3b3b3b">∞</span>
+          <form class="form-inline">
+            <a class="btn btn-outline-secondary" type="button" href="{% url 'core:stop' %}">Stop</a>
+          </form>
         </ul>
       </div>
     </div>

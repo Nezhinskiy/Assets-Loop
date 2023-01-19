@@ -29,10 +29,10 @@ ALL_FIAT_CHOICES = tuple(
     (fiat, fiat) for fiat in CRYPTO_EXCHANGES_CONFIG['all_fiats']
 )
 BANK_EXCHANGE_CHOICES = (
-    (0, 'Присутсвует'),
-    (1, 'Отсутствует'),
+    (0, 'Да'),
+    (1, 'Нет'),
     ('banks', 'Только внутри банков'),
-    ('Tinkoff invest', 'Только через Тинькофф инвестиции')
+    ('Tinkoff invest', 'Только через валютные биржи')
 )
 
 
@@ -85,8 +85,10 @@ class ExchangesFilter(django_filters.FilterSet):
     )
     bank_exchange = django_filters.ChoiceFilter(
         choices=BANK_EXCHANGE_CHOICES, method='bank_exchange_filter',
-        label='Внутрибанковский обмен', empty_label='', help_text=(
-            'Через валютные биржи можно обменивать только по рабочим дням '
+        label='Внутрибанковская конвертация', empty_label='', help_text=(
+            '•Да - только связки с внутрибанковской конвертацией. '
+            '•Нет - только связки без внутрибанковской конвертации. '
+            '*Через валютные биржи можно обменивать только по рабочим дням '
             'с 7:00 до 19:00 по Мск, в остальное время этот фильтр недоступен'
         )
     )

@@ -2,7 +2,7 @@
    {{ filter.form.media.css }}
 {% endblock %}
 
-{% load bootstrap5 %}
+{% load bootstrap4 %}
 {% load widget_tweaks %}
 
 <form method="get" action="">
@@ -11,10 +11,11 @@
       <h2>
         Расширенный фильтр:
       </h2>
-      <hr/>
+      <div class="col-sm-12">
+        <p>Процент маржинальности:</p>
+      </div>
       {% for field in filter.form %}
         {% if forloop.counter == 1 %}
-          <p>Процент маржинальности:</p>
           <div class="col-sm-6">
             <p>
               <label class="form-control-label" title="{{ field.help_text }}" for="{{ field.id_for_label }}">{% render_field field class="form-control" placeholder=field.help_text %}</label>
@@ -26,14 +27,14 @@
               <label class="form-control-label" title="{{ field.help_text }}" for="{{ field.id_for_label }}">{% render_field field class="form-control" placeholder=field.help_text %}</label>
             </p>
           </div>
-          <hr/>
+
         {% else %}
           <div class="col-sm-5">
           {% if forloop.counter == 6  or forloop.counter == 9 %}
             <p>
               <label class="form-control-label" for="{{ field.id_for_label }}">
                 {{ field.label }}
-                <span class="d-inline-block" tabindex="0" data-bs-placement="top" data-toggle="tooltip" title="{{ field.help_text }}">
+                <span class="d-inline-block" tabindex="0" data-placement="top" data-toggle="tooltip" title="{{ field.help_text }}">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16">
                     <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
                     <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
@@ -53,19 +54,16 @@
               {% render_field field class="form-control" %}
             </p>
           </div>
-          {% if forloop.counter == 6 %}
-            <hr/>
-          {% endif %}
         {% endif %}
       {% endfor %}
     </div>
     <div class="modal-footer">
-      {% bootstrap_button 'Поиск' %}
+      {% bootstrap_button 'Поиск' button_class="btn-dark" %}
     </div>
   </div>
 </form>
 
-{% block script %}
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.js"></script>
+{% block extra_js %}
+{#  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.js"></script>#}
   {{ filter.form.media.js }}
 {% endblock %}

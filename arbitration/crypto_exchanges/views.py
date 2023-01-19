@@ -35,6 +35,8 @@ from rest_framework.generics import ListAPIView
 from crypto_exchanges.serializers import InterExchangesSerializer
 from rest_framework.response import Response
 
+from core.models import InfoLoop
+
 
 class CryptoExchangesRatesList(ListView):
     def get_queryset(self):
@@ -514,6 +516,13 @@ class InterExchangesListNew(FilterView):
 
     def get_queryset(self):
         pass
+
+    def get_context_data(self, **kwargs):
+
+        context = super(InterExchangesListNew,
+                        self).get_context_data(**kwargs)
+        context['start'] = InfoLoop.objects.latest('updated').value
+        return context
 
 
 class InterExchangesAPIView(ListAPIView, FilterView):

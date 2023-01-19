@@ -48,7 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_filters',
     'rest_framework',
-    'bootstrap5',
+    'bootstrap4',
     'django_select2',
     'widget_tweaks',
     'crypto_exchanges.apps.CryptoExchangesConfig',

@@ -24,8 +24,7 @@ class InfoLoopList(ListView):
     def get_context_data(self, **kwargs):
         context = super(InfoLoopList, self).get_context_data(**kwargs)
         context['info_loops'] = self.get_queryset()
-        context['last_update'] = self.get_queryset().latest(
-            'updated').updated
+        context['last_update'] = self.get_queryset().latest('updated').updated
         context['loops_count'] = self.get_queryset().filter(value=1).count
         return context
 
@@ -43,7 +42,7 @@ def start(request):
 def stop(request):
     if InfoLoop.objects.last().value == 1:
         InfoLoop.objects.create(value=False)
-    return redirect('core:info')
+    return redirect('crypto_exchanges:InterExchangesListNew')
 
 
 def registration(request):

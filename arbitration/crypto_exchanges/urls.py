@@ -1,4 +1,6 @@
 from django.urls import include, path
+from django.views.generic.base import TemplateView
+
 
 from crypto_exchanges.views import (
     CryptoExchangeBestPaymentChannelsExchanges,
@@ -110,5 +112,5 @@ urlpatterns = [
     path('complexwise/', complex_binance_wise_inter_exchanges_calculate,
          name="simpl_binance_tinkoff_inter_exchanges_calculate"),
     path('z/', InterExchangesList.as_view(),
-         name="z")
+         name="z"),
 ]
