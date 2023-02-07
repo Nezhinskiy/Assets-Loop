@@ -335,7 +335,7 @@ class InterExchanges(models.Model):
         InterExchangesUpdates, related_name='datas',
         on_delete=models.CASCADE
     )
-    diagram = models.CharField(max_length=10, null=True, blank=True)
+    diagram = models.CharField(max_length=100, null=True, blank=True)
 
     class Meta:
         ordering = ['-marginality_percentage']

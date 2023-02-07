@@ -886,7 +886,7 @@ class InterSimplExchangesCalculate(object):
              * second_interim_crypto_exchange_price
              * output_crypto_exchange.price * bank_exchange_price - 1
         ) * 100
-        return marginality_percentage
+        return round(marginality_percentage, 3)
 
     def create_diagram(self, bank_exchange, input_crypto_exchange,
                        interim_crypto_exchange, second_interim_crypto_exchange,

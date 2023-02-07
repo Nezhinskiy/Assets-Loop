@@ -1053,7 +1053,7 @@ class Card2CryptoExchangesParser(Parser):
             ).list_fiat_crypto
             for asset in assets:
                 fiats_info = list_fiat_crypto.get(asset)
-                for fiat_info in fiats_info:
+                for fiat_info in fiats_info:  # TypeError: 'NoneType' object is not iterable
                     fiat, amount = fiat_info
                     if fiat == 'RUB' and trade_type == 'BUY':
                         continue

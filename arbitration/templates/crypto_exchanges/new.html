@@ -102,11 +102,11 @@
           return marginality_percentage > 0 ? 'green' : 'red';
       }
 
-      function bankExchange(row) {
+      function bankExchange(row, bank) {
           if (!row.bank_exchange.currency_market) {
-              return `внутри банка ${row.input_bank.name} нужно поменять ${row.bank_exchange.from_fiat} на ${row.bank_exchange.to_fiat} по курсу ${row.bank_exchange.price}, с учётом комиссии.`;
+              return `внутри банка ${bank} нужно поменять ${row.bank_exchange.from_fiat} на ${row.bank_exchange.to_fiat} по курсу ${row.bank_exchange.price}, с учётом комиссии.`;
           } else {
-              return `внутри банка ${row.input_bank.name} нужно поменять ${row.bank_exchange.from_fiat} на ${row.bank_exchange.to_fiat} через биржу ${row.bank_exchange.currency_market.name}, по курсу ${row.bank_exchange.price}, с учётом комиссии.`;
+              return `внутри банка ${bank} нужно поменять ${row.bank_exchange.from_fiat} на ${row.bank_exchange.to_fiat} через биржу ${row.bank_exchange.currency_market.name}, по курсу ${row.bank_exchange.price}, с учётом комиссии.`;
           }
       }
 
@@ -128,7 +128,7 @@
       function modalWrite(row) {
           let modal = ''
           if (row.bank_exchange && row.bank_exchange.bank.name === row.input_bank.name) {
-              modal += `<p>1. Сначала ${bankExchange(row)}</p><p>2. Далее, ${inputCryptoExchange(row)}</p>`
+              modal += `<p>1. Сначала ${bankExchange(row, row.input_bank.name)}</p><p>2. Далее, ${inputCryptoExchange(row)}</p>`
               if (row.interim_crypto_exchange) {
                   modal += `<p>3. ${interimCryptoExchange(row)}</p><p>4. Последнее, ${outputCryptoExchange(row)}</p>`
               } else {
@@ -141,13 +141,13 @@
                   if (!row.bank_exchange) {
                       modal += `<p>3. Последнее, ${outputCryptoExchange(row)}</p>`
                   } else {
-                      modal += `<p>3. Далее, ${outputCryptoExchange(row)}</p><p>4. Последнее, ${bankExchange(row)}</p>`
+                      modal += `<p>3. Далее, ${outputCryptoExchange(row)}</p><p>4. Последнее, ${bankExchange(row, row.output_bank.name)}</p>`
                   }
               } else {
                   if (!row.bank_exchange) {
                       modal += `<p>2. Последнее, ${outputCryptoExchange(row)}</p>`
                   } else {
-                      modal += `<p>2. Далее, ${outputCryptoExchange(row)}</p><p>3. Последнее, ${bankExchange(row)}</p>`
+                      modal += `<p>2. Далее, ${outputCryptoExchange(row)}</p><p>3. Последнее, ${bankExchange(row, row.output_bank.name)}</p>`
                   }
               }
           }
