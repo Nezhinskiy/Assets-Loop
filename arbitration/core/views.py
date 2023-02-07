@@ -1,17 +1,28 @@
 import time
 
+from celery import chain, chord, group
 from django.shortcuts import redirect
 from django.views.generic import ListView
 
+from banks.tasks import (best_bank_intra_exchanges,
+                         parse_currency_market_tinkoff_rates,
+                         parse_internal_tinkoff_rates,
+                         parse_internal_wise_rates)
 from core.models import InfoLoop
-from core.multithreading import all_exchanges
 from core.registration import all_registration
-from celery import group, chord, chain
-from banks.tasks import parse_internal_tinkoff_rates, parse_internal_wise_rates, parse_currency_market_tinkoff_rates, best_bank_intra_exchanges
-from crypto_exchanges.tasks import crypto_exchanges_start_time, get_tinkoff_p2p_binance_exchanges, get_wise_p2p_binance_exchanges, get_all_binance_crypto_exchanges, get_binance_card_2_crypto_exchanges, get_all_card_2_wallet_2_crypto_exchanges, best_crypto_exchanges_intra_exchanges
-
-
-from core.tasks import assets_loop, end_all_exchanges, end_crypto_exchanges, end_banks_exchanges, get_simpl_binance_tinkoff_inter_exchanges_calculate, get_simpl_binance_wise_inter_exchanges_calculate, get_complex_binance_tinkoff_inter_exchanges_calculate, get_complex_binance_wise_inter_exchanges_calculate
+from core.tasks import (assets_loop, end_all_exchanges, end_banks_exchanges,
+                        end_crypto_exchanges,
+                        get_complex_binance_tinkoff_inter_exchanges_calculate,
+                        get_complex_binance_wise_inter_exchanges_calculate,
+                        get_simpl_binance_tinkoff_inter_exchanges_calculate,
+                        get_simpl_binance_wise_inter_exchanges_calculate)
+from crypto_exchanges.tasks import (best_crypto_exchanges_intra_exchanges,
+                                    crypto_exchanges_start_time,
+                                    get_all_binance_crypto_exchanges,
+                                    get_all_card_2_wallet_2_crypto_exchanges,
+                                    get_binance_card_2_crypto_exchanges,
+                                    get_tinkoff_p2p_binance_exchanges,
+                                    get_wise_p2p_binance_exchanges)
 
 
 class InfoLoopList(ListView):

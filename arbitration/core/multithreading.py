@@ -3,8 +3,6 @@ from threading import Thread
 
 from banks.multithreading import all_banks_exchanges
 from core.models import InfoLoop
-from crypto_exchanges.crypto_exchanges_registration.binance import \
-    get_inter_exchanges_calculate
 from crypto_exchanges.multithreading import all_crypto_exchanges
 
 
@@ -13,16 +11,16 @@ def all_exchanges():
     value = first_loop.value
     count = 5
     while value:
-        print('multi')
         new_loop = InfoLoop.objects.create(value=True)
         start_time = datetime.now()
-        banks_exchanges = Thread(target=all_banks_exchanges, args=(new_loop,))
-        crypto_exchanges = Thread(target=all_crypto_exchanges, args=(new_loop,))
+        banks_exchanges = Thread(
+            target=all_banks_exchanges, args=(new_loop,))
+        crypto_exchanges = Thread(
+            target=all_crypto_exchanges, args=(new_loop,))
         banks_exchanges.start()
         crypto_exchanges.start()
         banks_exchanges.join()
         crypto_exchanges.join()
-        get_inter_exchanges_calculate()
         count -= 1
         if not count:
             InfoLoop.objects.create(value=False)

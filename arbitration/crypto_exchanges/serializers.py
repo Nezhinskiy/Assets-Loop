@@ -1,9 +1,12 @@
+import decimal
+
 from rest_framework import serializers
 
-from crypto_exchanges.models import InterExchanges, CryptoExchanges, P2PCryptoExchangesRates, IntraCryptoExchanges, InterExchangesUpdates
-
 from banks.models import Banks, BanksExchangeRates, CurrencyMarkets
-import decimal
+from crypto_exchanges.models import (CryptoExchanges, InterExchanges,
+                                     InterExchangesUpdates,
+                                     IntraCryptoExchanges,
+                                     P2PCryptoExchangesRates)
 
 ROUND_TO = 10
 

@@ -8,10 +8,7 @@ from time import sleep
 import requests
 
 from banks.banks_config import BANKS_CONFIG
-from core.intra_exchanges import (BestCryptoExchanges,
-                                  BestTotalCryptoExchanges,
-                                  InterExchangesCalculate, InterSimplExchangesCalculate,
-                                  )
+from core.intra_exchanges import InterSimplExchangesCalculate
 from core.parsers import (Card2CryptoExchangesParser,
                           Card2Wallet2CryptoExchangesParser,
                           CryptoExchangesParser, ListsFiatCryptoParser,
@@ -245,19 +242,7 @@ class BinanceListsFiatCryptoParser(ListsFiatCryptoParser):
     endpoint_buy = 'https://www.binance.com/bapi/fiat/v2/friendly/ocbs/buy/list-crypto'
 
 
-class BinanceBestCryptoExchanges(BestCryptoExchanges):
-    crypto_exchange_name = CRYPTO_EXCHANGES_NAME
-
-
 class BinanceCard2Wallet2CryptoExchangesParser(Card2Wallet2CryptoExchangesParser):
-    crypto_exchange_name = CRYPTO_EXCHANGES_NAME
-
-
-class BinanceBestTotalCryptoExchanges(BestTotalCryptoExchanges):
-    crypto_exchange_name = CRYPTO_EXCHANGES_NAME
-
-
-class BinanceInterExchangesCalculate(InterExchangesCalculate):
     crypto_exchange_name = CRYPTO_EXCHANGES_NAME
 
 

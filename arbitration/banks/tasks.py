@@ -1,10 +1,13 @@
 from datetime import datetime
+
+from dateutil import parser
+
+from arbitration.celery import app
 from banks.banks_registration.tinkoff import TinkoffParser
 from banks.banks_registration.wise import WiseParser
-from arbitration.celery import app
-from banks.currency_markets_registration.tinkoff_invest import TinkoffCurrencyMarketParser
+from banks.currency_markets_registration.tinkoff_invest import \
+    TinkoffCurrencyMarketParser
 from core.models import InfoLoop
-from dateutil import parser
 
 
 # Banks time

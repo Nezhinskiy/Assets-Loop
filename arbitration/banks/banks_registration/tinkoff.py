@@ -1,6 +1,5 @@
 import os
 
-from core.intra_exchanges import IntraBanks
 from core.parsers import BankInvestParser, BankParser
 
 BANK_NAME = os.path.basename(__file__).split('.')[0].capitalize()
@@ -74,19 +73,7 @@ class TinkoffParser(BankParser):
                         return buy, sell
 
 
-class IntraTinkoff(IntraBanks):
-    bank_name = BANK_NAME
-    currencies_with_requisites = TINKOFF_CURRENCIES_WITH_REQUISITES
-
-
 def get_all_tinkoff_exchanges():
     tinkoff_parser = TinkoffParser()
     message = tinkoff_parser.main()
-    return message
-
-
-def get_all_tinkoff():
-    get_all_tinkoff_exchanges()
-    tinkoff_insider = IntraTinkoff()
-    message = tinkoff_insider.main()
     return message

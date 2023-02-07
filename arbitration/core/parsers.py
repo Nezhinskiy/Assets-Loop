@@ -1,22 +1,17 @@
 from __future__ import annotations
 
-from time import sleep
-from datetime import datetime, timezone, timedelta, time
+from datetime import datetime, time, timedelta, timezone
 from http import HTTPStatus
 from itertools import combinations, permutations, product
 from sys import getsizeof
+from time import sleep
 from typing import List
 
 import requests
 
-from banks.models import (BankInvestExchanges, BankInvestExchangesUpdates,
-                          Banks, BanksExchangeRates, BanksExchangeRatesUpdates,
+from banks.models import (Banks, BanksExchangeRates, BanksExchangeRatesUpdates,
                           CurrencyMarkets)
-from crypto_exchanges.models import (Card2CryptoExchanges,
-                                     Card2CryptoExchangesUpdates,
-                                     Card2Wallet2CryptoExchanges,
-                                     Card2Wallet2CryptoExchangesUpdates,
-                                     CryptoExchanges, IntraCryptoExchanges,
+from crypto_exchanges.models import (CryptoExchanges, IntraCryptoExchanges,
                                      IntraCryptoExchangesUpdates,
                                      ListsFiatCrypto, ListsFiatCryptoUpdates,
                                      P2PCryptoExchangesRates,

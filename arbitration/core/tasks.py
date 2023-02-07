@@ -1,19 +1,27 @@
 from datetime import datetime, timezone
 from time import sleep
 
-from arbitration.celery import app
-from celery import group, chord
+from celery import chord, group
 from dateutil import parser
+
+from arbitration.celery import app
+from banks.tasks import (best_bank_intra_exchanges,
+                         parse_currency_market_tinkoff_rates,
+                         parse_internal_tinkoff_rates,
+                         parse_internal_wise_rates)
 from core.models import InfoLoop
-from banks.tasks import parse_internal_tinkoff_rates, parse_internal_wise_rates, parse_currency_market_tinkoff_rates, best_bank_intra_exchanges
-from crypto_exchanges.tasks import crypto_exchanges_start_time, get_tinkoff_p2p_binance_exchanges, get_wise_p2p_binance_exchanges, get_all_binance_crypto_exchanges, get_binance_card_2_crypto_exchanges, get_all_card_2_wallet_2_crypto_exchanges, best_crypto_exchanges_intra_exchanges
-
-
-from crypto_exchanges.crypto_exchanges_registration.binance import \
-    ComplexBinanceWiseInterExchangesCalculate, \
-    ComplexBinanceTinkoffInterExchangesCalculate, \
-    SimplBinanceWiseInterExchangesCalculate, \
-    SimplBinanceTinkoffInterExchangesCalculate
+from crypto_exchanges.crypto_exchanges_registration.binance import (
+    ComplexBinanceTinkoffInterExchangesCalculate,
+    ComplexBinanceWiseInterExchangesCalculate,
+    SimplBinanceTinkoffInterExchangesCalculate,
+    SimplBinanceWiseInterExchangesCalculate)
+from crypto_exchanges.tasks import (best_crypto_exchanges_intra_exchanges,
+                                    crypto_exchanges_start_time,
+                                    get_all_binance_crypto_exchanges,
+                                    get_all_card_2_wallet_2_crypto_exchanges,
+                                    get_binance_card_2_crypto_exchanges,
+                                    get_tinkoff_p2p_binance_exchanges,
+                                    get_wise_p2p_binance_exchanges)
 
 
 @app.task

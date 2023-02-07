@@ -3,9 +3,7 @@ from crypto_exchanges.crypto_exchanges_registration.binance import (
     BINANCE_ASSETS, BINANCE_ASSETS_FOR_FIAT, BINANCE_CRYPTO_FIATS,
     BINANCE_FIATS, BINANCE_PAY_TYPES, BINANCE_TRADE_TYPES, DEPOSIT_FIATS,
     INVALID_PARAMS_LIST, WITHDRAW_FIATS, BinanceCryptoParser, BinanceP2PParser)
-from crypto_exchanges.models import (Card2CryptoExchanges,
-                                     Card2Wallet2CryptoExchanges,
-                                     P2PCryptoExchangesRates)
+from crypto_exchanges.models import P2PCryptoExchangesRates
 
 CRYPTO_EXCHANGES_CONFIG = {
     'all_fiats': tuple({fiat for bank_info in BANKS_CONFIG.values()

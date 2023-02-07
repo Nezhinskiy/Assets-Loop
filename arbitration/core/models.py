@@ -30,5 +30,3 @@ class InfoLoop(models.Model):
     start_all_exchanges = models.DateTimeField(
         null=True, blank=True, default=None
     )
-
-    # check = models.BooleanField(null=True, blank=True, default=None)

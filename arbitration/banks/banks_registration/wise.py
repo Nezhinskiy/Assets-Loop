@@ -1,6 +1,5 @@
 import os
 
-from core.intra_exchanges import IntraBanks
 from core.parsers import BankParser
 
 BANK_NAME = os.path.basename(__file__).split('.')[0].capitalize()
@@ -74,20 +73,7 @@ class WiseParser(BankParser):
                     return price
 
 
-class IntraWise(IntraBanks):
-    bank_name = BANK_NAME
-    fiats = FIATS_WISE
-    currencies_with_requisites = WISE_CURRENCIES_WITH_REQUISITES
-
-
 def get_all_wise_exchanges():
     wise_parser = WiseParser()
     message = wise_parser.main()
-    return message
-
-
-def get_all_wise():
-    get_all_wise_exchanges()
-    wise_insider = IntraWise()
-    message = wise_insider.main()
     return message

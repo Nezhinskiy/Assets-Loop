@@ -3,13 +3,12 @@ import time
 import django_filters
 from django import forms
 from django.db.models import Q
-
-from crypto_exchanges.models import InterExchanges
-from banks.banks_config import BANKS_CONFIG
-from crypto_exchanges.crypto_exchanges_config import CRYPTO_EXCHANGES_CONFIG
 from django_select2.forms import Select2MultipleWidget
 
+from banks.banks_config import BANKS_CONFIG
 from core.parsers import check_work_time
+from crypto_exchanges.crypto_exchanges_config import CRYPTO_EXCHANGES_CONFIG
+from crypto_exchanges.models import InterExchanges
 
 BANK_CHOICES = tuple((bank, bank) for bank in BANKS_CONFIG.keys())
 CRYPTO_EXCHANGE_CHOICES = tuple(

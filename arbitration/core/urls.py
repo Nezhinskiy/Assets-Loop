@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import include, path
 
 from core.views import (InfoLoopList, get_all_exchanges, registration, start,
                         stop)

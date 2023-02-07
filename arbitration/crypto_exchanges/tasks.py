@@ -1,10 +1,14 @@
 from datetime import datetime
-from arbitration.celery import app
+
 from dateutil import parser
 
+from arbitration.celery import app
 from core.models import InfoLoop
-from crypto_exchanges.crypto_exchanges_registration.binance import TinkoffBinanceP2PParser, WiseBinanceP2PParser, BinanceCryptoParser, \
-    BinanceListsFiatCryptoParser, BinanceCard2CryptoExchangesParser, BinanceCard2Wallet2CryptoExchangesParser
+from crypto_exchanges.crypto_exchanges_registration.binance import (
+    BinanceCard2CryptoExchangesParser,
+    BinanceCard2Wallet2CryptoExchangesParser, BinanceCryptoParser,
+    BinanceListsFiatCryptoParser, TinkoffBinanceP2PParser,
+    WiseBinanceP2PParser)
 
 
 # Crypto exchanges time
