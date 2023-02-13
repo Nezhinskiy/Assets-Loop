@@ -22,12 +22,12 @@ class IntraCryptoExchanges(models.Model):
     )
     from_asset = models.CharField(max_length=4)
     to_asset = models.CharField(max_length=4)
-    price = models.FloatField(null=True, blank=True, default=None)
+    price = models.FloatField(default=None)
     update = models.ForeignKey(
         IntraCryptoExchangesUpdates, related_name='datas',
         on_delete=models.CASCADE
     )
-    spot_fee = models.FloatField(null=True, blank=True, default=None)
+    spot_fee = models.FloatField(default=None)
 
     class Meta:
         constraints = [

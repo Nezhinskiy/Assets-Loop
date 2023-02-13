@@ -329,32 +329,3 @@ def get_all_card_2_wallet_2_crypto_exchanges():
     card_2_wallet_2_crypto_exchanges_parser = BinanceCard2Wallet2CryptoExchangesParser()
     message = card_2_wallet_2_crypto_exchanges_parser.main()
     return message
-
-
-def get_best_crypto_exchanges():
-    best_intra_crypto_exchanges = BinanceBestCryptoExchanges
-    message = best_intra_crypto_exchanges.main()
-    return message
-
-
-def get_best_card_2_card_crypto_exchanges():
-    best_intra_card_2_card_crypto_exchanges = BinanceBestTotalCryptoExchanges()
-    message = best_intra_card_2_card_crypto_exchanges.main()
-    return message
-
-
-def get_inter_exchanges_calculate():
-    inter_exchanges_calculate = BinanceInterExchangesCalculate()
-    message = inter_exchanges_calculate.main()
-    return message
-
-
-def get_all():
-    get_all_p2p_binance_exchanges()
-    get_all_binance_crypto_exchanges()
-    get_binance_fiat_crypto_list()
-    get_binance_card_2_crypto_exchanges()
-    get_all_card_2_wallet_2_crypto_exchanges()
-    get_best_crypto_exchanges()
-    get_best_card_2_card_crypto_exchanges()
-    get_inter_exchanges_calculate()

@@ -1,6 +1,17 @@
 version: '3.8'
 services:
 
+  tor_proxy:
+    restart: always
+    image: dockage/tor-privoxy:latest
+    ports:
+      - "9050:9050"
+      - "9051:9051"
+      - "8118:8118"
+
+  redis:
+    image: redis:latest
+
   db:
     image: postgres:13.9-alpine
     restart: always
@@ -17,6 +28,7 @@ services:
       - static_value:/arbitration/static/
     depends_on:
       - db
+      - tor_proxy
     env_file:
       - .env
 
@@ -30,9 +42,6 @@ services:
       - static_value:/var/html/static/
     depends_on:
       - arbitration
-
-  redis:
-    image: redis:latest
 
   celery:
     restart: always

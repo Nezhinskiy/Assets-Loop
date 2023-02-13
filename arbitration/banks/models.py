@@ -9,7 +9,7 @@ class Banks(models.Model):
 
 
 class CurrencyMarkets(models.Model):
-    name = models.CharField(max_length=15, null=True, blank=True)
+    name = models.CharField(max_length=15)
 
 
 class BanksExchangeRatesUpdates(UpdatesModel):

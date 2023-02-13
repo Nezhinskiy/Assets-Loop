@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+import re
+import subprocess
+
+from stem import Signal
+from stem.control import Controller
 from datetime import datetime, time, timedelta, timezone
 from http import HTTPStatus
 from itertools import combinations, permutations, product
@@ -30,10 +35,43 @@ def check_work_time():
     )
 
 
+class Tor:
+    def __init__(self):
+        self.container_name = "infra_tor_proxy_1"
+        self.container_ip = None
+
+    def get_tor_session(self):
+        """
+        Set up a proxy for http and https on the running Tor host: port 9050
+        and initialize the request session.
+        """
+        with requests.session() as session:
+            session.proxies = {"http": "socks5://tor_proxy:9050",
+                               "https": "socks5://tor_proxy:9050"}
+        return session
+
+    def get_tor_ip(self):
+        if not self.container_ip:
+            cmd = "ping -c 1 " + self.container_name
+            output = subprocess.check_output(cmd, shell=True).decode().strip()
+            return re.findall(r'\(.*?\)', output)[0][1:-1]
+        else:
+            return self.container_ip
+
+    def renew_connection(self):
+        with Controller.from_port(address=self.get_tor_ip()) as controller:
+            controller.authenticate()
+            controller.signal(Signal.NEWNYM)
+            sleep(controller.get_newnym_wait())
+
+
 class Parser(object):
     TIMEOUT = 10
-    LIMIT_TRY = 2
     endpoint = None
+    LIMIT_TRY = 3
+
+    def __init__(self):
+        self.session = Tor().get_tor_session()
 
     def get_api_answer_post(self, body, headers, count_try=0, endpoint=None):
         if count_try == self.LIMIT_TRY:
@@ -41,14 +79,14 @@ class Parser(object):
         if endpoint is None:
             endpoint = self.endpoint
         try:
-            with requests.session() as session:
-                response = session.post(
-                    endpoint, headers=headers, json=body
-                )
+            response = self.session.post(
+                endpoint, headers=headers, json=body,
+            )
         except Exception as error:
             message = f'Ошибка при запросе к основному API: {error}'
             print(message)
-            sleep(self.TIMEOUT)
+            Tor().renew_connection()
+            self.session = Tor().get_tor_session()
             count_try += 1
             self.get_api_answer_post(body, headers, count_try, endpoint)
             # raise Exception(message)
@@ -56,7 +94,8 @@ class Parser(object):
             if response.status_code != HTTPStatus.OK:
                 message = f'Ошибка {response.status_code}'
                 print(message)
-                sleep(self.TIMEOUT)
+                Tor().renew_connection()
+                self.session = Tor().get_tor_session()
                 count_try += 1
                 self.get_api_answer_post(body, headers, count_try, endpoint)
                 # raise Exception(message)
@@ -72,15 +111,15 @@ class Parser(object):
         if endpoint is None:
             endpoint = self.endpoint
         try:
-            with requests.session() as session:
-                if params is None:
-                    response = session.get(endpoint)
-                else:
-                    response = session.get(endpoint, params=params)
+            if params is None:
+                response = self.session.get(endpoint)
+            else:
+                response = self.session.get(endpoint, params=params)
         except Exception as error:
             message = f'Ошибка при запросе к основному API: {error}'
             print(message)
-            sleep(self.TIMEOUT)
+            Tor().renew_connection()
+            self.session = Tor().get_tor_session()
             count_try += 1
             self.get_api_answer_get(params, count_try, endpoint)
             # raise Exception(message)
@@ -88,7 +127,8 @@ class Parser(object):
             if response.status_code != HTTPStatus.OK:
                 message = f'Ошибка {response.status_code}'
                 print(message)
-                sleep(self.TIMEOUT)
+                Tor().renew_connection()
+                self.session = Tor().get_tor_session()
                 count_try += 1
                 self.get_api_answer_get(params, count_try, endpoint)
                 # raise Exception(message)
@@ -1048,7 +1088,9 @@ class Card2CryptoExchangesParser(Parser):
             ).list_fiat_crypto
             for asset in assets:
                 fiats_info = list_fiat_crypto.get(asset)
-                for fiat_info in fiats_info:  # TypeError: 'NoneType' object is not iterable
+                if fiats_info is None:
+                    continue
+                for fiat_info in fiats_info:
                     fiat, amount = fiat_info
                     if fiat == 'RUB' and trade_type == 'BUY':
                         continue

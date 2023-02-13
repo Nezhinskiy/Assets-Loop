@@ -54,7 +54,7 @@ class InterSimplExchangesCalculate(object):
                 bank_exchanges = BanksExchangeRates.objects.filter(
                     bank__in=[self.bank, output_bank],
                     from_fiat=output_fiat, to_fiat=input_fiat,
-                    update__updated__gte=self.update_time
+                    price__isnull=False, update__updated__gte=self.update_time
                 )
                 input_crypto_exchanges = (
                     P2PCryptoExchangesRates.objects.filter(
@@ -206,10 +206,8 @@ class InterSimplExchangesCalculate(object):
                                     update__updated__gte=self.update_time
                                 )
                             )
-                            if (
-                                    target_interim_crypto_exchange.exists() and
-                                    target_second_interim_crypto_exchange.exists()
-                            ):
+                            if (target_interim_crypto_exchange.exists() and
+                                    target_second_interim_crypto_exchange.exists()):
                                 interim_crypto_exchange = (
                                     target_interim_crypto_exchange.get()
                                 )
@@ -243,6 +241,9 @@ class InterSimplExchangesCalculate(object):
             second_interim_crypto_exchange, output_crypto_exchange,
             bank_exchange
     ):
+        if (input_crypto_exchange.price is None
+                or output_crypto_exchange.price is None):
+            return
         if interim_crypto_exchange is None:
             interim_crypto_exchange_price = 1
         else:
@@ -252,11 +253,6 @@ class InterSimplExchangesCalculate(object):
         else:
             second_interim_crypto_exchange_price = (
                 second_interim_crypto_exchange.price)
-        if (
-                input_crypto_exchange.price is None
-                or output_crypto_exchange.price is None
-        ):
-            return
         bank_exchange_price = (bank_exchange.price if bank_exchange else 1)
         marginality_percentage = (
              input_crypto_exchange.price * interim_crypto_exchange_price

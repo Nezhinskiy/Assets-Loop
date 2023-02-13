@@ -1,6 +1,10 @@
+import re
+import socket
+import subprocess
 from datetime import datetime, timezone
 from time import sleep
 
+import docker
 from celery import chord, group
 from dateutil import parser
 
@@ -10,6 +14,7 @@ from banks.tasks import (best_bank_intra_exchanges,
                          parse_internal_tinkoff_rates,
                          parse_internal_wise_rates)
 from core.models import InfoLoop
+from core.registration import all_registration
 from crypto_exchanges.crypto_exchanges_registration.binance import (
     ComplexBinanceTinkoffInterExchangesCalculate,
     ComplexBinanceWiseInterExchangesCalculate,
@@ -22,6 +27,11 @@ from crypto_exchanges.tasks import (best_crypto_exchanges_intra_exchanges,
                                     get_binance_card_2_crypto_exchanges,
                                     get_tinkoff_p2p_binance_exchanges,
                                     get_wise_p2p_binance_exchanges)
+
+import socks
+from stem.control import Controller
+from stem import Signal
+import requests
 
 
 @app.task
@@ -204,11 +214,69 @@ def assets_loop():
                     if InfoLoop.objects.last().value == 1:
                         InfoLoop.objects.create(value=False)
                 else:
-                    if count_loop == 1:
-                        sleep(60)
-                    else:
-                        sleep(120)
+                    sleep(5)
+                    # if count_loop == 1:
+                    #     sleep(60)
+                    # else:
+                    #     sleep(120)
                     InfoLoop.objects.create(value=True)
             else:
                 if InfoLoop.objects.last().value == 1:
                     InfoLoop.objects.create(value=False)
+
+@app.task
+def tor():
+    err = 0
+    counter = 0
+    url = "https://httpbin.org/ip"
+
+    def get_tor_session():
+        # инициализировать сеанс запросов
+        session = requests.Session()
+        # установка прокси для http и https на localhost: 9050
+        # для этого требуется запущенная служба Tor на вашем компьютере и прослушивание порта 9050 (по умолчанию)
+        session.proxies = {"http": "socks5://tor_proxy:9050",
+                           "https": "socks5://tor_proxy:9050"}
+        return session
+
+    def get_container_ip():
+        container_name = "infra_tor_proxy_1"
+        cmd = "ping -c 1 " + container_name
+        output = subprocess.check_output(cmd, shell=True).decode().strip()
+        return re.findall(r'\(.*?\)', output)[0][1:-1]
+
+    def renew_connection():
+        with Controller.from_port(address=get_container_ip()) as c:
+            c.authenticate()
+            c.signal(Signal.NEWNYM)
+            sleep(c.get_newnym_wait())
+
+    s = get_tor_session()
+    while counter < 150:
+        r = s.get(url)
+        # print(r.text)
+        counter = counter + 1
+        if counter % 5 == 0:
+            renew_connection()
+            # s = get_tor_session()
+        # renew_connection()
+        #wait till next identity will be available
+    return print("Used " + str(counter) + " IPs and got " + str(err) + " errors")
+
+@app.task
+def notor():
+    err = 0
+    counter = 0
+    url = "https://httpbin.org/ip"
+    session = requests.Session()
+    while counter < 10:
+        r = session.get(url)
+        print(r.text)
+        counter = counter + 1
+        #wait till next identity will be available
+    return print("Used " + str(counter) + " IPs and got " + str(err) + " errors")
+
+
+@app.task
+def all_reg():
+    all_registration()

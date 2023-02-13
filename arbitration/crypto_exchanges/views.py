@@ -12,14 +12,13 @@ from banks.banks_config import BANKS_CONFIG
 from banks.models import Banks
 from core.models import InfoLoop
 from crypto_exchanges.crypto_exchanges_registration.binance import (
-    TinkoffBinanceP2PParser, WiseBinanceP2PParser, get_all,
+    TinkoffBinanceP2PParser, WiseBinanceP2PParser,
     get_all_binance_crypto_exchanges, get_all_card_2_wallet_2_crypto_exchanges,
-    get_all_p2p_binance_exchanges, get_best_card_2_card_crypto_exchanges,
-    get_best_crypto_exchanges, get_binance_card_2_crypto_exchanges,
+    get_all_p2p_binance_exchanges,
+    get_binance_card_2_crypto_exchanges,
     get_binance_fiat_crypto_list,
     get_complex_binance_tinkoff_inter_exchanges_calculate,
     get_complex_binance_wise_inter_exchanges_calculate,
-    get_inter_exchanges_calculate,
     get_simpl_binance_tinkoff_inter_exchanges_calculate,
     get_simpl_binance_wise_inter_exchanges_calculate)
 from crypto_exchanges.filters import ExchangesFilter
@@ -144,22 +143,6 @@ def binance_fiat_crypto_list(request):
 
 def binance_card_2_crypto_exchanges(request):
     return get_binance_card_2_crypto_exchanges()
-
-
-def binance_best_crypto_exchanges(request):
-    return get_best_crypto_exchanges()
-
-
-def binance_best_card_2_card_crypto_exchanges(request):
-    return get_best_card_2_card_crypto_exchanges()
-
-
-def binance_inter_exchanges_calculate(request):
-    return get_inter_exchanges_calculate()
-
-
-def all(request):
-    return get_all()
 
 
 def simpl_binance_tinkoff_inter_exchanges_calculate(request):
