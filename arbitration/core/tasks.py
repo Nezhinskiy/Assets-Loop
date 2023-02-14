@@ -26,9 +26,11 @@ from crypto_exchanges.tasks import (best_crypto_exchanges_intra_exchanges,
                                     get_all_card_2_wallet_2_crypto_exchanges,
                                     get_binance_card_2_crypto_exchanges,
                                     get_tinkoff_p2p_binance_exchanges,
-                                    get_wise_p2p_binance_exchanges)
+                                    get_wise_p2p_binance_exchanges
+                                    )
 
 import socks
+from fake_useragent import UserAgent
 from stem.control import Controller
 from stem import Signal
 import requests
@@ -147,11 +149,15 @@ def assets_loop():
         group_tinkoff_inter_exchanges_calculate,
         group_wise_inter_exchanges_calculate
     )
+    group_binance_card_2_crypto_exchanges = group(
+        get_binance_card_2_crypto_exchanges.s(trade_type)
+        for trade_type in ('BUY', 'SELL')
+    )
     group_all_banks_binance_crypto_exchanges = group(
         chord(
             get_all_binance_crypto_exchanges.s(),
             get_all_card_2_wallet_2_crypto_exchanges.s()
-        ), get_binance_card_2_crypto_exchanges.s()
+        ), group_binance_card_2_crypto_exchanges
     )
     chord_binance_crypto_exchanges = chord(
         group_all_banks_binance_crypto_exchanges,
@@ -210,7 +216,7 @@ def assets_loop():
             ):
                 count_loop += 1
                 print(count_loop)
-                if count_loop >= 5:
+                if count_loop >= 100:
                     if InfoLoop.objects.last().value == 1:
                         InfoLoop.objects.create(value=False)
                 else:
@@ -224,11 +230,17 @@ def assets_loop():
                 if InfoLoop.objects.last().value == 1:
                     InfoLoop.objects.create(value=False)
 
+
 @app.task
-def tor():
+def all_reg():
+    all_registration()
+
+
+@app.task
+def torr(a):
     err = 0
     counter = 0
-    url = "https://httpbin.org/ip"
+    url = "https://httpbin.org/user-agent"
 
     def get_tor_session():
         # инициализировать сеанс запросов
@@ -237,6 +249,7 @@ def tor():
         # для этого требуется запущенная служба Tor на вашем компьютере и прослушивание порта 9050 (по умолчанию)
         session.proxies = {"http": "socks5://tor_proxy:9050",
                            "https": "socks5://tor_proxy:9050"}
+        session.headers = {'User-Agent': UserAgent().chrome}
         return session
 
     def get_container_ip():
@@ -254,14 +267,22 @@ def tor():
     s = get_tor_session()
     while counter < 150:
         r = s.get(url)
-        # print(r.text)
+        print(r.text)
         counter = counter + 1
-        if counter % 5 == 0:
-            renew_connection()
-            # s = get_tor_session()
+        if a == 2:
+            if counter % 5 == 0:
+                # renew_connection()
+                s = get_tor_session()
         # renew_connection()
         #wait till next identity will be available
     return print("Used " + str(counter) + " IPs and got " + str(err) + " errors")
+
+
+@app.task
+def tor():
+    tor_group = group(torr.s(1), torr.s(2))
+    tor_group.delay()
+
 
 @app.task
 def notor():
@@ -275,8 +296,3 @@ def notor():
         counter = counter + 1
         #wait till next identity will be available
     return print("Used " + str(counter) + " IPs and got " + str(err) + " errors")
-
-
-@app.task
-def all_reg():
-    all_registration()

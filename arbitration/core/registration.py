@@ -7,6 +7,9 @@ from crypto_exchanges.crypto_exchanges_registration.binance import \
     get_all_binance_crypto_exchanges
 from crypto_exchanges.models import CryptoExchanges
 
+from crypto_exchanges.crypto_exchanges_registration.binance import \
+    BinanceListsFiatCryptoParser
+
 
 def banks():
     for bank_name in BANKS_CONFIG.keys():
@@ -33,9 +36,15 @@ def crypto_exchanges():
             CryptoExchanges.objects.create(name=crypto_exchange_name)
 
 
+def crypto_list():
+    binance_fiat_crypto_list_parser = BinanceListsFiatCryptoParser()
+    binance_fiat_crypto_list_parser.main()
+
+
 def all_registration():
     InfoLoop.objects.create(value=False)
     banks()
     currency_markets()
     crypto_exchanges()
+    crypto_list()
     get_all_binance_crypto_exchanges()

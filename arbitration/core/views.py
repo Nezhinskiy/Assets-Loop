@@ -43,6 +43,7 @@ class InfoLoopList(ListView):
 def start(request):
     if InfoLoop.objects.last().value == 0:
         assets_loop.s().delay()
+        time.sleep(0.1)
     return redirect('crypto_exchanges:InterExchangesListNew')
 
 

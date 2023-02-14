@@ -37,10 +37,11 @@ def get_all_binance_crypto_exchanges():
 
 
 @app.task
-def get_binance_card_2_crypto_exchanges():
-    binance_fiat_crypto_list_parser = BinanceListsFiatCryptoParser()
-    binance_fiat_crypto_list_parser.main()
-    binance_card_2_crypto_exchanges_parser = BinanceCard2CryptoExchangesParser()
+def get_binance_card_2_crypto_exchanges(trade_type):
+    # binance_fiat_crypto_list_parser = BinanceListsFiatCryptoParser()
+    # binance_fiat_crypto_list_parser.main()
+    binance_card_2_crypto_exchanges_parser = BinanceCard2CryptoExchangesParser(
+        trade_type)
     binance_card_2_crypto_exchanges_parser.main()
 
 
