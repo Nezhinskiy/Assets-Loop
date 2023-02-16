@@ -96,27 +96,22 @@ class BinanceP2PParser(P2PParser):
     page = 1
     rows = 1
 
-    def create_body(self, asset, fiat, pay_types):
+    def create_body(self, asset: str, trade_type: str, fiat: str) -> dict:
         return {
             "page": self.page,
             "rows": self.rows,
             "publisherType": "merchant",
             "asset": asset,
-            "tradeType": pay_types,
+            "tradeType": trade_type,
             "fiat": fiat,
             "payTypes": [self.bank.binance_name]
         }
 
-    def create_headers(self, body):
-        return {
-            "Content-Type": "application/json",
-            "Content-Length": str(getsizeof(body)),
-        }
-
-    def extract_price_from_json(self, json_data: dict) -> float | None:
+    @staticmethod
+    def extract_price_from_json(json_data: dict) -> float | None:
         data = json_data.get('data')
         if len(data) == 0:
-            return None
+            return
         internal_data = data[0]
         adv = internal_data.get('adv')
         return float(adv.get('price'))
