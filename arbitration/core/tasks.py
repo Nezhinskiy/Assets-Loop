@@ -1,7 +1,7 @@
 import re
 import socket
 import subprocess
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from time import sleep
 
 import docker
@@ -35,10 +35,12 @@ from stem.control import Controller
 from stem import Signal
 import requests
 
+from crypto_exchanges.models import InterExchanges
+
 
 @app.task
 def start_crypto_exchanges():
-    info = InfoLoop.objects.last()
+    info = InfoLoop.objects.filter(value=True).first()
     info.start_crypto_exchanges = datetime.now(timezone.utc)
     info.save()
     print('start_crypto_exchanges')
@@ -46,7 +48,7 @@ def start_crypto_exchanges():
 
 @app.task
 def start_bank_exchanges():
-    info = InfoLoop.objects.last()
+    info = InfoLoop.objects.filter(value=True).first()
     info.start_banks_exchanges = datetime.now(timezone.utc)
     info.save()
     print('start_banks_exchanges')
@@ -54,16 +56,20 @@ def start_bank_exchanges():
 
 @app.task
 def end_all_exchanges(_):
-    info = InfoLoop.objects.filter(value=True).last()
+    info = InfoLoop.objects.filter(value=True).first()
     duration = datetime.now(timezone.utc) - info.updated
     info.all_exchanges = duration
+    count_of_rates = InterExchanges.objects.filter(update__updated__gte=(
+            datetime.now(timezone.utc) - duration
+    )).count()
+    info.count_of_rates = count_of_rates
     info.save()
     print('end_all_exchanges')
 
 
 @app.task
 def end_crypto_exchanges(_):
-    info = InfoLoop.objects.filter(value=True).last()
+    info = InfoLoop.objects.filter(value=True).first()
     duration = datetime.now(timezone.utc) - info.updated
     info.all_crypto_exchanges = duration
     info.save()
@@ -72,7 +78,7 @@ def end_crypto_exchanges(_):
 
 @app.task
 def end_banks_exchanges(_):
-    info = InfoLoop.objects.filter(value=True).last()
+    info = InfoLoop.objects.filter(value=True).first()
     duration = datetime.now(timezone.utc) - info.updated
     info.all_banks_exchanges = duration
     info.save()
@@ -200,34 +206,29 @@ def assets_loop():
     general_group = group(
         general_chord_crypto_exchanges, general_chord_banks_exchanges
     )
-    general_chord = chord(general_group,
-                          end_all_exchanges.s())
-    if InfoLoop.objects.last().value == 0:
+    general_chord = chord(general_group, end_all_exchanges.s())
+    if not InfoLoop.objects.first().value:
         InfoLoop.objects.create(value=True)
         count_loop = 0
-        while InfoLoop.objects.last().value == 1:
+        while InfoLoop.objects.first().value == 1:
             general_chord.delay()
-            while (InfoLoop.objects.last().value == 1
-                    and not InfoLoop.objects.last().all_exchanges):
-                sleep(5)
-            if (
-                    InfoLoop.objects.last().all_crypto_exchanges
-                    and InfoLoop.objects.last().all_banks_exchanges
-            ):
+            while (InfoLoop.objects.first().value
+                   and not InfoLoop.objects.first().all_exchanges):
+                sleep(1)
+            if (InfoLoop.objects.filter(value=True
+                                        ).first().all_crypto_exchanges
+                    and InfoLoop.objects.filter(value=True
+                                                ).first().all_banks_exchanges):
                 count_loop += 1
                 print(count_loop)
-                if count_loop >= 100:
-                    if InfoLoop.objects.last().value == 1:
+                if count_loop >= 1000:
+                    if InfoLoop.objects.first().value:
                         InfoLoop.objects.create(value=False)
                 else:
-                    sleep(5)
-                    # if count_loop == 1:
-                    #     sleep(60)
-                    # else:
-                    #     sleep(120)
                     InfoLoop.objects.create(value=True)
+                    app.control.purge()
             else:
-                if InfoLoop.objects.last().value == 1:
+                if InfoLoop.objects.first().value:
                     InfoLoop.objects.create(value=False)
 
 

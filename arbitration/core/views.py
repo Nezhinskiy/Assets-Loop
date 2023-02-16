@@ -41,14 +41,14 @@ class InfoLoopList(ListView):
 
 
 def start(request):
-    if InfoLoop.objects.last().value == 0:
+    if InfoLoop.objects.first().value == 0:
         assets_loop.s().delay()
         time.sleep(0.1)
     return redirect('crypto_exchanges:InterExchangesListNew')
 
 
 def stop(request):
-    if InfoLoop.objects.last().value == 1:
+    if InfoLoop.objects.first().value == 1:
         InfoLoop.objects.create(value=False)
     return redirect('crypto_exchanges:InterExchangesListNew')
 
@@ -56,6 +56,7 @@ def stop(request):
 def registration(request):
     all_reg.s().delay()
     return redirect('core:info')
+
 
 def no_tor(request):
     notor.s().delay()

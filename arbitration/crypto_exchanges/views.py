@@ -195,8 +195,8 @@ class InterExchangesList(FilterView):
         context['crypto_exchange_names'] = list(CRYPTO_EXCHANGES_CONFIG.keys()
                                                 )[1:]
         context['loop_rates'] = self.get_queryset()
-        context['last_update'] = self.get_queryset().latest(
-            'update').update.updated
+        context['last_update'] = self.get_queryset().latest('update'
+                                                            ).update.updated
         return context
 
 
@@ -253,7 +253,7 @@ class InterExchangesAPIView(ListAPIView, FilterView):
     def list(self, request, *args, **kwargs):
         draw = request.query_params.get('draw')
         queryset = self.get_queryset()
-        recordsTotal = queryset.count()
+        records_total = queryset.count()
         filtered_queryset = self.filter_for_datatable(queryset)
         try:
             start = int(request.query_params.get('start'))
@@ -268,7 +268,7 @@ class InterExchangesAPIView(ListAPIView, FilterView):
                                          many=True)
         response = {
             'draw': draw,
-            'recordsTotal': recordsTotal,
+            'recordsTotal': records_total,
             'recordsFiltered': filtered_queryset.count(),
             'data': serializer.data
         }

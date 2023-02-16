@@ -38,6 +38,7 @@
         <th scope="col">Duration for all bank exchanges</th>
         <th scope="col">Duration for all crypto exchanges</th>
         <th scope="col">Duration for all exchanges</th>
+        <th scope="col">Count of rates</th>
         <th scope="col">Updated UTC</th>
       </tr>
     </thead>
@@ -48,6 +49,7 @@
         <td>{% if info_loop.value %}{{ info_loop.all_banks_exchanges }}{% endif %}</td>
         <td>{% if info_loop.value %}{{ info_loop.all_crypto_exchanges }}{% endif %}</td>
         <td>{% if info_loop.value %}{{ info_loop.all_exchanges }}{% endif %}</td>
+        <td>{% if info_loop.value %}{{ info_loop.count_of_rates }}{% endif %}</td>
         <td>{{ info_loop.updated}}</td>
       </tr>
     {% endfor %}
@@ -62,7 +64,7 @@
               "pageLength": 15,
               "lengthMenu": [[15, 30, 60, 100], [15, 30, 60, 100]],
               "info": true,
-              'order': [[0, 'desc']],
+              {#'order': [[0, 'desc']],#}
         });
     });
   </script>

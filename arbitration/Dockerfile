@@ -6,8 +6,8 @@ WORKDIR /arbitration
 
 COPY requirements.txt .
 
-RUN apt-get update -y && apt-get upgrade -y && apt-get install -y iputils-ping && \
-    pip install --upgrade pip &&  \
+RUN apt-get update -y && apt-get upgrade -y &&  \
+    apt-get install -y iputils-ping && pip install --upgrade pip &&  \
     pip install --root-user-action=ignore -r requirements.txt --no-cache-dir
 
 COPY . .
