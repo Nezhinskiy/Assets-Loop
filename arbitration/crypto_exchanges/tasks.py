@@ -46,8 +46,9 @@ def get_binance_card_2_crypto_exchanges(trade_type):
 
 
 @app.task
-def get_all_card_2_wallet_2_crypto_exchanges(_):
-    card_2_wallet_2_crypto_exchanges_parser = BinanceCard2Wallet2CryptoExchangesParser()
+def get_all_card_2_wallet_2_crypto_exchanges(trade_type):
+    card_2_wallet_2_crypto_exchanges_parser = (
+        BinanceCard2Wallet2CryptoExchangesParser(trade_type))
     print('get_all_card_2_wallet_2_crypto_exchanges')
     card_2_wallet_2_crypto_exchanges_parser.main()
 

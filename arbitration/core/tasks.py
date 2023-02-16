@@ -159,11 +159,14 @@ def assets_loop():
         get_binance_card_2_crypto_exchanges.s(trade_type)
         for trade_type in ('BUY', 'SELL')
     )
+    group_card_2_wallet_2_crypto_exchanges = group(
+        get_all_card_2_wallet_2_crypto_exchanges.s(trade_type)
+        for trade_type in ('BUY', 'SELL')
+    )
     group_all_banks_binance_crypto_exchanges = group(
-        chord(
-            get_all_binance_crypto_exchanges.s(),
-            get_all_card_2_wallet_2_crypto_exchanges.s()
-        ), group_binance_card_2_crypto_exchanges
+        get_all_binance_crypto_exchanges.s(),
+        group_card_2_wallet_2_crypto_exchanges,
+        group_binance_card_2_crypto_exchanges
     )
     chord_binance_crypto_exchanges = chord(
         group_all_banks_binance_crypto_exchanges,
@@ -226,7 +229,7 @@ def assets_loop():
                         InfoLoop.objects.create(value=False)
                 else:
                     InfoLoop.objects.create(value=True)
-                    app.control.purge()
+                    # app.control.purge()
             else:
                 if InfoLoop.objects.first().value:
                     InfoLoop.objects.create(value=False)
