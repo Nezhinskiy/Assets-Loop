@@ -96,7 +96,7 @@ class BinanceP2PParser(P2PParser):
     page = 1
     rows = 1
 
-    def create_body(self, asset: str, trade_type: str, fiat: str) -> dict:
+    def create_body(self, asset: str, fiat: str, trade_type: str) -> dict:
         return {
             "page": self.page,
             "rows": self.rows,
@@ -131,9 +131,6 @@ class BinanceCryptoParser(CryptoExchangesParser):
     endpoint = 'https://api.binance.com/api/v3/ticker/price?'
     name_from = 'symbol'
 
-    def __init__(self):
-        self.count = 0
-
     def get_api_answer(self, params):
         """Делает запрос к эндпоинту API Tinfoff."""
         try:
@@ -152,7 +149,6 @@ class BinanceCryptoParser(CryptoExchangesParser):
                 sleep(1)
                 with requests.session() as session:
                     response = session.get(self.endpoint, params=params)
-            self.count += 1
             return response.json(), params
         except Exception as error:
             message = f'Ошибка при запросе к основному API: {error}'
@@ -160,13 +156,8 @@ class BinanceCryptoParser(CryptoExchangesParser):
             # raise Exception(message)
             return False
 
-
-    def converts_choices_to_set(self, choices: tuple[tuple[str, str]]
-                                ) -> list[str]:
-        """repackaging choices into a set."""
-        return [choice[0] for choice in choices]
-
-    def extract_price_from_json(self, json_data) -> float:
+    @staticmethod
+    def extract_price_from_json(json_data: dict) -> float:
         price: float = float(json_data['price'])
         return price
 
@@ -177,7 +168,7 @@ class BinanceCryptoParser(CryptoExchangesParser):
         ]
         return params
 
-    def calculates_buy_and_sell_data(self, params) -> tuple[dict, dict]:
+    def calculates_buy_and_sell_data(self, params) -> tuple[dict, dict] | None:
         answer = self.get_api_answer(params)
         if not answer:
             return
@@ -211,18 +202,14 @@ class BinanceCryptoParser(CryptoExchangesParser):
                         }
                         return buy_data, sell_data
 
-    def get_all_api_answers(
-            self, bank, new_update, records_to_update
-    ):
+    def get_all_api_answers(self):
         for params in self.generate_unique_params():
-            values = self.choice_buy_and_sell_or_price(params)
+            values = self.calculates_buy_and_sell_data(params)
             if not values:
                 continue
             for value_dict in values:
                 price = value_dict.pop('price')
-                self.add_to_bulk_update_or_create(
-                    bank, new_update, records_to_update, value_dict, price
-                )
+                self.add_to_bulk_update_or_create(value_dict, price)
 
 
 class BinanceCard2CryptoExchangesParser(Card2CryptoExchangesParser):
