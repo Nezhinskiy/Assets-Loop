@@ -47,7 +47,7 @@ class BaseParser(ABC):
 class ParsingViaTor(BaseParser, ABC):
     LIMIT_TRY = 3
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.tor = Tor()
         self.count_try = 0
@@ -113,7 +113,7 @@ class ParsingViaTor(BaseParser, ABC):
     def successful_response_handler(self) -> None:
         message = (f'Successful response with class: '
                    f'{self.__class__.__name__}')
-        logger.info(message)
+        logger.debug(message)
 
 
 class CryptoParser(ParsingViaTor, ABC):
@@ -491,9 +491,10 @@ class CryptoExchangesParser(BaseParser, ABC):
     model_update = IntraCryptoExchangesUpdates
     crypto_exchange_name: str
     name_from: str
+    exceptions: tuple[str]
     CURRENCY_PAIR = 2
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         from crypto_exchanges.crypto_exchanges_config import \
             CRYPTO_EXCHANGES_CONFIG
@@ -837,7 +838,7 @@ class Card2CryptoExchangesParser(CryptoParser, ABC):
     endpoint_sell: str
     endpoint_buy: str
 
-    def __init__(self, trade_type: str):
+    def __init__(self, trade_type: str) -> None:
         super().__init__()
         self.new_update = self.model_update.objects.create(
             crypto_exchange=self.crypto_exchange,

@@ -4,6 +4,7 @@ import os
 from http import HTTPStatus
 from sys import getsizeof
 from time import sleep
+from typing import List, Dict
 
 import requests
 
@@ -126,6 +127,7 @@ class BinanceCryptoParser(CryptoExchangesParser):
     crypto_exchange_name = CRYPTO_EXCHANGES_NAME
     fiats = ASSETS
     endpoint = 'https://api.binance.com/api/v3/ticker/price?'
+    exceptions = ('SHIBRUB',)
     name_from = 'symbol'
 
     def get_api_answer(self, params):
@@ -155,15 +157,14 @@ class BinanceCryptoParser(CryptoExchangesParser):
 
     @staticmethod
     def extract_price_from_json(json_data: dict) -> float:
-        price: float = float(json_data['price'])
-        return price
+        return float(json_data['price'])
 
-    def create_params(self, fiats_combinations):
-        params = [
+    def create_params(self,
+                      assets_combinations: tuple) -> list[dict[str, str]]:
+        return [
             dict([(self.name_from, ''.join([params[0], params[1]]))])
-            for params in fiats_combinations
+            for params in assets_combinations if params not in self.exceptions
         ]
-        return params
 
     def calculates_buy_and_sell_data(self, params) -> tuple[dict, dict] | None:
         answer = self.get_api_answer(params)
