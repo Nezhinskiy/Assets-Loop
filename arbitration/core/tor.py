@@ -1,6 +1,7 @@
 import re
 import subprocess
 from time import sleep
+import socks
 
 import requests
 from fake_useragent import UserAgent
@@ -19,8 +20,8 @@ class Tor:
         and initialize the request session.
         """
         with requests.session() as session:
-            session.proxies = {'http': 'socks5://tor_proxy:9050',
-                               'https': 'socks5://tor_proxy:9050'}
+            session.proxies = {'http': 'socks5h://tor_proxy:9050',
+                               'https': 'socks5h://tor_proxy:9050'}
             session.headers = {'User-Agent': UserAgent().chrome}
         return session
 

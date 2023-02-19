@@ -1,12 +1,9 @@
 import re
-import socket
 import subprocess
 from datetime import datetime, timezone, timedelta
 from time import sleep
 
-import docker
 from celery import chord, group
-from dateutil import parser
 
 from arbitration.celery import app
 from banks.tasks import (best_bank_intra_exchanges,
@@ -29,7 +26,6 @@ from crypto_exchanges.tasks import (best_crypto_exchanges_intra_exchanges,
                                     get_wise_p2p_binance_exchanges
                                     )
 
-import socks
 from fake_useragent import UserAgent
 from stem.control import Controller
 from stem import Signal
@@ -300,3 +296,13 @@ def notor():
         counter = counter + 1
         #wait till next identity will be available
     return print("Used " + str(counter) + " IPs and got " + str(err) + " errors")
+
+
+@app.task
+def c2c_s():
+    get_binance_card_2_crypto_exchanges.s('SELL').delay()
+
+
+@app.task
+def c2c_b():
+    get_binance_card_2_crypto_exchanges.s('BUY').delay()

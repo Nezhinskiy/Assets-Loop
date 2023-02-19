@@ -2,27 +2,12 @@ import math
 import sys
 from datetime import datetime, timedelta, timezone
 from itertools import permutations, product
-
-from django.core.exceptions import MultipleObjectsReturned
-
 from banks.models import Banks, BanksExchangeRates, CurrencyMarkets
 from crypto_exchanges.models import (CryptoExchanges, InterExchanges,
                                      InterExchangesUpdates,
                                      IntraCryptoExchanges,
                                      P2PCryptoExchangesRates,
                                      RelatedMarginalityPercentages)
-
-
-def get_related_exchange(meta_exchange):
-    if meta_exchange:
-        try:
-            model = meta_exchange.payment_channel_model
-        except AttributeError:
-            model = meta_exchange.bank_exchange_model
-        exchange_id = meta_exchange.exchange_id
-        return getattr(sys.modules[__name__], model).objects.get(
-            id=exchange_id
-        )
 
 
 class InterSimplExchangesCalculate(object):

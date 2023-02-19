@@ -2,8 +2,6 @@ from datetime import datetime
 
 from django import template
 
-from core.intra_exchanges import get_related_exchange
-
 register = template.Library()
 
 
@@ -21,9 +19,6 @@ def is_empty(value, channel):
         return True
     else:
         return False
-
-
-register.filter('get_related_exchange', get_related_exchange)
 
 
 @register.filter

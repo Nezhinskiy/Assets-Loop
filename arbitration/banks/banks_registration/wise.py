@@ -10,39 +10,9 @@ WISE_CURRENCIES = (
 
 WISE_CURRENCIES_WITH_REQUISITES = ('USD', 'EUR', )
 
-FIATS_WISE = (
-    ('USD', 'Usd'),
-    ('EUR', 'Eur'),
-    ('ILS', 'Ils'),
-    ('GBP', 'Gbp'),
-    ('CHF', 'Chf'),
-    ('CAD', 'Cad'),
-    ('AUD', 'Aud'),
-    ('SGD', 'Sgd'),
-    ('BGN', 'Bgn'),
-    ('BYN', 'Byn'),
-    ('AED', 'Aed'),
-    ('PLN', 'Pln'),
-    ('TRY', 'Try'),
-    ('CNY', 'Cny'),
-    ('HKD', 'Hkd'),
-    ('SEK', 'Sek'),
-    ('CZK', 'Czk'),
-    ('THB', 'Thb'),
-    ('INR', 'Inr'),
-    ('JPY', 'Jpy'),
-    ('KZT', 'Kzt'),
-    ('AMD', 'Amd'),
-    ('KRW', 'Krw'),
-    ('IDR', 'Idr'),
-    ('VND', 'Vnd'),
-    ('NOK', 'Nok'),
-)
-
 
 class WiseParser(BankParser):
     bank_name = BANK_NAME
-    fiats = FIATS_WISE
     endpoint = 'https://wise.com/gateway/v3/price?'
     name_from = 'sourceCurrency'
     name_to = 'targetCurrency'

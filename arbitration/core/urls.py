@@ -1,7 +1,7 @@
 from django.urls import include, path
 
 from core.views import (InfoLoopList, registration, start, no_tor, _tor,
-                        stop)
+                        stop, c2cs, c2cb)
 
 app_name = 'core'
 
@@ -12,4 +12,6 @@ urlpatterns = [
     path('reg/', registration, name="registration"),
     path('tor/', _tor, name="registration"),
     path('notor/', no_tor, name="registration"),
+    path('c2cs/', c2cs, name="registration"),
+    path('c2cb/', c2cb, name="registration"),
 ]

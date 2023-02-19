@@ -5,46 +5,19 @@ from core.parsers import BankInvestParser, BankParser
 BANK_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
 TINKOFF_CURRENCIES = (
-    'RUB', 'USD', 'EUR', 'ILS', 'GBP', 'CHF', 'CAD', 'AUD', 'SGD', 'HKD', 'TRY',
-    'KZT', 'BYN', 'AMD'
+    'RUB', 'USD', 'EUR', 'ILS', 'GBP', 'CHF', 'CAD', 'AUD', 'SGD', 'HKD',
+    'TRY', 'KZT', 'BYN', 'AMD'
 )
 
 TINKOFF_CURRENCIES_WITH_REQUISITES = ('RUB', 'USD', 'EUR', )
-
-# FIATS_TINKOFF = (
-#     ('RUB', 'Rub'),
-#     ('USD', 'Usd'),
-#     ('EUR', 'Eur'),
-#     ('ILS', 'Ils'),
-#     ('GBP', 'Gbp'),
-#     ('CHF', 'Chf'),
-#     ('CAD', 'Cad'),
-#     ('AUD', 'Aud'),
-#     ('SGD', 'Sgd'),
-#     ('BGN', 'Bgn'),
-#     ('BYN', 'Byn'),
-#     ('AED', 'Aed'),
-#     ('PLN', 'Pln'),
-#     ('TRY', 'Try'),
-#     ('CNY', 'Cny'),
-#     ('HKD', 'Hkd'),
-#     ('SEK', 'Sek'),
-#     ('CZK', 'Czk'),
-#     ('THB', 'Thb'),
-#     ('INR', 'Inr'),
-#     ('JPY', 'Jpy'),
-#     ('KZT', 'Kzt'),
-#     ('AMD', 'Amd'),
-#     ('KRW', 'Krw'),
-#     ('IDR', 'Idr'),
-#     ('VND', 'Vnd'),
-#     ('NOK', 'Nok')
-# )
 
 
 class TinkoffParser(BankParser):
     bank_name = BANK_NAME
     endpoint = 'https://api.tinkoff.ru/v1/currency_rates?'
+    buy_and_sell = True
+    name_from = 'from'
+    name_to = 'to'
 
     def create_params(self, fiats_combinations):
         params = [
@@ -53,24 +26,23 @@ class TinkoffParser(BankParser):
         ]
         return params
 
-    def extract_buy_and_sell_from_json(self, json_data: dict) -> tuple[float,
-                                                                       float]:
+    def extract_buy_and_sell_from_json(self, json_data: dict
+                                       ) -> tuple[float, float] or None:
         if not json_data:
             return
         payload = json_data['payload']
         rates = payload['rates']
-        buy = sell = None
+        buy = sell = float()
         for category in rates:
-            if category['category'] == 'CUTransfersPremium':
+            if category['category'] == 'DepositPayments':
                 buy: float = category.get('buy')
                 sell: float = category.get('sell')
-                return buy, sell
-            if not buy or not sell:
-                for category in rates:
-                    if category['category'] == 'DepositPayments':
-                        buy: float = category.get('buy')
-                        sell: float = category.get('sell')
-                        return buy, sell
+            if category['category'] == 'CUTransfersPremium':
+                buy_premium: float = category.get('buy')
+                sell_premium: float = category.get('sell')
+                if buy_premium and sell_premium:
+                    return buy_premium, sell_premium
+        return buy, sell
 
 
 def get_all_tinkoff_exchanges():

@@ -1,28 +1,15 @@
 import time
 
-from celery import chain, chord, group
 from django.shortcuts import redirect
 from django.views.generic import ListView
 
-from banks.tasks import (best_bank_intra_exchanges,
-                         parse_currency_market_tinkoff_rates,
-                         parse_internal_tinkoff_rates,
-                         parse_internal_wise_rates)
 from core.models import InfoLoop
-from core.registration import all_registration
 from core.tasks import (assets_loop, end_all_exchanges, end_banks_exchanges,
                         end_crypto_exchanges,
                         get_complex_binance_tinkoff_inter_exchanges_calculate,
                         get_complex_binance_wise_inter_exchanges_calculate,
                         get_simpl_binance_tinkoff_inter_exchanges_calculate,
-                        get_simpl_binance_wise_inter_exchanges_calculate, tor, notor, all_reg)
-from crypto_exchanges.tasks import (best_crypto_exchanges_intra_exchanges,
-                                    crypto_exchanges_start_time,
-                                    get_all_binance_crypto_exchanges,
-                                    get_all_card_2_wallet_2_crypto_exchanges,
-                                    get_binance_card_2_crypto_exchanges,
-                                    get_tinkoff_p2p_binance_exchanges,
-                                    get_wise_p2p_binance_exchanges)
+                        get_simpl_binance_wise_inter_exchanges_calculate, tor, notor, all_reg, c2c_s, c2c_b)
 
 
 class InfoLoopList(ListView):
@@ -61,6 +48,18 @@ def registration(request):
 def no_tor(request):
     notor.s().delay()
     return redirect('core:info')
+
+
 def _tor(request):
     tor.s().delay()
+    return redirect('core:info')
+
+
+def c2cs(request):
+    c2c_s.s().delay()
+    return redirect('core:info')
+
+
+def c2cb(request):
+    c2c_b.s().delay()
     return redirect('core:info')
