@@ -15,6 +15,10 @@ from crypto_exchanges.models import (CryptoExchanges, IntraCryptoExchanges,
                                      P2PCryptoExchangesRates,
                                      P2PCryptoExchangesRatesUpdates)
 from core.tor import Tor
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def check_work_time():
@@ -30,8 +34,6 @@ def check_work_time():
 
 
 class BaseParser(ABC):
-    model = None
-    model_update = None
     endpoint = None
 
     def __init__(self) -> None:
@@ -43,81 +45,79 @@ class BaseParser(ABC):
 
 
 class ParsingViaTor(BaseParser, ABC):
-    TIMEOUT = 10
     LIMIT_TRY = 3
 
-    def __init__(self) -> None:
+    def __init__(self):
         super().__init__()
-        self.session = Tor().get_tor_session()
+        self.tor = Tor()
+        self.count_try = 0
 
-    def get_api_answer_post(self, body, headers, count_try=0, endpoint=None):
-        if count_try == self.LIMIT_TRY:
-            return False
+    def get_api_answer_post(self, body: dict, headers: dict, endpoint=None
+                            ) -> dict | bool:
+        self.count_try = 0
         if endpoint is None:
             endpoint = self.endpoint
-        try:
-            print(count_try)
-            response = self.session.post(endpoint, headers=headers, json=body)
-        except Exception as error:
-            message = f'Ошибка при запросе к основному API: {error}'
-            print(message)
-            Tor().renew_connection()
-            self.session = Tor().get_tor_session()
-            count_try += 1
-            self.get_api_answer_post(body, headers, count_try, endpoint)
-            # raise Exception(message)
-        try:
-            if response.status_code != HTTPStatus.OK:
-                message = f'Ошибка {response.status_code}'
-                print(message)
-                Tor().renew_connection()
-                self.session = Tor().get_tor_session()
-                count_try += 1
-                self.get_api_answer_post(body, headers, count_try, endpoint)
-                # raise Exception(message)
-            return response.json()
-        except Exception as error:
-            message = f'Ошибка при запросе к основному API: {error}'
-            print(message)
-            return False
 
-    def get_api_answer_get(self, params=None, count_try=0, endpoint=None):
-        if count_try == self.LIMIT_TRY:
-            return False
+        while self.count_try < self.LIMIT_TRY:
+            try:
+                response = self.tor.session.post(endpoint, headers=headers,
+                                                 json=body)
+            except Exception as error:
+                self.unsuccessful_response_handler(error)
+                continue
+
+            if response.status_code != HTTPStatus.OK:
+                self.negative_response_status_handler(response)
+                continue
+
+            self.successful_response_handler()
+            return response.json()
+
+        return False
+
+    def get_api_answer_get(self, params=None, endpoint=None) -> dict | bool:
+        self.count_try = 0
         if endpoint is None:
             endpoint = self.endpoint
-        try:
-            print(count_try)
-            if params is None:
-                response = self.session.get(endpoint)
-            else:
-                response = self.session.get(endpoint, params=params)
-        except Exception as error:
-            message = f'Ошибка при запросе к основному API: {error}'
-            print(message)
-            Tor().renew_connection()
-            self.session = Tor().get_tor_session()
-            count_try += 1
-            self.get_api_answer_get(params, count_try, endpoint)
-            # raise Exception(message)
-        try:
+
+        while self.count_try < self.LIMIT_TRY:
+            try:
+                response = self.tor.session.get(endpoint, params=params)
+            except Exception as error:
+                self.unsuccessful_response_handler(error)
+                continue
+
             if response.status_code != HTTPStatus.OK:
-                message = f'Ошибка {response.status_code}'
-                print(message)
-                Tor().renew_connection()
-                self.session = Tor().get_tor_session()
-                count_try += 1
-                self.get_api_answer_get(params, count_try, endpoint)
-                # raise Exception(message)
+                self.negative_response_status_handler(response)
+                continue
+
+            self.successful_response_handler()
             return response.json()
-        except Exception as error:
-            message = f'Ошибка при запросе к основному API: {error}'
-            print(message)
-            return False
+
+        return False
+
+    def unsuccessful_response_handler(self, error) -> None:
+        message = (f'{error} with class: '
+                   f'{self.__class__.__name__}, count try: {self.count_try}')
+        logger.error(message)
+        self.tor.renew_connection()
+        self.count_try += 1
+
+    def negative_response_status_handler(self, response) -> None:
+        message = (f'{response.status_code} with class: '
+                   f'{self.__class__.__name__}, count try: {self.count_try}')
+        logger.error(message)
+        self.tor.renew_connection()
+        self.count_try += 1
+
+    def successful_response_handler(self) -> None:
+        message = (f'Successful response with class: '
+                   f'{self.__class__.__name__}')
+        logger.info(message)
 
 
 class CryptoParser(ParsingViaTor, ABC):
-    crypto_exchange_name: str = None
+    crypto_exchange_name: str
 
     def __init__(self) -> None:
         super().__init__()
@@ -147,7 +147,6 @@ class BankParser(ParsingViaTor, ABC):
     buy_and_sell: bool
     name_from: str
     name_to: str
-    ROUND_TO = 10
     CURRENCY_PAIR = 2
 
     def __init__(self) -> None:
@@ -201,8 +200,11 @@ class BankParser(ParsingViaTor, ABC):
                 'price': 1 / buy_and_sell[1]
             }
             return buy_data, sell_data
-        except BaseException as err:
-            print(err, params, buy_and_sell)
+        except Exception as error:
+            message = (f'Error with calculates buy and sell data in '
+                       f'{self.__class__.__name__}. Data: {params}, '
+                       f'{buy_and_sell}. Error: {error}')
+            logger.error(message)
 
     def calculates_price_data(self, params: dict) -> list[dict]:
         price = self.extract_price_from_json(self.get_api_answer(params))
@@ -213,8 +215,11 @@ class BankParser(ParsingViaTor, ABC):
                 'price': price
             }
             return [price_data]
-        except BaseException as err:
-            print(err, params)
+        except Exception as error:
+            message = (f'Error with calculates price data in '
+                       f'{self.__class__.__name__}. Data: {params}. '
+                       f'Error: {error}')
+            logger.error(message)
 
     def choice_buy_and_sell_or_price(self, params
                                      ) -> tuple[dict, dict] | list[dict]:
@@ -265,7 +270,7 @@ class BankInvestParser(ParsingViaTor, ABC):
     endpoint: str
     link_ends: str
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.currency_market = CurrencyMarkets.objects.get(
             name=self.currency_markets_name)
@@ -273,7 +278,7 @@ class BankInvestParser(ParsingViaTor, ABC):
             currency_market=self.currency_market
         )
 
-    def get_api_answer(self, link_end) -> dict:
+    def get_api_answer(self, link_end: str) -> dict:
         """Делает запрос к эндпоинту API Tinfoff."""
         endpoint = self.endpoint + link_end
         response = self.get_api_answer_get(endpoint=endpoint)
@@ -294,14 +299,13 @@ class BankInvestParser(ParsingViaTor, ABC):
                     relative_yield = instrument['relativeYield']
                     pre_price = instrument['price']
                     price = pre_price + pre_price / 100 * relative_yield
-                    break
-        if link_end[0:3] == 'KZT':
-            price /= 100
-        elif link_end[0:3] == 'AMD':
-            price /= 100
-        buy_price = price - price * 0.003
-        sell_price = (1 / price) - (1 / price) * 0.003
-        return buy_price, sell_price
+                    if link_end[0:3] == 'KZT':
+                        price /= 100
+                    elif link_end[0:3] == 'AMD':
+                        price /= 100
+                        buy_price = price - price * 0.003
+                        sell_price = (1 / price) - (1 / price) * 0.003
+                        return buy_price, sell_price
 
     def calculates_buy_and_sell_data(self, link_end: str,
                                      answer: dict) -> tuple[dict, dict]:
@@ -378,14 +382,9 @@ class P2PParser(CryptoParser, ABC):
     model_update = P2PCryptoExchangesRatesUpdates
     crypto_exchange_name: str
     bank_name: str
-    assets = None
-    fiats = None
-    pay_types = None
-    trade_types = None
     page: int
     rows: int
     endpoint: str
-    ROUND_TO = 10
     CURRENCY_PAIR = 2
     payment_channel = 'P2P'
 
@@ -458,15 +457,14 @@ class P2PParser(CryptoParser, ABC):
                 response = self.get_api_answer(asset, fiat, trade_type)
                 if response is False:
                     continue
+                self.extract_price_from_json(response)
                 price = (
                     1 / self.extract_price_from_json(response)
                     if trade_type == 'BUY'
-                    and self.extract_price_from_json(response) is not None
                     else self.extract_price_from_json(response)
                 )
-                self.add_to_bulk_update_or_create(
-                    asset, trade_type, fiat, price
-                )
+                self.add_to_bulk_update_or_create(asset, trade_type, fiat,
+                                                  price)
 
     def is_full_update(self) -> None:
         if (
@@ -518,18 +516,13 @@ class CryptoExchangesParser(BaseParser, ABC):
     def get_api_answer(self, params: dict) -> dict:
         pass
 
-    def calculates_price_data(self, params: dict) -> list[dict]:
-        price = self.extract_price_from_json(self.get_api_answer(params))
-        price_data = {
-            'from_asset': params[self.name_from],
-            'to_asset': params[self.name_to],
-            'price': price
-        }
-        return [price_data]
-
     @staticmethod
     @abstractmethod
     def extract_price_from_json(json_data: dict) -> float:
+        pass
+
+    @abstractmethod
+    def calculates_buy_and_sell_data(self, params) -> tuple[dict, dict] | None:
         pass
 
     def generate_unique_params(self) -> list[dict[str]]:
@@ -574,9 +567,12 @@ class CryptoExchangesParser(BaseParser, ABC):
                 update=self.new_update
             )
 
-    def get_all_api_answers(self) -> None:
+    def get_all_api_answers(self):
         for params in self.generate_unique_params():
-            for value_dict in self.calculates_price_data(params):
+            values = self.calculates_buy_and_sell_data(params)
+            if not values:
+                continue
+            for value_dict in values:
                 price = value_dict.pop('price')
                 self.add_to_bulk_update_or_create(value_dict, price)
 
@@ -592,7 +588,6 @@ class CryptoExchangesParser(BaseParser, ABC):
 class Card2Wallet2CryptoExchangesParser(CryptoParser, ABC):
     model = P2PCryptoExchangesRates
     model_update = P2PCryptoExchangesRatesUpdates
-    ROUND_TO = 10
     payment_channel = 'Card2Wallet2CryptoExchange'
     crypto_exchange_name: str
 
@@ -837,7 +832,6 @@ class ListsFiatCryptoParser(CryptoParser, ABC):
 class Card2CryptoExchangesParser(CryptoParser, ABC):
     model = P2PCryptoExchangesRates
     model_update = P2PCryptoExchangesRatesUpdates
-    ROUND_TO = 5
     payment_channel = 'Card2CryptoExchange'
     transaction_method = 'Bank Card (Visa/MC)'
     endpoint_sell: str

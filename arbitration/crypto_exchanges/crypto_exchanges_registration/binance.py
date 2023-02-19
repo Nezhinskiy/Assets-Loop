@@ -89,9 +89,6 @@ SPOT_ZERO_FEES = {
 
 class BinanceP2PParser(P2PParser):
     crypto_exchange_name = CRYPTO_EXCHANGES_NAME
-    assets = ASSETS
-    fiats = FIATS
-    trade_types = TRADE_TYPES
     endpoint = 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search'
     page = 1
     rows = 1
@@ -201,15 +198,6 @@ class BinanceCryptoParser(CryptoExchangesParser):
                             'spot_fee': spot_fee
                         }
                         return buy_data, sell_data
-
-    def get_all_api_answers(self):
-        for params in self.generate_unique_params():
-            values = self.calculates_buy_and_sell_data(params)
-            if not values:
-                continue
-            for value_dict in values:
-                price = value_dict.pop('price')
-                self.add_to_bulk_update_or_create(value_dict, price)
 
 
 class BinanceCard2CryptoExchangesParser(Card2CryptoExchangesParser):

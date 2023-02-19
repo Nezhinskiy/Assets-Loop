@@ -2,6 +2,8 @@ version: '3.8'
 services:
 
   tor_proxy:
+    container_name: 'tor_proxy'
+    hostname: 'tor_proxy'
     restart: always
     image: dockage/tor-privoxy:latest
     ports:
@@ -53,7 +55,6 @@ services:
     depends_on:
       - redis
       - arbitration
-
 
 volumes:
   db_arbitration:
