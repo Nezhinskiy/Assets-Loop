@@ -2,20 +2,23 @@ version: '3.8'
 services:
 
   tor_proxy:
-    container_name: 'tor_proxy'
-    hostname: 'tor_proxy'
-    restart: always
     image: dockage/tor-privoxy:latest
+    container_name: tor_proxy
+    hostname: tor_proxy
+    restart: always
     ports:
       - "9050:9050"
       - "9051:9051"
       - "8118:8118"
 
   redis:
+    restart: always
     image: redis:latest
+    container_name: redis
 
   db:
     image: postgres:13.9-alpine
+    container_name: db
     restart: always
     volumes:
       - db_arbitration:/var/lib/postgresql/data
@@ -25,17 +28,18 @@ services:
   arbitration:
     build:
       context: ../arbitration
+    container_name: arbitration
     restart: always
     volumes:
       - static_value:/arbitration/static/
     depends_on:
       - db
-      - tor_proxy
     env_file:
       - .env
 
   nginx:
     image: nginx:1.23.3-alpine
+    container_name: nginx
     restart: always
     ports:
       - "80:80"
@@ -45,16 +49,38 @@ services:
     depends_on:
       - arbitration
 
-  celery:
+  celery-worker:
     restart: always
     build:
       context: ../arbitration
-    command: celery -A arbitration worker --concurrency=8 --loglevel=info --max-tasks-per-child=1
+    container_name: celery-worker
+    entrypoint: celery
+    command: -A arbitration worker --concurrency=8 --loglevel=ERROR #--max-tasks-per-child=1
     env_file:
       - .env
-    depends_on:
+    links:
       - redis
+    depends_on:
       - arbitration
+      - redis
+
+  celery-beat:
+    restart: always
+    build:
+      context: ../arbitration
+    container_name: celery-beat
+    entrypoint: celery
+    command: -A arbitration beat --loglevel=ERROR
+    env_file:
+      - .env
+    links:
+      - celery-worker
+      - redis
+    depends_on:
+      - celery-worker
+      - redis
+      - tor_proxy
+      - nginx
 
 volumes:
   db_arbitration:

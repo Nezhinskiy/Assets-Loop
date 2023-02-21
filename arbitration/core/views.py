@@ -1,6 +1,7 @@
 import time
+from itertools import product
 
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.views.generic import ListView
 
 from core.models import InfoLoop
@@ -10,6 +11,8 @@ from core.tasks import (assets_loop, end_all_exchanges, end_banks_exchanges,
                         get_complex_binance_wise_inter_exchanges_calculate,
                         get_simpl_binance_tinkoff_inter_exchanges_calculate,
                         get_simpl_binance_wise_inter_exchanges_calculate, tor, notor, all_reg, c2c_s, c2c_b)
+
+from crypto_exchanges.models import InterExchangesUpdates
 
 
 class InfoLoopList(ListView):
@@ -63,3 +66,32 @@ def c2cs(request):
 def c2cb(request):
     c2c_b.s().delay()
     return redirect('core:info')
+
+
+class InfoCoreList(ListView):
+    model = InterExchangesUpdates
+    template_name = 'core/info_core.html'
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        from banks.banks_config import BANKS_CONFIG
+        self.banks = BANKS_CONFIG.keys()
+
+    def get_queryset(self):
+        return self.model.objects.all()
+
+    def get_context_data(self, **kwargs):
+        context = super(InfoCoreList, self).get_context_data(**kwargs)
+        context['banks'] = self.banks
+        names = []
+        for bank_name in self.banks:
+            name = f'{bank_name}'
+            names.append(name)
+            context[name] = self.get_queryset().filter(
+                bank__name=bank_name)
+            name = f'{bank_name}'
+            names.append(name)
+            context[name] = self.get_queryset().filter(
+                bank__name=bank_name)
+        context['names'] = names
+        return context

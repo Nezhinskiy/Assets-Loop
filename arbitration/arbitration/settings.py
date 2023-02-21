@@ -1,7 +1,10 @@
 import os
 import sys
+from datetime import timedelta, datetime
 from pathlib import Path
 import logging.config
+
+from celery.schedules import crontab
 from django.utils.log import DEFAULT_LOGGING
 from django.core.management.utils import get_random_secret_key
 from dotenv import load_dotenv
@@ -34,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_celery_beat',
     'django_filters',
     'rest_framework',
     'bootstrap4',
@@ -125,7 +129,7 @@ LOGGING_CONFIG = None
 
 # Logging config
 
-LOGLEVEL = os.environ.get('LOGLEVEL', 'info').upper()
+LOGLEVEL = os.environ.get('LOGLEVEL', 'error').upper()
 
 logging.config.dictConfig({
     'version': 1,
@@ -187,12 +191,42 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Celery settings
+
+CELERY_TASK_ACKS_LATE = True
+
 if LOCAL:
     CELERY_BROKER_URL = "redis://localhost:6379"
     CELERY_RESULT_BACKEND = "redis://localhost:6379"
 else:
     CELERY_BROKER_URL = "redis://redis:6379"
     CELERY_RESULT_BACKEND = "redis://redis:6379"
+
+# Celery beat settings
+
+# CELERY_BEAT_SCHEDULE = {
+#     'get_binance_fiat_crypto_list': {
+#         'task': 'crypto_exchanges.tasks.get_binance_fiat_crypto_list',
+#         'schedule': timedelta(hours=12)
+#     },
+#     'get_simpl_binance_tinkoff_inter_exchanges_calculate': {
+#         'task': 'core.tasks.get_simpl_binance_tinkoff_inter_exchanges_calculate',
+#         'schedule': timedelta(seconds=30),
+#
+#     },
+#     'get_simpl_binance_wise_inter_exchanges_calculate': {
+#         'task': 'core.tasks.get_simpl_binance_wise_inter_exchanges_calculate',
+#         'schedule': timedelta(seconds=35),
+#     },
+#     'get_complex_binance_tinkoff_inter_exchanges_calculate': {
+#         'task': 'core.tasks.get_complex_binance_tinkoff_inter_exchanges_calculate',
+#         'schedule': timedelta(seconds=40),
+#
+#     },
+#     'get_complex_binance_wise_inter_exchanges_calculate': {
+#         'task': 'core.tasks.get_complex_binance_wise_inter_exchanges_calculate',
+#         'schedule': timedelta(seconds=45),
+#     },
+# }
 
 
 CACHES = {

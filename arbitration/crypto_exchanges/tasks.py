@@ -1,5 +1,7 @@
+import logging
 from datetime import datetime
 
+from celery import group
 from dateutil import parser
 
 from arbitration.celery import app
@@ -11,6 +13,10 @@ from crypto_exchanges.crypto_exchanges_registration.binance import (
     WiseBinanceP2PParser)
 
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
 # Crypto exchanges time
 @app.task
 def crypto_exchanges_start_time():
@@ -18,47 +24,88 @@ def crypto_exchanges_start_time():
     return datetime.now()
 
 
-@app.task
-def get_tinkoff_p2p_binance_exchanges():
-    binance_parser = TinkoffBinanceP2PParser()
-    binance_parser.main()
+tinkoff_p2p_binance_exchanges = TinkoffBinanceP2PParser()
+wise_p2p_binance_exchanges = WiseBinanceP2PParser()
+binance_crypto_exchanges = BinanceCryptoParser()
+binance_card_2_crypto_exchanges_buy = BinanceCard2CryptoExchangesParser('BUY')
+binance_card_2_crypto_exchanges_sell = (
+    BinanceCard2CryptoExchangesParser('SELL'))
+card_2_wallet_2_crypto_exchanges_buy = (
+        BinanceCard2Wallet2CryptoExchangesParser('BUY'))
+card_2_wallet_2_crypto_exchanges_sell = (
+        BinanceCard2Wallet2CryptoExchangesParser('SELL'))
+
+
+@app.task(bind=True, max_retries=None)
+def get_tinkoff_p2p_binance_exchanges(self):
+    tinkoff_p2p_binance_exchanges.logger_start()
+    tinkoff_p2p_binance_exchanges.main()
+    tinkoff_p2p_binance_exchanges.logger_end()
+    self.retry(countdown=70)
+
+
+@app.task(bind=True, max_retries=None)
+def get_wise_p2p_binance_exchanges(self):
+    wise_p2p_binance_exchanges.logger_start()
+    wise_p2p_binance_exchanges.main()
+    wise_p2p_binance_exchanges.logger_end()
+    self.retry(countdown=70)
+
+
+@app.task(bind=True, max_retries=None)
+def get_all_binance_crypto_exchanges(self):
+    binance_crypto_exchanges.logger_start()
+    binance_crypto_exchanges.main()
+    binance_crypto_exchanges.logger_end()
+    self.retry(countdown=75)
+
+
+@app.task(bind=True, max_retries=None)
+def get_binance_card_2_crypto_exchanges_buy(self):
+    binance_card_2_crypto_exchanges_buy.logger_start()
+    binance_card_2_crypto_exchanges_buy.main()
+    binance_card_2_crypto_exchanges_buy.logger_end()
+    self.retry(countdown=170)
+
+
+@app.task(bind=True, max_retries=None)
+def get_binance_card_2_crypto_exchanges_sell(self):
+    binance_card_2_crypto_exchanges_sell.logger_start()
+    binance_card_2_crypto_exchanges_sell.main()
+    binance_card_2_crypto_exchanges_sell.logger_end()
+    self.retry(countdown=170)
 
 
 @app.task
-def get_wise_p2p_binance_exchanges():
-    binance_parser = WiseBinanceP2PParser()
-    binance_parser.main()
+def get_binance_fiat_crypto_list():
+    BinanceListsFiatCryptoParser().main()
 
 
-@app.task
-def get_all_binance_crypto_exchanges():
-    binance_crypto_parser = BinanceCryptoParser()
-    binance_crypto_parser.main()
+@app.task(bind=True, max_retries=None)
+def get_all_card_2_wallet_2_crypto_exchanges_buy(self):
+    card_2_wallet_2_crypto_exchanges_buy.logger_start()
+    card_2_wallet_2_crypto_exchanges_buy.main()
+    card_2_wallet_2_crypto_exchanges_buy.logger_end()
+    self.retry(countdown=55)
 
 
-@app.task
-def get_binance_card_2_crypto_exchanges(trade_type):
-    # binance_fiat_crypto_list_parser = BinanceListsFiatCryptoParser()
-    # binance_fiat_crypto_list_parser.main()
-    binance_card_2_crypto_exchanges_parser = BinanceCard2CryptoExchangesParser(
-        trade_type)
-    binance_card_2_crypto_exchanges_parser.main()
+@app.task(bind=True, max_retries=None)
+def get_all_card_2_wallet_2_crypto_exchanges_sell(self):
+    card_2_wallet_2_crypto_exchanges_sell.logger_start()
+    card_2_wallet_2_crypto_exchanges_sell.main()
+    card_2_wallet_2_crypto_exchanges_sell.logger_end()
+    self.retry(countdown=55)
 
 
-@app.task
-def get_all_card_2_wallet_2_crypto_exchanges(trade_type):
-    card_2_wallet_2_crypto_exchanges_parser = (
-        BinanceCard2Wallet2CryptoExchangesParser(trade_type))
-    print('get_all_card_2_wallet_2_crypto_exchanges')
-    card_2_wallet_2_crypto_exchanges_parser.main()
 
+# group(
+#     # get_tinkoff_p2p_binance_exchanges.s(),
+#     # get_wise_p2p_binance_exchanges.s(),
+#     # get_all_binance_crypto_exchanges.s(),
+#     # get_binance_card_2_crypto_exchanges_buy.s(),
+#     # get_binance_card_2_crypto_exchanges_sell.s(),
+#     get_all_card_2_wallet_2_crypto_exchanges_buy.s(),
+#     get_all_card_2_wallet_2_crypto_exchanges_sell.s()
+# ).delay()
 
-# Best crypto exchanges
-@app.task
-def best_crypto_exchanges_intra_exchanges(str_start_time):
-    start_time = parser.parse(str_start_time[0])
-    print('crypto_exchanges_end')
-    duration = datetime.now() - start_time
-    new_loop = InfoLoop.objects.filter(value=True).last()
-    new_loop.all_crypto_exchanges = duration
-    new_loop.save()
+# get_all_card_2_wallet_2_crypto_exchanges_buy.apply()

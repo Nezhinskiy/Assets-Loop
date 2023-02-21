@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}
+  Инфорация по запускам
+{% endblock %}
+
+{% block content %}
+  <button type="button" class="btn btn-primary" data-toggle="modal" data-target=".Tinkoff">Tinkoff</button>
+  <button type="button" class="btn btn-primary" data-toggle="modal" data-target=".Wise">Wise</button>
+
+
+
+  <div class="modal fade Tinkoff" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <table id="TinkoffDatatable" class="table">
+          <thead class="table-dark">
+            <tr>
+              <th scope="col">Последний старт</th>
+                <th scope="col">Объектов</th>
+                <th scope="col">Длительность</th>
+            </tr>
+          </thead>
+          {% for info in Tinkoff %}
+            <tr>
+              <th scope="row">{{ info.updated }}</th>
+              <td>{{ info.datas.count }}</td>
+              <td>{{ info.duration }}</td>
+            </tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade Wise" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <table id="WiseDatatable" class="table">
+          <thead class="table-dark">
+            <tr>
+              <th scope="col">Последний старт</th>
+                <th scope="col">Объектов</th>
+                <th scope="col">Длительность</th>
+            </tr>
+          </thead>
+          {% for info in Wise %}
+            <tr>
+              <th scope="row">{{ info.updated }}</th>
+              <td>{{ info.datas.count }}</td>
+              <td>{{ info.duration }}</td>
+            </tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+
+
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    $(document).ready(function () {
+          $('#TinkoffDatatable').DataTable({
+              "searching": false,
+              "pageLength": 15,
+              "lengthMenu": [[15, 30, 60, 100], [15, 30, 60, 100]],
+              "info": true,
+              'order': [[0, 'desc']],
+        });
+    });
+    $(document).ready(function () {
+          $('#WiseDatatable').DataTable({
+              "searching": false,
+              "pageLength": 15,
+              "lengthMenu": [[15, 30, 60, 100], [15, 30, 60, 100]],
+              "info": true,
+              'order': [[0, 'desc']],
+        });
+    });
+  </script>
+{% endblock %}

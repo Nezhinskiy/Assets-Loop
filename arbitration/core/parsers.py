@@ -17,9 +17,6 @@ from crypto_exchanges.models import (CryptoExchanges, IntraCryptoExchanges,
 from core.tor import Tor
 import logging
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 
 def check_work_time():
     START_TIME = time(hour=7)
@@ -38,10 +35,25 @@ class BaseParser(ABC):
 
     def __init__(self) -> None:
         from banks.banks_config import BANKS_CONFIG
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.start_time = datetime.now()
         self.records_to_update = []
         self.records_to_create = []
         self.banks_config = BANKS_CONFIG
+        self.duration = None
+
+    def logger_start(self) -> None:
+        message = f'Start {self.__class__.__name__} at {self.start_time}.'
+        self.logger.error(message)
+
+    def logger_end(self) -> None:
+        message1 = f'Finish {self.__class__.__name__} at {self.duration}.'
+        self.logger.error(message1)
+        message2 = (
+            f'{self.__class__.__name__} updated: '
+            f'{len(self.records_to_update) + len(self.records_to_create)}'
+        )
+        self.logger.error(message2)
 
 
 class ParsingViaTor(BaseParser, ABC):
@@ -70,7 +82,8 @@ class ParsingViaTor(BaseParser, ABC):
                 self.negative_response_status_handler(response)
                 continue
 
-            self.successful_response_handler()
+            # self.successful_response_handler()
+            print(f'1 - {self.__class__.__name__}')
             return response.json()
 
         return False
@@ -91,7 +104,8 @@ class ParsingViaTor(BaseParser, ABC):
                 self.negative_response_status_handler(response)
                 continue
 
-            self.successful_response_handler()
+            # self.successful_response_handler()
+            print(f'2 - {self.__class__.__name__}')
             return response.json()
 
         return False
@@ -99,21 +113,21 @@ class ParsingViaTor(BaseParser, ABC):
     def unsuccessful_response_handler(self, error) -> None:
         message = (f'{error} with class: '
                    f'{self.__class__.__name__}, count try: {self.count_try}')
-        logger.error(message)
+        self.logger.error(message)
         self.tor.renew_connection()
         self.count_try += 1
 
     def negative_response_status_handler(self, response) -> None:
         message = (f'{response.status_code} with class: '
                    f'{self.__class__.__name__}, count try: {self.count_try}')
-        logger.error(message)
+        self.logger.error(message)
         self.tor.renew_connection()
         self.count_try += 1
 
     def successful_response_handler(self) -> None:
         message = (f'Successful response with class: '
                    f'{self.__class__.__name__}')
-        logger.debug(message)
+        self.logger.info(message)
 
 
 class CryptoParser(ParsingViaTor, ABC):
@@ -204,7 +218,7 @@ class BankParser(ParsingViaTor, ABC):
             message = (f'Error with calculates buy and sell data in '
                        f'{self.__class__.__name__}. Data: {params}, '
                        f'{buy_and_sell}. Error: {error}')
-            logger.error(message)
+            self.logger.error(message)
 
     def calculates_price_data(self, params: dict) -> list[dict]:
         price = self.extract_price_from_json(self.get_api_answer(params))
@@ -219,7 +233,7 @@ class BankParser(ParsingViaTor, ABC):
             message = (f'Error with calculates price data in '
                        f'{self.__class__.__name__}. Data: {params}. '
                        f'Error: {error}')
-            logger.error(message)
+            self.logger.error(message)
 
     def choice_buy_and_sell_or_price(self, params
                                      ) -> tuple[dict, dict] | list[dict]:
@@ -258,8 +272,8 @@ class BankParser(ParsingViaTor, ABC):
         self.get_all_api_answers()
         BanksExchangeRates.objects.bulk_update(self.records_to_update,
                                                ['price', 'update'])
-        duration = datetime.now() - self.start_time
-        self.new_update.duration = duration
+        self.duration = datetime.now() - self.start_time
+        self.new_update.duration = self.duration
         self.new_update.save()
 
 
@@ -372,8 +386,8 @@ class BankInvestParser(ParsingViaTor, ABC):
         self.model.objects.bulk_create(self.records_to_create)
         self.model.objects.bulk_update(self.records_to_update,
                                        ['price', 'update'])
-        duration = datetime.now() - self.start_time
-        self.new_update.duration = duration
+        self.duration = datetime.now() - self.start_time
+        self.new_update.duration = self.duration
         self.new_update.save()
 
 
@@ -481,8 +495,8 @@ class P2PParser(CryptoParser, ABC):
         self.model.objects.bulk_create(self.records_to_create)
         self.model.objects.bulk_update(self.records_to_update,
                                        ['price', 'update'])
-        duration = datetime.now() - self.start_time
-        self.new_update.duration = duration
+        self.duration = datetime.now() - self.start_time
+        self.new_update.duration = self.duration
         self.new_update.save()
 
 
@@ -581,8 +595,8 @@ class CryptoExchangesParser(BaseParser, ABC):
         self.get_all_api_answers()
         self.model.objects.bulk_update(self.records_to_update,
                                        ['price', 'update'])
-        duration = datetime.now() - self.start_time
-        self.new_update.duration = duration
+        self.duration = datetime.now() - self.start_time
+        self.new_update.duration = self.duration
         self.new_update.save()
 
 
@@ -710,8 +724,8 @@ class Card2Wallet2CryptoExchangesParser(CryptoParser, ABC):
         P2PCryptoExchangesRates.objects.bulk_update(
             self.records_to_update, ['price', 'update', 'transaction_fee']
         )
-        duration = datetime.now() - self.start_time
-        self.new_update.duration = duration
+        self.duration = datetime.now() - self.start_time
+        self.new_update.duration = self.duration
         self.new_update.save()
 
 
@@ -825,8 +839,8 @@ class ListsFiatCryptoParser(CryptoParser, ABC):
                     == datetime.now(timezone.utc).date()):
                 return
         self.get_all_api_answers()
-        duration = datetime.now() - self.start_time
-        self.new_update.duration = duration
+        self.duration = datetime.now() - self.start_time
+        self.new_update.duration = self.duration
         self.new_update.save()
 
 
@@ -996,13 +1010,13 @@ class Card2CryptoExchangesParser(CryptoParser, ABC):
 
     def is_full_update(self) -> None:
         self.full_update = True
-        # if (
-        #         self.model_update.objects.filter(
-        #         payment_channel=self.payment_channel).count() == 0
-        #         or datetime.now(timezone.utc).time().hour
-        #         != self.model_update.objects.last().updated.time().hour
-        # ):
-        #     self.full_update = True
+        if (
+                self.model_update.objects.filter(
+                payment_channel=self.payment_channel).count() == 0
+                or datetime.now(timezone.utc).time().hour
+                != self.model_update.objects.last().updated.time().hour
+        ):
+            self.full_update = True
 
     def main(self) -> None:
         self.is_full_update()
@@ -1012,6 +1026,6 @@ class Card2CryptoExchangesParser(CryptoParser, ABC):
             self.records_to_update,
             ['price', 'pre_price', 'transaction_fee', 'update']
         )
-        duration = datetime.now() - self.start_time
-        self.new_update.duration = duration
+        self.duration = datetime.now() - self.start_time
+        self.new_update.duration = self.duration
         self.new_update.save()

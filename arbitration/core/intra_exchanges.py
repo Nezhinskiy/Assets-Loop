@@ -11,9 +11,6 @@ from crypto_exchanges.models import (CryptoExchanges, InterExchanges,
                                      RelatedMarginalityPercentages)
 import logging
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 
 class InterSimplExchangesCalculate(ABC):
     model = InterExchanges
@@ -27,6 +24,7 @@ class InterSimplExchangesCalculate(ABC):
 
     def __init__(self) -> None:
         from banks.banks_config import BANKS_CONFIG
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.crypto_exchange = CryptoExchanges.objects.get(
             name=self.crypto_exchange_name
         )
@@ -36,6 +34,7 @@ class InterSimplExchangesCalculate(ABC):
             crypto_exchange=self.crypto_exchange, bank=self.bank
         )
         self.records_to_update = []
+        self.duration = None
         self.banks_config = BANKS_CONFIG
         self.banks = BANKS_CONFIG.keys()
         self.input_bank_config = BANKS_CONFIG.get(self.bank_name)
@@ -77,7 +76,7 @@ class InterSimplExchangesCalculate(ABC):
                 f'crypto exchange. {marginality_percentage}%, {diagram} input '
                 f'- {input_crypto_exchange.payment_channel}, output - '
                 f'{output_crypto_exchange.payment_channel}.')
-            logger.warning(message)
+            self.logger.warning(message)
             return True
         return False
 
@@ -289,8 +288,7 @@ class InterSimplExchangesCalculate(ABC):
                     input_crypto_exchange, interim_exchange,
                     interim_second_exchange, self.output_bank,
                     output_crypto_exchange, bank_exchange
-                ),
-                update=self.new_update
+                ), update=self.new_update
             )
         # related_marginality_percentage = RelatedMarginalityPercentages(
         #     marginality_percentage=marginality_percentage,
@@ -309,6 +307,19 @@ class InterSimplExchangesCalculate(ABC):
         # RelatedMarginalityPercentages.objects.bulk_create(
         #     records_to_create
         # )
-        duration = datetime.now() - self.start_time
-        self.new_update.duration = duration
+        self.duration = datetime.now() - self.start_time
+        self.new_update.duration = self.duration
         self.new_update.save()
+
+    def logger_start(self) -> None:
+        message = f'Start {self.__class__.__name__} at {self.start_time}.'
+        self.logger.error(message)
+
+    def logger_end(self) -> None:
+        message1 = f'Finish {self.__class__.__name__} at {self.duration}.'
+        self.logger.error(message1)
+        message2 = (
+            f'{self.__class__.__name__} updated: '
+            f'{len(self.records_to_update)}'
+        )
+        self.logger.error(message2)
