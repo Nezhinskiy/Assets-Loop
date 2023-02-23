@@ -160,11 +160,12 @@ class InterExchanges(models.Model):
         blank=True, null=True, on_delete=models.CASCADE
     )
     marginality_percentage = models.FloatField('Marginality percentage')
-    update = models.ForeignKey(
-        InterExchangesUpdates, related_name='datas',
-        on_delete=models.CASCADE
-    )
     diagram = models.CharField(max_length=100, null=True, blank=True)
+    dynamics = models.CharField(max_length=4, null=True, default=None)
+    new = models.BooleanField(null=True, default=True)
+    update = models.ForeignKey(
+        InterExchangesUpdates, related_name='datas', on_delete=models.CASCADE
+    )
 
     class Meta:
         ordering = ['-marginality_percentage']

@@ -216,116 +216,117 @@ def get_complex_binance_wise_inter_exchanges_calculate():
 
 @app.task
 def assets_loop():
-    # 1. Crypto exchanges
-    # 1.1 Binance
-    # 1.1.1 Tinkoff
-
-    group_tinkoff_inter_exchanges_calculate = group(
-        get_complex_binance_tinkoff_inter_exchanges_calculate.s(),
-        get_simpl_binance_tinkoff_inter_exchanges_calculate.s()
-    )
-    group_tinkoff_binance_p2p = group(get_tinkoff_p2p_binance_exchanges.s())
-    chord_tinkoff_binance_p2p = chord(
-        group_tinkoff_binance_p2p,
-        get_simpl_binance_tinkoff_inter_exchanges_calculate.s()
-    )
-    # 1.1.2 Wise
-    group_wise_inter_exchanges_calculate = group(
-        get_complex_binance_wise_inter_exchanges_calculate.s(),
-        get_simpl_binance_wise_inter_exchanges_calculate.s()
-    )
-    group_wise_binance_p2p = group(get_wise_p2p_binance_exchanges.s())
-    chord_wise_binance_p2p = chord(
-        group_wise_binance_p2p,
-        get_simpl_binance_wise_inter_exchanges_calculate.s()
-    )
-    # 1.0 All banks
-    group_all_bank_complex_inter_exchanges_calculate = group(
-        get_complex_binance_tinkoff_inter_exchanges_calculate.s(),
-        get_complex_binance_wise_inter_exchanges_calculate.s(),
-    )
-    group_all_banks_inter_exchanges_calculate = group(
-        group_tinkoff_inter_exchanges_calculate,
-        group_wise_inter_exchanges_calculate
-    )
-    group_binance_card_2_crypto_exchanges = group(
-        get_binance_card_2_crypto_exchanges_buy,
-        get_binance_card_2_crypto_exchanges_sell
-    )
-    group_card_2_wallet_2_crypto_exchanges = group(
-        get_all_card_2_wallet_2_crypto_exchanges_buy,
-        get_all_card_2_wallet_2_crypto_exchanges_sell
-    )
-    group_all_banks_binance_crypto_exchanges = group(
-        get_all_binance_crypto_exchanges.s(),
-        group_card_2_wallet_2_crypto_exchanges,
-        group_binance_card_2_crypto_exchanges
-    )
-    chord_binance_crypto_exchanges = chord(
-        group_all_banks_binance_crypto_exchanges,
-        group_all_banks_inter_exchanges_calculate
-    )
-
-    # 2. Banks
-    # 2.1 Tinkoff
-    group_tinkoff_rates = group(parse_internal_tinkoff_rates.s(),
-                                parse_currency_market_tinkoff_rates.s())
-    chord_tinkoff_rates = chord(
-        group_tinkoff_rates,
-        get_simpl_binance_tinkoff_inter_exchanges_calculate.s()
-    )
-    # 2.2 Wise
-    group_wise_rates = group(parse_internal_wise_rates.s())
-    chord_wise_rates = chord(
-        group_wise_rates, get_simpl_binance_wise_inter_exchanges_calculate.s()
-    )
-
-    # General
-    # 0.1 Crypto exchanges
-    general_group_crypto_exchanges = group(
-        chord_tinkoff_binance_p2p, chord_wise_binance_p2p,
-        chord_binance_crypto_exchanges
-    )
-    general_chord_crypto_exchanges = chord(chord(
-        general_group_crypto_exchanges,
-        group_all_bank_complex_inter_exchanges_calculate
-    ), end_crypto_exchanges.s())
-    # 0.2 Banks
-    general_group_banks_exchanges = group(
-        chord_tinkoff_rates, chord_wise_rates
-    )
-    general_chord_banks_exchanges = chord(chord(
-        general_group_banks_exchanges,
-        group_all_bank_complex_inter_exchanges_calculate
-    ), end_banks_exchanges.s())
-    # 0.
-    general_group = group(
-        general_chord_crypto_exchanges, general_chord_banks_exchanges
-    )
-    general_chord = chord(general_group, end_all_exchanges.s())
-    if not InfoLoop.objects.first().value:
-        InfoLoop.objects.create(value=True)
-        count_loop = 0
-        while InfoLoop.objects.first().value == 1:
-            general_chord.delay()
-            while (InfoLoop.objects.first().value
-                   and not InfoLoop.objects.first().all_exchanges):
-                sleep(1)
-            if (InfoLoop.objects.filter(value=True
-                                        ).first().all_crypto_exchanges
-                    and InfoLoop.objects.filter(value=True
-                                                ).first().all_banks_exchanges):
-                count_loop += 1
-                print(count_loop)
-                if count_loop >= 1000:
-                    if InfoLoop.objects.first().value:
-                        InfoLoop.objects.create(value=False)
-                else:
-                    InfoLoop.objects.create(value=True)
-                    # app.control.purge()
-            else:
-                if InfoLoop.objects.first().value:
-                    InfoLoop.objects.create(value=False)
+    pass
+#     # 1. Crypto exchanges
+#     # 1.1 Binance
+#     # 1.1.1 Tinkoff
+#
+#     group_tinkoff_inter_exchanges_calculate = group(
+#         get_complex_binance_tinkoff_inter_exchanges_calculate.s(),
+#         get_simpl_binance_tinkoff_inter_exchanges_calculate.s()
+#     )
+#     group_tinkoff_binance_p2p = group(get_tinkoff_p2p_binance_exchanges.s())
+#     chord_tinkoff_binance_p2p = chord(
+#         group_tinkoff_binance_p2p,
+#         get_simpl_binance_tinkoff_inter_exchanges_calculate.s()
+#     )
+#     # 1.1.2 Wise
+#     group_wise_inter_exchanges_calculate = group(
+#         get_complex_binance_wise_inter_exchanges_calculate.s(),
+#         get_simpl_binance_wise_inter_exchanges_calculate.s()
+#     )
+#     group_wise_binance_p2p = group(get_wise_p2p_binance_exchanges.s())
+#     chord_wise_binance_p2p = chord(
+#         group_wise_binance_p2p,
+#         get_simpl_binance_wise_inter_exchanges_calculate.s()
+#     )
+#     # 1.0 All banks
+#     group_all_bank_complex_inter_exchanges_calculate = group(
+#         get_complex_binance_tinkoff_inter_exchanges_calculate.s(),
+#         get_complex_binance_wise_inter_exchanges_calculate.s(),
+#     )
+#     group_all_banks_inter_exchanges_calculate = group(
+#         group_tinkoff_inter_exchanges_calculate,
+#         group_wise_inter_exchanges_calculate
+#     )
+#     group_binance_card_2_crypto_exchanges = group(
+#         get_binance_card_2_crypto_exchanges_buy,
+#         get_binance_card_2_crypto_exchanges_sell
+#     )
+#     group_card_2_wallet_2_crypto_exchanges = group(
+#         get_all_card_2_wallet_2_crypto_exchanges_buy,
+#         get_all_card_2_wallet_2_crypto_exchanges_sell
+#     )
+#     group_all_banks_binance_crypto_exchanges = group(
+#         get_all_binance_crypto_exchanges.s(),
+#         group_card_2_wallet_2_crypto_exchanges,
+#         group_binance_card_2_crypto_exchanges
+#     )
+#     chord_binance_crypto_exchanges = chord(
+#         group_all_banks_binance_crypto_exchanges,
+#         group_all_banks_inter_exchanges_calculate
+#     )
+#
+#     # 2. Banks
+#     # 2.1 Tinkoff
+#     group_tinkoff_rates = group(parse_internal_tinkoff_rates.s(),
+#                                 parse_currency_market_tinkoff_rates.s())
+#     chord_tinkoff_rates = chord(
+#         group_tinkoff_rates,
+#         get_simpl_binance_tinkoff_inter_exchanges_calculate.s()
+#     )
+#     # 2.2 Wise
+#     group_wise_rates = group(parse_internal_wise_rates.s())
+#     chord_wise_rates = chord(
+#         group_wise_rates, get_simpl_binance_wise_inter_exchanges_calculate.s()
+#     )
+#
+#     # General
+#     # 0.1 Crypto exchanges
+#     general_group_crypto_exchanges = group(
+#         chord_tinkoff_binance_p2p, chord_wise_binance_p2p,
+#         chord_binance_crypto_exchanges
+#     )
+#     general_chord_crypto_exchanges = chord(chord(
+#         general_group_crypto_exchanges,
+#         group_all_bank_complex_inter_exchanges_calculate
+#     ), end_crypto_exchanges.s())
+#     # 0.2 Banks
+#     general_group_banks_exchanges = group(
+#         chord_tinkoff_rates, chord_wise_rates
+#     )
+#     general_chord_banks_exchanges = chord(chord(
+#         general_group_banks_exchanges,
+#         group_all_bank_complex_inter_exchanges_calculate
+#     ), end_banks_exchanges.s())
+#     # 0.
+#     general_group = group(
+#         general_chord_crypto_exchanges, general_chord_banks_exchanges
+#     )
+#     general_chord = chord(general_group, end_all_exchanges.s())
+#     if not InfoLoop.objects.first().value:
+#         InfoLoop.objects.create(value=True)
+#         count_loop = 0
+#         while InfoLoop.objects.first().value == 1:
+#             general_chord.delay()
+#             while (InfoLoop.objects.first().value
+#                    and not InfoLoop.objects.first().all_exchanges):
+#                 sleep(1)
+#             if (InfoLoop.objects.filter(value=True
+#                                         ).first().all_crypto_exchanges
+#                     and InfoLoop.objects.filter(value=True
+#                                                 ).first().all_banks_exchanges):
+#                 count_loop += 1
+#                 print(count_loop)
+#                 if count_loop >= 1000:
+#                     if InfoLoop.objects.first().value:
+#                         InfoLoop.objects.create(value=False)
+#                 else:
+#                     InfoLoop.objects.create(value=True)
+#                     # app.control.purge()
+#             else:
+#                 if InfoLoop.objects.first().value:
+#                     InfoLoop.objects.create(value=False)
 
 
 @app.task(bind=True, max_retries=None, queue='parsing')

@@ -27,6 +27,8 @@ from crypto_exchanges.models import (CryptoExchanges, InterExchanges,
                                      P2PCryptoExchangesRates)
 from crypto_exchanges.serializers import InterExchangesSerializer
 
+from arbitration.settings import INTER_EXCHANGES_OBSOLETE_IN_MINUTES
+
 
 class CryptoExchangesRatesList(ListView):
     def get_queryset(self):
@@ -229,7 +231,9 @@ class InterExchangesAPIView(ListAPIView, FilterView):
             'update'
         ).filter(
             update__updated__gte=(
-                    datetime.now(timezone.utc) - timedelta(minutes=15)
+                datetime.now(timezone.utc) - timedelta(
+                    minutes=INTER_EXCHANGES_OBSOLETE_IN_MINUTES
+                )
             )
         )
         self.filter = self.filterset_class(self.request.GET, queryset=qs)

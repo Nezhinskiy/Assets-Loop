@@ -12,7 +12,7 @@ from crypto_exchanges.models import (CryptoExchanges, InterExchanges,
 import logging
 
 from arbitration.settings import BASE_ASSET, \
-    DATA_OBSOLETE_IN_MINUTES, ALLOWED_PERCENTAGE
+    DATA_OBSOLETE_IN_MINUTES, ALLOWED_PERCENTAGE, INTER_EXCHANGES_OBSOLETE_IN_MINUTES
 
 
 class InterSimplExchangesCalculate(ABC):
@@ -28,7 +28,7 @@ class InterSimplExchangesCalculate(ABC):
 
     def __init__(self) -> None:
         from banks.banks_config import BANKS_CONFIG
-        self.start_time = datetime.now()
+        self.start_time = datetime.now(timezone.utc)
         self.logger = logging.getLogger(self.__class__.__name__)
         self.crypto_exchange = CryptoExchanges.objects.get(
             name=self.crypto_exchange_name
@@ -231,7 +231,7 @@ class InterSimplExchangesCalculate(ABC):
              * second_interim_exchange_price
              * output_crypto_exchange.price * bank_exchange_price - 1
         ) * 100
-        return round(marginality_percentage, 3)
+        return round(marginality_percentage, 2)
 
     def create_diagram(
             self, input_crypto_exchange, interim_exchange,
@@ -277,6 +277,19 @@ class InterSimplExchangesCalculate(ABC):
         )
         if target_object.exists():
             inter_exchange = target_object.get()
+            if inter_exchange.marginality_percentage > marginality_percentage:
+                inter_exchange.dynamics = 'fall'
+            elif (inter_exchange.marginality_percentage
+                  < marginality_percentage):
+                inter_exchange.dynamics = 'rise'
+            else:
+                inter_exchange.dynamics = None
+            relevance_time = inter_exchange.update.updated + timedelta(
+                minutes=INTER_EXCHANGES_OBSOLETE_IN_MINUTES)
+            if relevance_time < self.start_time:
+                inter_exchange.new = True
+            else:
+                inter_exchange.new = False
             inter_exchange.marginality_percentage = marginality_percentage
             inter_exchange.update = self.new_update
             self.records_to_update.append(inter_exchange)
@@ -294,7 +307,7 @@ class InterSimplExchangesCalculate(ABC):
                     input_crypto_exchange, interim_exchange,
                     interim_second_exchange, self.output_bank,
                     output_crypto_exchange, bank_exchange
-                ), update=self.new_update
+                ), dynamics=None, new=True, update=self.new_update
             )
         # related_marginality_percentage = RelatedMarginalityPercentages(
         #     marginality_percentage=marginality_percentage,
@@ -308,12 +321,13 @@ class InterSimplExchangesCalculate(ABC):
         else:
             self.get_complex_interbank_exchange()
         self.model.objects.bulk_update(
-            self.records_to_update, ['marginality_percentage', 'update']
+            self.records_to_update,
+            ['marginality_percentage', 'dynamics', 'new',  'update']
         )
         # RelatedMarginalityPercentages.objects.bulk_create(
         #     records_to_create
         # )
-        time_now = datetime.now()
+        time_now = datetime.now(timezone.utc)
         self.duration = time_now - self.start_time
         self.new_update.updated = time_now
         self.new_update.duration = self.duration

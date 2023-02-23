@@ -174,17 +174,30 @@
               },
               "rowCallback": function( row, data, index ) {
                   $('body>.tooltip').remove();
-                  if ( updateTime(data.update.updated) > 120 )
+                  if ( updateTime( data.update.updated ) > 120 )
                   {
-                      $('tr', row).addClass('table-active');
                       $('td', row).addClass('table-active');
-                  } else if ( updateTime(data.update.updated) < 4 )
+                  } else if ( row.new && updateTime(data.update.updated) < 4 )
                   {
-                      $('td', row).addClass('stylish');
+                      $('td', data.new).addClass('stylish');
                       setTimeout(function() {
                           $('td', row).removeClass('stylish');
                           }, 500);
 
+                  }
+                  if ( data.dynamics === 'fall' && updateTime(data.update.updated) < 4 )
+                  {
+                      $('td:eq(1)', row).addClass('fall');
+                      setTimeout(function() {
+                          $('td:eq(1)', row).removeClass('fall');
+                          }, 500);
+                  }
+                  if ( data.dynamics === 'rise' && updateTime(data.update.updated) < 4 )
+                  {
+                      $('td:eq(1)', row).addClass('rise');
+                      setTimeout(function() {
+                          $('td:eq(1)', row).removeClass('rise');
+                          }, 500);
                   }},
               columns: [
                   {
