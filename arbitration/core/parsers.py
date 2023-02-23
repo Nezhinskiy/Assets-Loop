@@ -17,17 +17,7 @@ from crypto_exchanges.models import (CryptoExchanges, IntraCryptoExchanges,
 from core.tor import Tor
 import logging
 
-
-def check_work_time():
-    START_TIME = time(hour=7)
-    END_TIME = time(hour=19)
-
-    def msk_datetime():
-        return datetime.now(timezone.utc) + timedelta(hours=3)
-    return (
-        msk_datetime().weekday() in range(0, 5)
-        and START_TIME <= msk_datetime().time() < END_TIME
-    )
+from arbitration.settings import DATA_OBSOLETE_IN_MINUTES
 
 
 class BaseParser(ABC):
@@ -292,51 +282,6 @@ class BankInvestParser(ParsingViaTor, ABC):
             currency_market=self.currency_market
         )
 
-    def get_api_answer(self, link_end: str) -> dict:
-        """Делает запрос к эндпоинту API Tinfoff."""
-        endpoint = self.endpoint + link_end
-        response = self.get_api_answer_get(endpoint=endpoint)
-        return response
-
-    @staticmethod
-    def extract_buy_and_sell_from_json(json_data: dict, link_end: str
-                                       ) -> tuple:
-        items = json_data['payload']['items']
-        for item in items:
-            content = item['content']
-            instruments = content['instruments']
-            for instrument in instruments:
-                if not instrument:
-                    continue
-                ticker = instrument.get('ticker')
-                if ticker == link_end:
-                    relative_yield = instrument['relativeYield']
-                    pre_price = instrument['price']
-                    price = pre_price + pre_price / 100 * relative_yield
-                    if link_end[0:3] == 'KZT':
-                        price /= 100
-                    elif link_end[0:3] == 'AMD':
-                        price /= 100
-                        buy_price = price - price * 0.003
-                        sell_price = (1 / price) - (1 / price) * 0.003
-                        return buy_price, sell_price
-
-    def calculates_buy_and_sell_data(self, link_end: str,
-                                     answer: dict) -> tuple[dict, dict]:
-        buy_price, sell_price = self.extract_buy_and_sell_from_json(answer,
-                                                                    link_end)
-        buy_data = {
-            'from_fiat': link_end[0:3],
-            'to_fiat': link_end[3:6],
-            'price': buy_price
-        }
-        sell_data = {
-            'from_fiat': link_end[3:6],
-            'to_fiat': link_end[0:3],
-            'price': sell_price
-        }
-        return buy_data, sell_data
-
     def add_to_bulk_update_or_create(self, value_dict: dict) -> None:
         bank_names = []
         for name, value in self.banks_config.items():
@@ -367,21 +312,11 @@ class BankInvestParser(ParsingViaTor, ABC):
                 )
                 self.records_to_create.append(created_object)
 
+    @abstractmethod
     def get_all_api_answers(self) -> None:
-        for link_end in self.link_ends:
-            answer = self.get_api_answer(link_end)
-            if answer is False:
-                continue
-            buy_and_sell_data = self.calculates_buy_and_sell_data(link_end,
-                                                                  answer)
-            for buy_or_sell_data in buy_and_sell_data:
-                self.add_to_bulk_update_or_create(
-                    buy_or_sell_data
-                )
+        pass
 
     def main(self) -> None:
-        if not check_work_time():
-            return
         self.get_all_api_answers()
         self.model.objects.bulk_create(self.records_to_create)
         self.model.objects.bulk_update(self.records_to_update,
@@ -604,6 +539,7 @@ class Card2Wallet2CryptoExchangesParser(CryptoParser, ABC):
     model = P2PCryptoExchangesRates
     model_update = P2PCryptoExchangesRatesUpdates
     payment_channel = 'Card2Wallet2CryptoExchange'
+    data_obsolete_in_minutes: int = DATA_OBSOLETE_IN_MINUTES
     crypto_exchange_name: str
 
     def __init__(self, trade_type: str) -> None:
@@ -618,6 +554,9 @@ class Card2Wallet2CryptoExchangesParser(CryptoParser, ABC):
             'withdraw_fiats')
         self.invalid_params_list = self.crypto_exchanges_configs.get(
             'invalid_params_list')
+        self.update_time = datetime.now(timezone.utc) - timedelta(
+            minutes=self.data_obsolete_in_minutes
+        )
 
     def calculates_price_and_intra_crypto_exchange(
             self, fiat: str, asset: str, transaction_fee: float
@@ -644,6 +583,25 @@ class Card2Wallet2CryptoExchangesParser(CryptoParser, ABC):
             'transaction_method': transaction_method,
             'transaction_fee': transaction_fee
         }
+
+    def check_p2p_exchange_is_better_or_false(
+            self, value_dict: dict, price: float, bank: Banks
+    ) -> bool:
+        p2p_exchange = self.model.objects.filter(
+            crypto_exchange=self.crypto_exchange, bank=bank,
+            asset=value_dict['asset'], trade_type=value_dict['trade_type'],
+            fiat=value_dict['fiat'], payment_channel='P2P',
+            price__isnull=False, update__updated__gte=self.update_time
+        )
+        if p2p_exchange.exists():
+            p2p_price = p2p_exchange.get().price
+            if (
+                    value_dict['trade_type'] == 'BUY' and price > p2p_price
+                    or value_dict['trade_type'] == 'SELL'
+                    and price < p2p_price
+            ):
+                return True
+        return False
 
     def get_all_datas(self) -> None:
         fiats = (self.deposit_fiats if self.trade_type == 'BUY'
@@ -682,23 +640,13 @@ class Card2Wallet2CryptoExchangesParser(CryptoParser, ABC):
                 fiat=value_dict['fiat'],
                 transaction_method=value_dict['transaction_method'],
                 intra_crypto_exchange=intra_crypto_exchange,
-                payment_channel=self.payment_channel,
+                payment_channel=self.payment_channel
             )
-            p2p_exchange = self.model.objects.filter(
-                crypto_exchange=self.crypto_exchange, bank=bank,
-                asset=value_dict['asset'], trade_type=value_dict['trade_type'],
-                fiat=value_dict['fiat'], payment_channel='P2P',
-                price__isnull=False
-            )
-            if p2p_exchange.exists():
-                p2p_price = p2p_exchange.get().price
-                if (value_dict['trade_type'] == 'BUY' and price > p2p_price
-                        or value_dict['trade_type'] == 'SELL'
-                        and price < p2p_price):
-                    if target_object.exists():
-                        target_object.delete()
-                    return
-
+            if self.check_p2p_exchange_is_better_or_false(value_dict, price,
+                                                          bank):
+                if target_object.exists():
+                    target_object.delete()
+                return
             if target_object.exists():
                 updated_object = target_object.get()
                 updated_object.price = price

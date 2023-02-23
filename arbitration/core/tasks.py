@@ -34,8 +34,6 @@ from fake_useragent import UserAgent
 from stem.control import Controller
 from stem import Signal
 import requests
-from celery_once import QueueOnce
-
 
 from crypto_exchanges.models import InterExchanges
 
@@ -330,21 +328,21 @@ def assets_loop():
                     InfoLoop.objects.create(value=False)
 
 
-@app.task(bind=True, max_retries=None)
+@app.task(bind=True, max_retries=None, queue='parsing')
 def all_reg(self):
-    get_tinkoff_p2p_binance_exchanges.delay()
-    get_wise_p2p_binance_exchanges.delay(),
-    # group(
-    #     get_tinkoff_p2p_binance_exchanges.s(),
-    #     get_wise_p2p_binance_exchanges.s(),
-    #     get_all_binance_crypto_exchanges.s(),
-    #     get_binance_card_2_crypto_exchanges_buy.s(),
-    #     get_binance_card_2_crypto_exchanges_sell.s(),
-    #     get_all_card_2_wallet_2_crypto_exchanges_buy.s(),
-    #     get_all_card_2_wallet_2_crypto_exchanges_sell.s(),
-    #     parse_internal_tinkoff_rates.s(),
-    #     parse_internal_wise_rates.s()
-    # ).delay()
+    # get_tinkoff_p2p_binance_exchanges.delay()
+    # get_wise_p2p_binance_exchanges.delay(),
+    group(
+        get_tinkoff_p2p_binance_exchanges.s(),
+        get_wise_p2p_binance_exchanges.s(),
+        get_all_binance_crypto_exchanges.s(),
+        get_binance_card_2_crypto_exchanges_buy.s(),
+        get_binance_card_2_crypto_exchanges_sell.s(),
+        get_all_card_2_wallet_2_crypto_exchanges_buy.s(),
+        get_all_card_2_wallet_2_crypto_exchanges_sell.s(),
+        parse_internal_tinkoff_rates.s(),
+        parse_internal_wise_rates.s()
+    ).delay()
     # self.retry(countdown=17)
     # all_registration()
 

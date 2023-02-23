@@ -11,6 +11,9 @@ from crypto_exchanges.models import (CryptoExchanges, InterExchanges,
                                      RelatedMarginalityPercentages)
 import logging
 
+from arbitration.settings import BASE_ASSET, \
+    DATA_OBSOLETE_IN_MINUTES, ALLOWED_PERCENTAGE
+
 
 class InterSimplExchangesCalculate(ABC):
     model = InterExchanges
@@ -18,29 +21,29 @@ class InterSimplExchangesCalculate(ABC):
     crypto_exchange_name: str
     bank_name: str
     simpl: bool
-    BASE_ASSET: str = 'USDT'
-    DATA_OBSOLETE_IN_MINUTES: int = 10
-    ALLOWED_PERCENTAGE: int = 8
+    base_asset: str = BASE_ASSET
+    data_obsolete_in_minutes: int = DATA_OBSOLETE_IN_MINUTES
+    allowed_percentage: int = ALLOWED_PERCENTAGE
+    duration: timedelta
 
     def __init__(self) -> None:
         from banks.banks_config import BANKS_CONFIG
+        self.start_time = datetime.now()
         self.logger = logging.getLogger(self.__class__.__name__)
         self.crypto_exchange = CryptoExchanges.objects.get(
             name=self.crypto_exchange_name
         )
         self.bank = Banks.objects.get(name=self.bank_name)
-        self.start_time = datetime.now()
         self.new_update = self.model_update.objects.create(
             crypto_exchange=self.crypto_exchange, bank=self.bank
         )
         self.records_to_update = []
-        self.duration = None
         self.banks_config = BANKS_CONFIG
         self.banks = BANKS_CONFIG.keys()
         self.input_bank_config = BANKS_CONFIG.get(self.bank_name)
         self.all_input_fiats = self.input_bank_config.get('currencies')
         self.update_time = datetime.now(timezone.utc) - timedelta(
-            minutes=self.DATA_OBSOLETE_IN_MINUTES
+            minutes=self.data_obsolete_in_minutes
         )
         self.output_bank = None
         self.input_crypto_exchanges = None
@@ -65,7 +68,7 @@ class InterSimplExchangesCalculate(ABC):
             interim_exchange, interim_second_exchange,
             output_crypto_exchange, bank_exchange=None
     ) -> bool:
-        if marginality_percentage > self.ALLOWED_PERCENTAGE:
+        if marginality_percentage > self.allowed_percentage:
             diagram = self.create_diagram(
                 input_crypto_exchange, interim_exchange,
                 interim_second_exchange, self.output_bank,
@@ -96,12 +99,12 @@ class InterSimplExchangesCalculate(ABC):
             target_interim_exchange = IntraCryptoExchanges.objects.filter(
                 crypto_exchange=self.crypto_exchange,
                 from_asset=input_crypto_exchange.asset,
-                to_asset=self.BASE_ASSET, update__updated__gte=self.update_time
+                to_asset=self.base_asset, update__updated__gte=self.update_time
             )
             target_second_interim_exchange = (
                 IntraCryptoExchanges.objects.filter(
                     crypto_exchange=self.crypto_exchange,
-                    from_asset=self.BASE_ASSET,
+                    from_asset=self.base_asset,
                     to_asset=output_crypto_exchange.asset,
                     update__updated__gte=self.update_time
                 )
@@ -127,8 +130,10 @@ class InterSimplExchangesCalculate(ABC):
                     from_fiat=output_fiat, to_fiat=input_fiat,
                     price__isnull=False, update__updated__gte=self.update_time
                 )
+                self.logger.error('INTERERROR', len(bank_exchanges))
                 self.filter_input_crypto_exchanges(input_fiat)
                 self.filter_output_crypto_exchanges(output_fiat)
+                self.logger.error('INTERERROR', len(self.input_crypto_exchanges), len(self.output_crypto_exchanges))
                 for input_crypto_exchange, output_crypto_exchange in product(
                         self.input_crypto_exchanges,
                         self.output_crypto_exchanges
@@ -174,6 +179,7 @@ class InterSimplExchangesCalculate(ABC):
                     continue
                 self.filter_input_crypto_exchanges(fiat)
                 self.filter_output_crypto_exchanges(fiat)
+                self.logger.error('INTERERROR', len(self.input_crypto_exchanges), len(self.output_crypto_exchanges))
                 for input_crypto_exchange, output_crypto_exchange in product(
                         self.input_crypto_exchanges,
                         self.output_crypto_exchanges
@@ -307,7 +313,9 @@ class InterSimplExchangesCalculate(ABC):
         # RelatedMarginalityPercentages.objects.bulk_create(
         #     records_to_create
         # )
-        self.duration = datetime.now() - self.start_time
+        time_now = datetime.now()
+        self.duration = time_now - self.start_time
+        self.new_update.updated = time_now
         self.new_update.duration = self.duration
         self.new_update.save()
 

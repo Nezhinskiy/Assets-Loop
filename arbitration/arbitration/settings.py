@@ -1,6 +1,6 @@
 import os
 import sys
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 from pathlib import Path
 import logging.config
 
@@ -19,9 +19,6 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "True") == "True"
-
-# For local start
-LOCAL = os.getenv("DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = ['*']
 #     os.getenv(
@@ -190,43 +187,55 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Custom setting
+
+BASE_ASSET = 'USDT'
+DATA_OBSOLETE_IN_MINUTES = 10
+ALLOWED_PERCENTAGE = int(os.getenv('ALLOWED_PERCENTAGE', 8))
+
 # Celery settings
 
 CELERY_TASK_ACKS_LATE = True
+CELERY_TIMEZONE = timezone.utc
 
-if LOCAL:
-    CELERY_BROKER_URL = "redis://localhost:6379"
-    CELERY_RESULT_BACKEND = "redis://localhost:6379"
-else:
-    CELERY_BROKER_URL = "redis://redis:6379"
-    CELERY_RESULT_BACKEND = "redis://redis:6379"
+CELERY_BROKER_URL = "redis://redis:6379"
+CELERY_RESULT_BACKEND = "redis://redis:6379"
 
 # Celery beat settings
 
-# CELERY_BEAT_SCHEDULE = {
-#     'get_binance_fiat_crypto_list': {
-#         'task': 'crypto_exchanges.tasks.get_binance_fiat_crypto_list',
-#         'schedule': timedelta(hours=12)
-#     },
-#     'get_simpl_binance_tinkoff_inter_exchanges_calculate': {
-#         'task': 'core.tasks.get_simpl_binance_tinkoff_inter_exchanges_calculate',
-#         'schedule': timedelta(seconds=30),
-#
-#     },
-#     'get_simpl_binance_wise_inter_exchanges_calculate': {
-#         'task': 'core.tasks.get_simpl_binance_wise_inter_exchanges_calculate',
-#         'schedule': timedelta(seconds=35),
-#     },
-#     'get_complex_binance_tinkoff_inter_exchanges_calculate': {
-#         'task': 'core.tasks.get_complex_binance_tinkoff_inter_exchanges_calculate',
-#         'schedule': timedelta(seconds=40),
-#
-#     },
-#     'get_complex_binance_wise_inter_exchanges_calculate': {
-#         'task': 'core.tasks.get_complex_binance_wise_inter_exchanges_calculate',
-#         'schedule': timedelta(seconds=45),
-#     },
-# }
+CELERY_BEAT_SCHEDULE = {
+    'get_binance_fiat_crypto_list': {
+        'task': 'crypto_exchanges.tasks.get_binance_fiat_crypto_list',
+        'schedule': timedelta(hours=12),
+        'options': {'queue': 'regular_tasks'}
+    },
+    'get_simpl_binance_tinkoff_inter_exchanges_calculate': {
+        'task': 'core.tasks.get_simpl_binance_tinkoff_inter_exchanges_calculate',
+        'schedule': timedelta(seconds=25),
+        'options': {'queue': 'regular_tasks'}
+
+    },
+    'get_complex_binance_tinkoff_inter_exchanges_calculate': {
+        'task': 'core.tasks.get_complex_binance_tinkoff_inter_exchanges_calculate',
+        'schedule': timedelta(seconds=25),
+        'options': {'queue': 'regular_tasks'}
+    },
+    'get_simpl_binance_wise_inter_exchanges_calculate': {
+        'task': 'core.tasks.get_simpl_binance_wise_inter_exchanges_calculate',
+        'schedule': timedelta(seconds=25),
+        'options': {'queue': 'regular_tasks'}
+    },
+    'get_complex_binance_wise_inter_exchanges_calculate': {
+        'task': 'core.tasks.get_complex_binance_wise_inter_exchanges_calculate',
+        'schedule': timedelta(seconds=25),
+        'options': {'queue': 'regular_tasks'}
+    },
+    'parse_currency_market_tinkoff_rates': {
+        'task': 'banks.tasks.parse_currency_market_tinkoff_rates',
+        'schedule': crontab(minute='*/2', hour='4-16', day_of_week='1-5'),
+        'options': {'queue': 'regular_tasks'}
+    },
+}
 
 
 CACHES = {
@@ -245,4 +254,4 @@ CACHES = {
 }
 
 # Tell select2 which cache configuration to use:
-SELECT2_CACHE_BACKEND = "select2"
+SELECT2_CACHE_BACKEND = 'select2'

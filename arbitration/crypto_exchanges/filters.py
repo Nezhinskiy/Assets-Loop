@@ -6,7 +6,6 @@ from django.db.models import Q
 from django_select2.forms import Select2MultipleWidget
 
 from banks.banks_config import BANKS_CONFIG
-from core.parsers import check_work_time
 from crypto_exchanges.crypto_exchanges_config import CRYPTO_EXCHANGES_CONFIG
 from crypto_exchanges.models import InterExchanges
 

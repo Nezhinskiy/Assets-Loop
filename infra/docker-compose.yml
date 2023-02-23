@@ -49,13 +49,28 @@ services:
     depends_on:
       - arbitration
 
-  celery-worker:
+  celery-parsing:
     restart: always
     build:
       context: ../arbitration
-    container_name: celery-worker
+    container_name: celery-parsing
     entrypoint: celery
-    command: -A arbitration worker --concurrency=8 --loglevel=ERROR #--max-tasks-per-child=1
+    command:  -A arbitration worker --loglevel=ERROR -Q parsing -c 7
+    env_file:
+      - .env
+    links:
+      - redis
+    depends_on:
+      - arbitration
+      - redis
+
+  celery-regular:
+    restart: always
+    build:
+      context: ../arbitration
+    container_name: celery-regular
+    entrypoint: celery
+    command:  -A arbitration worker --loglevel=ERROR -Q regular_tasks -c 1
     env_file:
       - .env
     links:
@@ -74,10 +89,10 @@ services:
     env_file:
       - .env
     links:
-      - celery-worker
+      - celery-regular
       - redis
     depends_on:
-      - celery-worker
+      - celery-regular
       - redis
       - tor_proxy
       - nginx
