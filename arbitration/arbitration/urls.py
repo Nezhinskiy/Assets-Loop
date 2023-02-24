@@ -23,10 +23,10 @@ urlpatterns = [
      path('select2/', include('django_select2.urls')),
      # path('admin/', admin.site.urls),
      path('', include('core.urls')),
-     path('', include('crypto_exchanges.urls', namespace='crypto_exchanges')),
-     path('', include('banks.urls', namespace='banks')),
-     re_path(r'^media/(?P<path>.*)$', serve,{'document_root': settings.MEDIA_ROOT}),
-     re_path(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}),
+     re_path(r'^media/(?P<path>.*)$', serve,
+             {'document_root': settings.MEDIA_ROOT}),
+     re_path(r'^static/(?P<path>.*)$', serve,
+             {'document_root': settings.STATIC_ROOT}),
  ]
 
 urlpatterns += staticfiles_urlpatterns()

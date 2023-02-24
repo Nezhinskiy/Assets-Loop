@@ -34,8 +34,7 @@ class IntraCryptoExchanges(models.Model):
             models.UniqueConstraint(
                 fields=(
                     'crypto_exchange', 'from_asset', 'to_asset'
-                ),
-                name='unique_intra_crypto_exchanges'
+                ), name='unique_intra_crypto_exchanges'
             )
         ]
 
@@ -83,8 +82,7 @@ class P2PCryptoExchangesRates(models.Model):
                 fields=(
                     'crypto_exchange', 'bank', 'asset', 'trade_type',
                     'fiat', 'transaction_method', 'payment_channel'
-                ),
-                name='unique_p2p'
+                ), name='unique_p2p'
             )
         ]
 
@@ -176,8 +174,7 @@ class InterExchanges(models.Model):
                     'input_crypto_exchange', 'interim_crypto_exchange',
                     'second_interim_crypto_exchange', 'output_crypto_exchange',
                     'bank_exchange'
-                ),
-                name='unique_inter_exchanges'
+                ), name='unique_inter_exchanges'
             )
         ]
 

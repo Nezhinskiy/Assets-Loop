@@ -571,7 +571,7 @@ class Card2Wallet2CryptoExchangesParser(CryptoParser, ABC):
             'transaction_fee': transaction_fee
         }
 
-    def check_p2p_exchange_is_better_or_false(
+    def check_p2p_exchange_is_better(
             self, value_dict: dict, price: float, bank: Banks
     ) -> bool:
         p2p_exchange = self.model.objects.filter(
@@ -629,8 +629,7 @@ class Card2Wallet2CryptoExchangesParser(CryptoParser, ABC):
                 intra_crypto_exchange=intra_crypto_exchange,
                 payment_channel=self.payment_channel
             )
-            if self.check_p2p_exchange_is_better_or_false(value_dict, price,
-                                                          bank):
+            if self.check_p2p_exchange_is_better(value_dict, price, bank):
                 if target_object.exists():
                     target_object.delete()
                 return
@@ -721,26 +720,23 @@ class ListsFiatCryptoParser(CryptoParser, ABC):
 
     def add_to_update_or_create(self, list_fiat_crypto: dict, trade_type: str
                                 ) -> None:
-        target_object = ListsFiatCrypto.objects.filter(
+        target_object = self.model.objects.filter(
             crypto_exchange=self.crypto_exchange, trade_type=trade_type
         )
         if target_object.exists():
-            updated_object = ListsFiatCrypto.objects.get(
+            updated_object = self.model.objects.get(
                 crypto_exchange=self.crypto_exchange, trade_type=trade_type
             )
-            if updated_object.list_fiat_crypto == list_fiat_crypto:
-                return
             updated_object.list_fiat_crypto = list_fiat_crypto
             updated_object.update = self.new_update
             updated_object.save()
         else:
-            created_object = ListsFiatCrypto(
+            self.model.objects.create(
                 crypto_exchange=self.crypto_exchange,
                 list_fiat_crypto=list_fiat_crypto,
                 trade_type=trade_type,
                 update=self.new_update
             )
-            created_object.save()
 
     def get_all_api_answers(self) -> None:
         sell_dict = {}
@@ -769,10 +765,6 @@ class ListsFiatCryptoParser(CryptoParser, ABC):
         self.add_to_update_or_create(buy_dict, trade_type='BUY')
 
     def main(self) -> None:
-        if self.model_update.objects.all().count() != 0:
-            if (self.model_update.objects.last().updated.date()
-                    == datetime.now(timezone.utc).date()):
-                return
         self.get_all_api_answers()
         self.duration = datetime.now() - self.start_time
         self.new_update.duration = self.duration

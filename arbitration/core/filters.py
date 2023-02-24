@@ -1,8 +1,5 @@
-import time
-
 import django_filters
-from django import forms
-from django.db.models import Q
+
 from django_select2.forms import Select2MultipleWidget
 
 from banks.banks_config import BANKS_CONFIG
@@ -91,25 +88,29 @@ class ExchangesFilter(django_filters.FilterSet):
         )
     )
 
-    def asset_filter(self, queryset, _, values):
+    @staticmethod
+    def asset_filter(queryset, _, values):
         return queryset.filter(
             input_crypto_exchange__asset__in=values,
             output_crypto_exchange__asset__in=values
         )
 
-    def payment_channel_filter(self, queryset, _, values):
+    @staticmethod
+    def payment_channel_filter(queryset, _, values):
         return queryset.filter(
             input_crypto_exchange__payment_channel__in=values,
             output_crypto_exchange__payment_channel__in=values
         )
 
-    def fiat_filter(self, queryset, _, values):
+    @staticmethod
+    def fiat_filter(queryset, _, values):
         return queryset.filter(
             input_crypto_exchange__fiat__in=values,
             output_crypto_exchange__fiat__in=values
         )
 
-    def bank_exchange_filter(self, queryset, _, values):
+    @staticmethod
+    def bank_exchange_filter(queryset, _, values):
         if values in ('1', '0'):
             qs = queryset.filter(
                 bank_exchange__isnull=bool(int(values))

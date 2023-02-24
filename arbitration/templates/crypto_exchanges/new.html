@@ -140,7 +140,7 @@
           return modal;
       }
 
-      let data_url = '{% url "crypto_exchanges:inter-exchanges_data" %}' + '{{ request.get_full_path|last_url_path:0 | safe }}';
+      let data_url = '{% url "core:inter_exchanges_data" %}' + '{{ request.get_full_path|last_url_path:0 | safe }}';
 
       $(document).ready(function () {
           var refreshTable = $('#dynamicDatatable').DataTable({

@@ -189,6 +189,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Custom setting
 
+PARSING_WORKER_NAME = 'celery@parsing_worker'
 BASE_ASSET = 'USDT'
 DATA_OBSOLETE_IN_MINUTES = 10
 INTER_EXCHANGES_OBSOLETE_IN_MINUTES = 15

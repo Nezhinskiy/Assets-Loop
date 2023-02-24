@@ -55,7 +55,7 @@ services:
       context: ../arbitration
     container_name: celery-parsing
     entrypoint: celery
-    command:  -A arbitration worker --loglevel=ERROR -Q parsing -c 7
+    command:  -A arbitration worker --loglevel=ERROR -Q parsing -c 7 -n parsing_worker
     env_file:
       - .env
     links:
@@ -70,7 +70,7 @@ services:
       context: ../arbitration
     container_name: celery-regular
     entrypoint: celery
-    command:  -A arbitration worker --loglevel=ERROR -Q regular_tasks -c 1
+    command:  -A arbitration worker --loglevel=ERROR -Q regular_tasks -c 1 -n regular_worker
     env_file:
       - .env
     links:

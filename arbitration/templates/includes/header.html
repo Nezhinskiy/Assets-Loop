@@ -3,14 +3,14 @@
 <header>
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark navbar-active-deepskyblue">
     <div class="container-fluid">
-      <a class="navbar-brand" href="{% url 'crypto_exchanges:InterExchangesListNew' %}">Assets L<span style="color:deepskyblue">∞</span>p</a>
+      <a class="navbar-brand" href="{% url 'core:inter_exchanges_list_new' %}">Assets L<span style="color:deepskyblue">∞</span>p</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDark" aria-controls="navbarNavDark" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarNavDark">
         <ul class="navbar-nav">
           <li class="nav-item">
-            <a class="nav-link {% if '/' == request.path  %}active{% endif %}" href="{% url 'crypto_exchanges:InterExchangesListNew' %}" id="navbarDarkMenuLink" role="button" aria-expanded="false">
+            <a class="nav-link {% if '/' == request.path  %}active{% endif %}" href="{% url 'core:inter_exchanges_list_new' %}" id="navbarDarkMenuLink" role="button" aria-expanded="false">
               Все связки
             </a>
           </li>
