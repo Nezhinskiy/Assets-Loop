@@ -17,31 +17,17 @@
         <h1>
           Все актуальные арбитражные связки:
         </h1>
-        {% if not start %}
-          <hr>
-          <p>
-            <h3>
-              Нажмите <a class="btn btn-outline-success" type="button" href="{% url 'core:start' %}">Start</a>, чтобы запустить алгоритм. <br>Данные начнут появляться через 1-2 минуты.
-            </h3>
-          </p>
-          <p>
-            * будет запущено 5 итераций работы алгоритма.
-          </p>
-          <p>
-            ** что бы прервать работу приложения, нужно нажать кнопку "Stop" в шапке сайта.
-          </p>
-        {% else %}
-          <table id="dynamicDatatable" class="table">
-            <thead class="table-dark">
-              <tr>
-                <th style="width:80%" scope="col">Связка</th>
-                <th style="width:10%" scope="col">Маржинальность</th>
-                <th style="width:10%" scope="col">Обновлено</th>
-              </tr>
-            </thead>
-            <tbody>
-            </tbody>
-          {% endif %}
+
+        <table id="dynamicDatatable" class="table">
+          <thead class="table-dark">
+            <tr>
+              <th style="width:80%" scope="col">Связка</th>
+              <th style="width:10%" scope="col">Маржинальность</th>
+              <th style="width:10%" scope="col">Обновлено</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
         </table>
       </div>
     </div>
@@ -154,7 +140,7 @@
           return modal;
       }
 
-      let data_url = '{% url "crypto_exchanges:inter-exchanges_data" %}'  + '{{ request.get_full_path|last_url_path:0 | safe }}';
+      let data_url = '{% url "crypto_exchanges:inter-exchanges_data" %}' + '{{ request.get_full_path|last_url_path:0 | safe }}';
 
       $(document).ready(function () {
           var refreshTable = $('#dynamicDatatable').DataTable({
@@ -173,31 +159,24 @@
                   dataSrc: 'data',
               },
               "rowCallback": function( row, data, index ) {
-                  $('body>.tooltip').remove();
-                  if ( updateTime( data.update.updated ) > 120 )
-                  {
-                      $('td', row).addClass('table-active');
-                  } else if ( row.new && updateTime(data.update.updated) < 4 )
-                  {
-                      $('td', data.new).addClass('stylish');
+                  var updatedTime = updateTime(data.update.updated);
+                  if (updatedTime > 120) {
+                      $('td', row).addClass('obsolete');
+                  } else if (data.new === true && updatedTime < 4) {
+                      $('td', row).addClass('stylish');
                       setTimeout(function() {
                           $('td', row).removeClass('stylish');
-                          }, 500);
-
-                  }
-                  if ( data.dynamics === 'fall' && updateTime(data.update.updated) < 4 )
-                  {
+                      }, 500);
+                  } else if (data.dynamics === 'fall' && updatedTime < 4) {
                       $('td:eq(1)', row).addClass('fall');
                       setTimeout(function() {
                           $('td:eq(1)', row).removeClass('fall');
-                          }, 500);
-                  }
-                  if ( data.dynamics === 'rise' && updateTime(data.update.updated) < 4 )
-                  {
+                      }, 500);
+                  } else if (data.dynamics === 'rise' && updatedTime < 4) {
                       $('td:eq(1)', row).addClass('rise');
                       setTimeout(function() {
                           $('td:eq(1)', row).removeClass('rise');
-                          }, 500);
+                      }, 500);
                   }},
               columns: [
                   {
@@ -208,14 +187,14 @@
                       data:null,
                       render: function (data, type, row){
                           return '<span class="d-inline-block" tabindex="0" data-placement="top" data-toggle="tooltip" title="Нажмите для подробной информации">' +
-                                 '<p type="button" data-toggle="modal" data-diagram="'+row.diagram+'" data-content="'+modalWrite(row)+'" data-target="#myModal">' +
-                                  '<span style="color:'+colorSelector(row.marginality_percentage)+'">'+row.marginality_percentage+'% </span>' +
-                                  '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16">' +
-                                    '<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>' +
-                                    '<path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>' +
-                                  '</svg>' +
-                                '</p>' +
-                              '</span>'
+                                   '<p type="button" data-toggle="modal" data-diagram="'+row.diagram+'" data-content="'+modalWrite(row)+'" data-target="#myModal">' +
+                                     '<span style="color:'+colorSelector(row.marginality_percentage)+'">'+row.marginality_percentage+'% </span>' +
+                                     '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16">' +
+                                       '<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>' +
+                                       '<path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>' +
+                                   '</svg>' +
+                                   '</p>' +
+                                 '</span>'
                       },
                       orderable: true
                   },

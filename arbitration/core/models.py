@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from django.db import models
 
@@ -14,14 +14,10 @@ class UpdatesModel(models.Model):
 
 
 class InfoLoop(models.Model):
-    value = models.BooleanField(null=True, blank=True, default=None)
-    updated = models.DateTimeField(
-        'Update date', auto_now_add=True
-    )
-    all_banks_exchanges = models.DurationField(default=timedelta())
-    all_crypto_exchanges = models.DurationField(default=timedelta())
-    all_exchanges = models.DurationField(default=timedelta())
-    count_of_rates = models.PositiveSmallIntegerField(null=True, blank=True)
+    value = models.BooleanField(default=False)
+    started = models.DateTimeField('Started date', auto_now_add=True)
+    stopped = models.DateTimeField('Stopped date', blank=True)
+    duration = models.DurationField(default=timedelta())
 
     class Meta:
-        ordering = ['-updated']
+        ordering = ['-started']

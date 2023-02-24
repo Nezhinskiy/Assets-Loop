@@ -1,4 +1,5 @@
 import time
+from datetime import datetime, timezone
 from itertools import product
 
 from django.shortcuts import redirect, render
@@ -10,7 +11,7 @@ from core.tasks import (assets_loop, end_all_exchanges, end_banks_exchanges,
                         get_complex_binance_tinkoff_inter_exchanges_calculate,
                         get_complex_binance_wise_inter_exchanges_calculate,
                         get_simpl_binance_tinkoff_inter_exchanges_calculate,
-                        get_simpl_binance_wise_inter_exchanges_calculate, tor, notor, all_reg, c2c_s, c2c_b)
+                        get_simpl_binance_wise_inter_exchanges_calculate, all_reg)
 
 from crypto_exchanges.models import InterExchangesUpdates
 
@@ -25,46 +26,32 @@ class InfoLoopList(ListView):
     def get_context_data(self, **kwargs):
         context = super(InfoLoopList, self).get_context_data(**kwargs)
         context['info_loops'] = self.get_queryset()
-        context['last_update'] = self.get_queryset().latest('updated').updated
-        context['loops_count'] = self.get_queryset().filter(value=1).count
+        context['loops_count'] = self.get_queryset().count
         return context
 
 
 def start(request):
     if InfoLoop.objects.first().value == 0:
+        InfoLoop.objects.create(value=True)
         assets_loop.s().delay()
-        time.sleep(0.1)
     return redirect('crypto_exchanges:InterExchangesListNew')
 
 
 def stop(request):
     if InfoLoop.objects.first().value == 1:
-        InfoLoop.objects.create(value=False)
+        target_loop = InfoLoop.objects.first()
+        target_loop.value = False
+        datetime_now = datetime.now(timezone.utc)
+        target_loop.stopped = datetime_now
+        target_loop.duration = datetime_now - target_loop.started
+        target_loop.save()
     return redirect('crypto_exchanges:InterExchangesListNew')
 
 
 def registration(request):
     all_reg.s().delay()
-    return redirect('core:info')
-
-
-def no_tor(request):
-    notor.s().delay()
-    return redirect('core:info')
-
-
-def _tor(request):
-    tor.s().delay()
-    return redirect('core:info')
-
-
-def c2cs(request):
-    c2c_s.s().delay()
-    return redirect('core:info')
-
-
-def c2cb(request):
-    c2c_b.s().delay()
+    if not InfoLoop.objects.all():
+        InfoLoop.objects.create(value=False)
     return redirect('core:info')
 
 
@@ -87,11 +74,9 @@ class InfoCoreList(ListView):
         for bank_name in self.banks:
             name = f'{bank_name}'
             names.append(name)
-            context[name] = self.get_queryset().filter(
-                bank__name=bank_name)
+            context[name] = self.get_queryset().filter(bank__name=bank_name)
             name = f'{bank_name}'
             names.append(name)
-            context[name] = self.get_queryset().filter(
-                bank__name=bank_name)
+            context[name] = self.get_queryset().filter(bank__name=bank_name)
         context['names'] = names
         return context

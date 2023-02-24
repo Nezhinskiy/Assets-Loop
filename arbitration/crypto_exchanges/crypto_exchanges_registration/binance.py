@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from abc import ABC
 from http import HTTPStatus
 from sys import getsizeof
 from time import sleep
@@ -88,7 +89,7 @@ SPOT_ZERO_FEES = {
 }
 
 
-class BinanceP2PParser(P2PParser):
+class BinanceP2PParser(P2PParser, ABC):
     crypto_exchange_name = CRYPTO_EXCHANGES_NAME
     endpoint = 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search'
     page = 1

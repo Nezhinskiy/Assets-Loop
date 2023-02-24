@@ -12,7 +12,7 @@ from crypto_exchanges.models import (CryptoExchanges, InterExchanges,
 import logging
 
 from arbitration.settings import BASE_ASSET, \
-    DATA_OBSOLETE_IN_MINUTES, ALLOWED_PERCENTAGE, INTER_EXCHANGES_OBSOLETE_IN_MINUTES
+    DATA_OBSOLETE_IN_MINUTES, ALLOWED_PERCENTAGE, INTER_EXCHANGES_BEGIN_OBSOLETE_MINUTES
 
 
 class InterSimplExchangesCalculate(ABC):
@@ -285,7 +285,7 @@ class InterSimplExchangesCalculate(ABC):
             else:
                 inter_exchange.dynamics = None
             relevance_time = inter_exchange.update.updated + timedelta(
-                minutes=INTER_EXCHANGES_OBSOLETE_IN_MINUTES)
+                minutes=INTER_EXCHANGES_BEGIN_OBSOLETE_MINUTES)
             if relevance_time < self.start_time:
                 inter_exchange.new = True
             else:

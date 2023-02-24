@@ -192,6 +192,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 BASE_ASSET = 'USDT'
 DATA_OBSOLETE_IN_MINUTES = 10
 INTER_EXCHANGES_OBSOLETE_IN_MINUTES = 15
+INTER_EXCHANGES_BEGIN_OBSOLETE_MINUTES = 2
 ALLOWED_PERCENTAGE = int(os.getenv('ALLOWED_PERCENTAGE', 8))
 
 # Celery settings
@@ -212,7 +213,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'get_simpl_binance_tinkoff_inter_exchanges_calculate': {
         'task': 'core.tasks.get_simpl_binance_tinkoff_inter_exchanges_calculate',
-        'schedule': timedelta(seconds=25),
+        'schedule': timedelta(seconds=20),
         'options': {'queue': 'regular_tasks'}
 
     },
@@ -223,7 +224,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'get_simpl_binance_wise_inter_exchanges_calculate': {
         'task': 'core.tasks.get_simpl_binance_wise_inter_exchanges_calculate',
-        'schedule': timedelta(seconds=25),
+        'schedule': timedelta(seconds=20),
         'options': {'queue': 'regular_tasks'}
     },
     'get_complex_binance_wise_inter_exchanges_calculate': {

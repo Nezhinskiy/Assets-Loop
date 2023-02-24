@@ -207,16 +207,6 @@ class InterExchangesListNew(FilterView):
     template_name = 'crypto_exchanges/new.html'
     filterset_class = ExchangesFilter
 
-    def get_queryset(self):
-        pass
-
-    def get_context_data(self, **kwargs):
-
-        context = super(InterExchangesListNew,
-                        self).get_context_data(**kwargs)
-        context['start'] = InfoLoop.objects.latest('updated').value
-        return context
-
 
 class InterExchangesAPIView(ListAPIView, FilterView):
     model = InterExchanges

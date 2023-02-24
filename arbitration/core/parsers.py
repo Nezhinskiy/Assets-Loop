@@ -59,7 +59,6 @@ class ParsingViaTor(BaseParser, ABC):
         self.count_try = 0
         if endpoint is None:
             endpoint = self.endpoint
-
         while self.count_try < self.LIMIT_TRY:
             try:
                 response = self.tor.session.post(endpoint, headers=headers,
@@ -67,37 +66,28 @@ class ParsingViaTor(BaseParser, ABC):
             except Exception as error:
                 self.unsuccessful_response_handler(error)
                 continue
-
             if response.status_code != HTTPStatus.OK:
                 self.negative_response_status_handler(response)
                 continue
-
-            # self.successful_response_handler()
-            print(f'1 - {self.__class__.__name__}')
+            self.successful_response_handler()
             return response.json()
-
         return False
 
     def get_api_answer_get(self, params=None, endpoint=None) -> dict | bool:
         self.count_try = 0
         if endpoint is None:
             endpoint = self.endpoint
-
         while self.count_try < self.LIMIT_TRY:
             try:
                 response = self.tor.session.get(endpoint, params=params)
             except Exception as error:
                 self.unsuccessful_response_handler(error)
                 continue
-
             if response.status_code != HTTPStatus.OK:
                 self.negative_response_status_handler(response)
                 continue
-
-            # self.successful_response_handler()
-            print(f'2 - {self.__class__.__name__}')
+            self.successful_response_handler()
             return response.json()
-
         return False
 
     def unsuccessful_response_handler(self, error) -> None:
@@ -406,12 +396,9 @@ class P2PParser(CryptoParser, ABC):
                 response = self.get_api_answer(asset, fiat, trade_type)
                 if response is False:
                     continue
-                self.extract_price_from_json(response)
-                price = (
-                    1 / self.extract_price_from_json(response)
-                    if trade_type == 'BUY'
-                    else self.extract_price_from_json(response)
-                )
+                price = self.extract_price_from_json(response)
+                if price is not None:
+                    price = 1 / price if trade_type == 'BUY' else price
                 self.add_to_bulk_update_or_create(asset, trade_type, fiat,
                                                   price)
 

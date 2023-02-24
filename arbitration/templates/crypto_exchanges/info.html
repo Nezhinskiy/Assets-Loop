@@ -16,9 +16,6 @@
         <p>
           Число итераций: {{ loops_count }}
         </p>
-        <p>
-          Последний запуск: {{ last_update }} UTC
-        </p>
       </div>
       <div class="col-sm-6">
         <p>
@@ -35,22 +32,18 @@
       <tr>
         <th scope="col">#</th>
         <th scope="col">Status</th>
-        <th scope="col">Duration for all bank exchanges</th>
-        <th scope="col">Duration for all crypto exchanges</th>
-        <th scope="col">Duration for all exchanges</th>
-        <th scope="col">Count of rates</th>
-        <th scope="col">Updated UTC</th>
+        <th scope="col">Started</th>
+        <th scope="col">Stopped</th>
+        <th scope="col">Duration</th>
       </tr>
     </thead>
     {% for info_loop in info_loops %}
       <tr>
         <th scope="row">{{ forloop.counter }}</th>
         <td>{% if info_loop.value %}Started{% else %}Stopped{% endif %}</td>
-        <td>{% if info_loop.value %}{{ info_loop.all_banks_exchanges }}{% endif %}</td>
-        <td>{% if info_loop.value %}{{ info_loop.all_crypto_exchanges }}{% endif %}</td>
-        <td>{% if info_loop.value %}{{ info_loop.all_exchanges }}{% endif %}</td>
-        <td>{% if info_loop.value %}{{ info_loop.count_of_rates }}{% endif %}</td>
-        <td>{{ info_loop.updated}}</td>
+        <td>{{ info_loop.started }}</td>
+        <td>{{ info_loop.sopped }}</td>
+        <td>{{ info_loop.duration }}</td>
       </tr>
     {% endfor %}
   </table>
