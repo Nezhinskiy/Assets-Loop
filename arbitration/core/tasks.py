@@ -9,10 +9,10 @@ from banks.tasks import (
                          parse_internal_wise_rates)
 from core.registration import all_registration
 from crypto_exchanges.crypto_exchanges_registration.binance import (
-    ComplexBinanceTinkoffInterExchangesCalculate,
-    ComplexBinanceWiseInterExchangesCalculate,
-    SimplBinanceTinkoffInterExchangesCalculate,
-    SimplBinanceWiseInterExchangesCalculate)
+    ComplexBinanceTinkoffInterExchangesCalculating,
+    ComplexBinanceWiseInterExchangesCalculating,
+    SimplBinanceTinkoffInterExchangesCalculating,
+    SimplBinanceWiseInterExchangesCalculating)
 from crypto_exchanges.tasks import (
                                     get_all_binance_crypto_exchanges,
                                     get_all_card_2_wallet_2_crypto_exchanges_buy,
@@ -80,23 +80,23 @@ def assets_loop_stop():
 
 
 @app.task
-def get_simpl_binance_tinkoff_inter_exchanges_calculate():
-    SimplBinanceTinkoffInterExchangesCalculate().main()
+def get_simpl_binance_tinkoff_inter_exchanges_calculating():
+    SimplBinanceTinkoffInterExchangesCalculating().main()
 
 
 @app.task
-def get_simpl_binance_wise_inter_exchanges_calculate():
-    SimplBinanceWiseInterExchangesCalculate().main()
+def get_simpl_binance_wise_inter_exchanges_calculating():
+    SimplBinanceWiseInterExchangesCalculating().main()
 
 
 @app.task
-def get_complex_binance_tinkoff_inter_exchanges_calculate():
-    ComplexBinanceTinkoffInterExchangesCalculate().main()
+def get_complex_binance_tinkoff_inter_exchanges_calculating():
+    ComplexBinanceTinkoffInterExchangesCalculating().main()
 
 
 @app.task
-def get_complex_binance_wise_inter_exchanges_calculate():
-    ComplexBinanceWiseInterExchangesCalculate().main()
+def get_complex_binance_wise_inter_exchanges_calculating():
+    ComplexBinanceWiseInterExchangesCalculating().main()
 
 
 @app.task(queue='parsing')

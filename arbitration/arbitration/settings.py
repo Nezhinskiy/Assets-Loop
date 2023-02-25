@@ -223,24 +223,24 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': timedelta(seconds=random.randint(40, 55)),
         'options': {'queue': 'calculating'}
     },
-    'get_simpl_binance_tinkoff_inter_exchanges_calculate': {
-        'task': 'core.tasks.get_simpl_binance_tinkoff_inter_exchanges_calculate',
+    'get_simpl_binance_tinkoff_inter_exchanges_calculating': {
+        'task': 'core.tasks.get_simpl_binance_tinkoff_inter_exchanges_calculating',
         'schedule': timedelta(seconds=random.randint(20, 25)),
         'options': {'queue': 'calculating'}
 
     },
-    'get_complex_binance_tinkoff_inter_exchanges_calculate': {
-        'task': 'core.tasks.get_complex_binance_tinkoff_inter_exchanges_calculate',
+    'get_complex_binance_tinkoff_inter_exchanges_calculating': {
+        'task': 'core.tasks.get_complex_binance_tinkoff_inter_exchanges_calculating',
         'schedule': timedelta(seconds=random.randint(22, 28)),
         'options': {'queue': 'calculating'}
     },
-    'get_simpl_binance_wise_inter_exchanges_calculate': {
-        'task': 'core.tasks.get_simpl_binance_wise_inter_exchanges_calculate',
+    'get_simpl_binance_wise_inter_exchanges_calculating': {
+        'task': 'core.tasks.get_simpl_binance_wise_inter_exchanges_calculating',
         'schedule': timedelta(seconds=random.randint(20, 25)),
         'options': {'queue': 'calculating'}
     },
-    'get_complex_binance_wise_inter_exchanges_calculate': {
-        'task': 'core.tasks.get_complex_binance_wise_inter_exchanges_calculate',
+    'get_complex_binance_wise_inter_exchanges_calculating': {
+        'task': 'core.tasks.get_complex_binance_wise_inter_exchanges_calculating',
         'schedule': timedelta(seconds=random.randint(22, 28)),
         'options': {'queue': 'calculating'}
     },

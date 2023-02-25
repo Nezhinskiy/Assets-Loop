@@ -3,7 +3,7 @@ import logging
 from arbitration.celery import app
 from crypto_exchanges.crypto_exchanges_registration.binance import (
     BinanceCard2CryptoExchangesParser,
-    BinanceCard2Wallet2CryptoExchangesCalculate, BinanceCryptoParser,
+    BinanceCard2Wallet2CryptoExchangesCalculating, BinanceCryptoParser,
     BinanceListsFiatCryptoParser, TinkoffBinanceP2PParser,
     WiseBinanceP2PParser)
 
@@ -67,9 +67,9 @@ def get_binance_fiat_crypto_list():
 
 @app.task
 def get_all_card_2_wallet_2_crypto_exchanges_buy():
-    BinanceCard2Wallet2CryptoExchangesCalculate('BUY').main()
+    BinanceCard2Wallet2CryptoExchangesCalculating('BUY').main()
 
 
 @app.task
 def get_all_card_2_wallet_2_crypto_exchanges_sell():
-    BinanceCard2Wallet2CryptoExchangesCalculate('SELL').main()
+    BinanceCard2Wallet2CryptoExchangesCalculating('SELL').main()

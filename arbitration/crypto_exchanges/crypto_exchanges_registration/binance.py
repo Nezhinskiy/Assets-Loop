@@ -10,7 +10,7 @@ from typing import List, Dict
 import requests
 
 from banks.banks_config import BANKS_CONFIG
-from core.calculations import InterExchangesCalculate, Card2Wallet2CryptoExchangesCalculate
+from core.calculations import InterExchangesCalculating, Card2Wallet2CryptoExchangesCalculating
 from core.parsers import (Card2CryptoExchangesParser,
                           CryptoExchangesParser, ListsFiatCryptoParser,
                           P2PParser)
@@ -110,11 +110,11 @@ class WiseBinanceP2PParser(BinanceP2PParser):
 
 
 class BinanceCryptoParser(CryptoExchangesParser):
-    crypto_exchange_name = CRYPTO_EXCHANGES_NAME
-    fiats = ASSETS
-    endpoint = 'https://api.binance.com/api/v3/ticker/price?'
-    exceptions = ('SHIBRUB',)
-    name_from = 'symbol'
+    crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
+    fiats: tuple = ASSETS
+    endpoint: str = 'https://api.binance.com/api/v3/ticker/price?'
+    exceptions: tuple = ('SHIBRUB',)
+    name_from: int = 'symbol'
 
     def get_api_answer(self, params):
         """Делает запрос к эндпоинту API Tinfoff."""
@@ -146,7 +146,7 @@ class BinanceCryptoParser(CryptoExchangesParser):
         return float(json_data['price'])
 
     def create_params(self,
-                      assets_combinations: tuple) -> list[dict[str, str]]:
+                      assets_combinations: tuple) -> list[dict[int, str]]:
         return [
             dict([(self.name_from, ''.join([params[0], params[1]]))])
             for params in assets_combinations if params not in self.exceptions
@@ -188,44 +188,44 @@ class BinanceCryptoParser(CryptoExchangesParser):
 
 
 class BinanceCard2CryptoExchangesParser(Card2CryptoExchangesParser):
-    crypto_exchange_name = CRYPTO_EXCHANGES_NAME
-    endpoint_sell = 'https://www.binance.com/bapi/fiat/v1/public/ocbs/get-quote'
-    endpoint_buy = 'https://www.binance.com/bapi/fiat/v2/public/ocbs/fiat-channel-gateway/get-quotation?'
+    crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
+    endpoint_sell: str = 'https://www.binance.com/bapi/fiat/v1/public/ocbs/get-quote'
+    endpoint_buy: str = 'https://www.binance.com/bapi/fiat/v2/public/ocbs/fiat-channel-gateway/get-quotation?'
 
 
 class BinanceListsFiatCryptoParser(ListsFiatCryptoParser):
-    crypto_exchange_name = CRYPTO_EXCHANGES_NAME
-    endpoint_sell = 'https://www.binance.com/bapi/fiat/v2/friendly/ocbs/sell/list-fiat'
-    endpoint_buy = 'https://www.binance.com/bapi/fiat/v2/friendly/ocbs/buy/list-crypto'
+    crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
+    endpoint_sell: str = 'https://www.binance.com/bapi/fiat/v2/friendly/ocbs/sell/list-fiat'
+    endpoint_buy: str = 'https://www.binance.com/bapi/fiat/v2/friendly/ocbs/buy/list-crypto'
 
 
-class BinanceCard2Wallet2CryptoExchangesCalculate(Card2Wallet2CryptoExchangesCalculate):
-    crypto_exchange_name = CRYPTO_EXCHANGES_NAME
+class BinanceCard2Wallet2CryptoExchangesCalculating(Card2Wallet2CryptoExchangesCalculating):
+    crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
 
 
-class SimplBinanceTinkoffInterExchangesCalculate(InterExchangesCalculate):
-    crypto_exchange_name = CRYPTO_EXCHANGES_NAME
-    bank_name = 'Tinkoff'
-    simpl = True
+class SimplBinanceTinkoffInterExchangesCalculating(InterExchangesCalculating):
+    crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
+    bank_name: str = 'Tinkoff'
+    simpl: bool = True
 
 
-class SimplBinanceWiseInterExchangesCalculate(InterExchangesCalculate):
-    crypto_exchange_name = CRYPTO_EXCHANGES_NAME
-    bank_name = 'Wise'
-    simpl = True
+class SimplBinanceWiseInterExchangesCalculating(InterExchangesCalculating):
+    crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
+    bank_name: str = 'Wise'
+    simpl: bool = True
 
 
-class ComplexBinanceTinkoffInterExchangesCalculate(
-    InterExchangesCalculate
+class ComplexBinanceTinkoffInterExchangesCalculating(
+    InterExchangesCalculating
 ):
-    crypto_exchange_name = CRYPTO_EXCHANGES_NAME
-    bank_name = 'Tinkoff'
-    simpl = False
+    crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
+    bank_name: str = 'Tinkoff'
+    simpl: bool = False
 
 
-class ComplexBinanceWiseInterExchangesCalculate(
-    InterExchangesCalculate
+class ComplexBinanceWiseInterExchangesCalculating(
+    InterExchangesCalculating
 ):
-    crypto_exchange_name = CRYPTO_EXCHANGES_NAME
-    bank_name = 'Wise'
-    simpl = False
+    crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
+    bank_name: str = 'Wise'
+    simpl: bool = False

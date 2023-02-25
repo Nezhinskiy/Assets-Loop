@@ -16,8 +16,10 @@ from arbitration.settings import BASE_ASSET, \
 
 from crypto_exchanges.models import P2PCryptoExchangesRatesUpdates
 
+from core.loggers import ParsingLogger, CalculatingLogger
 
-class BaseCalculate(ABC):
+
+class BaseCalculating(ABC):
     crypto_exchange_name: str
 
     def __init__(self):
@@ -31,20 +33,18 @@ class BaseCalculate(ABC):
         )
         self.banks_config = BANKS_CONFIG
 
-    def logger_start(self) -> None:
-        message = f'Start {self.__class__.__name__} at {self.start_time}.'
-        self.logger.info(message)
 
-
-class InterExchangesCalculate(BaseCalculate, ABC):
+class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
     model = InterExchanges
     model_update = InterExchangesUpdates
     bank_name: str
     simpl: bool
     base_asset: str = BASE_ASSET
+    output_bank: Banks
+    input_crypto_exchanges: P2PCryptoExchangesRates
+    output_crypto_exchanges: P2PCryptoExchangesRates
     data_obsolete_in_minutes: int = DATA_OBSOLETE_IN_MINUTES
     allowed_percentage: int = ALLOWED_PERCENTAGE
-    duration: timedelta
 
     def __init__(self) -> None:
         super().__init__()
@@ -58,16 +58,13 @@ class InterExchangesCalculate(BaseCalculate, ABC):
         self.update_time = datetime.now(timezone.utc) - timedelta(
             minutes=self.data_obsolete_in_minutes
         )
-        self.output_bank = None
-        self.input_crypto_exchanges = None
-        self.output_crypto_exchanges = None
+        self.created_objects = 0
 
-    def logger_end(self) -> None:
-        message = (
-            f'Finish {self.__class__.__name__} at {self.duration}. Updated: '
-            f'{len(self.records_to_update)}'
-        )
-        self.logger.info(message)
+    def get_count_created_objects(self) -> None:
+        self.count_created_objects = self.created_objects
+
+    def get_count_updated_objects(self) -> None:
+        self.count_updated_objects = len(self.records_to_update)
 
     def filter_input_crypto_exchanges(self, input_fiat: str) -> None:
         self.input_crypto_exchanges = P2PCryptoExchangesRates.objects.filter(
@@ -326,6 +323,7 @@ class InterExchangesCalculate(BaseCalculate, ABC):
                     output_crypto_exchange, bank_exchange
                 ), dynamics=None, new=True, update=self.new_update
             )
+            self.created_objects += 1
         # related_marginality_percentage = RelatedMarginalityPercentages(
         #     marginality_percentage=marginality_percentage,
         #     inter_exchange=inter_exchange
@@ -333,27 +331,32 @@ class InterExchangesCalculate(BaseCalculate, ABC):
         # records_to_create.append(related_marginality_percentage)
 
     def main(self) -> None:
-        self.logger_start()
-        if self.simpl:
-            self.get_simpl_inter_exchanges()
-        else:
-            self.get_complex_interbank_exchange()
-        self.model.objects.bulk_update(
-            self.records_to_update,
-            ['marginality_percentage', 'dynamics', 'new',  'update']
-        )
-        # RelatedMarginalityPercentages.objects.bulk_create(
-        #     self.records_to_create
-        # )
-        time_now = datetime.now(timezone.utc)
-        self.duration = time_now - self.start_time
-        self.new_update.updated = time_now
-        self.new_update.duration = self.duration
-        self.new_update.save()
-        self.logger_end()
+        try:
+            self.logger_start()
+            if self.simpl:
+                self.get_simpl_inter_exchanges()
+            else:
+                self.get_complex_interbank_exchange()
+            self.model.objects.bulk_update(
+                self.records_to_update,
+                ['marginality_percentage', 'dynamics', 'new',  'update']
+            )
+            # RelatedMarginalityPercentages.objects.bulk_create(
+            #     self.records_to_create
+            # )
+            time_now = datetime.now(timezone.utc)
+            self.duration = time_now - self.start_time
+            self.new_update.updated = time_now
+            self.new_update.duration = self.duration
+            self.new_update.save()
+            self.logger_end()
+        except Exception as error:
+            self.logger_error(error)
+            raise Exception
 
 
-class Card2Wallet2CryptoExchangesCalculate(BaseCalculate, ABC):
+class Card2Wallet2CryptoExchangesCalculating(BaseCalculating, ParsingLogger,
+                                             ABC):
     model = P2PCryptoExchangesRates
     model_update = P2PCryptoExchangesRatesUpdates
     payment_channel = 'Card2Wallet2CryptoExchange'
@@ -379,18 +382,12 @@ class Card2Wallet2CryptoExchangesCalculate(BaseCalculate, ABC):
         self.update_time = datetime.now(timezone.utc) - timedelta(
             minutes=self.data_obsolete_in_minutes
         )
-        self.duration = None
 
-    def logger_end(self) -> None:
-        message = f'Finish {self.__class__.__name__} at {self.duration}.'
-        count_updated_objects = (len(self.records_to_update)
-                                 + len(self.records_to_create))
-        if count_updated_objects > 0:
-            message += f'Updated: {count_updated_objects}'
-            self.logger.error(message)
-        else:
-            message += f'Has not been updated: {count_updated_objects}'
-            self.logger.error(message)
+    def get_count_created_objects(self) -> None:
+        self.count_created_objects = len(self.records_to_create)
+
+    def get_count_updated_objects(self) -> None:
+        self.count_updated_objects = len(self.records_to_update)
 
     def calculates_price_and_intra_crypto_exchange(
             self, fiat: str, asset: str, transaction_fee: float
@@ -500,14 +497,18 @@ class Card2Wallet2CryptoExchangesCalculate(BaseCalculate, ABC):
                 self.records_to_create.append(created_object)
 
     def main(self):
-        self.logger_start()
-        self.get_all_datas()
-        P2PCryptoExchangesRates.objects.bulk_create(self.records_to_create)
-        P2PCryptoExchangesRates.objects.bulk_update(
-            self.records_to_update, ['price', 'update', 'transaction_fee']
-        )
-        time_now = datetime.now(timezone.utc)
-        self.duration = time_now - self.start_time
-        self.new_update.duration = self.duration
-        self.new_update.save()
-        self.logger_end()
+        try:
+            self.logger_start()
+            self.get_all_datas()
+            P2PCryptoExchangesRates.objects.bulk_create(self.records_to_create)
+            P2PCryptoExchangesRates.objects.bulk_update(
+                self.records_to_update, ['price', 'update', 'transaction_fee']
+            )
+            time_now = datetime.now(timezone.utc)
+            self.duration = time_now - self.start_time
+            self.new_update.duration = self.duration
+            self.new_update.save()
+            self.logger_end()
+        except Exception as error:
+            self.logger_error(error)
+            raise Exception
