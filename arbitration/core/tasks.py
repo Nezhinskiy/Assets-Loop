@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 @app.task(queue='parsing')
 def all_reg():
     all_registration()
+    get_start_binance_fiat_crypto_list.s().delay()
 
 
 @app.task(bind=True, max_retries=4, queue='parsing')
