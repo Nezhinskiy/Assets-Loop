@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from banks.banks_config import BANKS_CONFIG
 from crypto_exchanges.crypto_exchanges_registration.binance import (
     BINANCE_ASSETS, BINANCE_ASSETS_FOR_FIAT, BINANCE_CRYPTO_FIATS,
@@ -6,8 +8,12 @@ from crypto_exchanges.crypto_exchanges_registration.binance import (
 from crypto_exchanges.models import P2PCryptoExchangesRates
 
 CRYPTO_EXCHANGES_CONFIG = {
-    'all_fiats': tuple({fiat for bank_info in BANKS_CONFIG.values()
-                        for fiat in bank_info['currencies']}),
+    'all_fiats': tuple(
+        OrderedDict.fromkeys(
+            fiat for bank_info in BANKS_CONFIG.values()
+            for fiat in bank_info['currencies']
+        )
+    ),
     'Binance': {
         'p2p_parser': BinanceP2PParser,
         'crypto_exchanges_parser': BinanceCryptoParser,

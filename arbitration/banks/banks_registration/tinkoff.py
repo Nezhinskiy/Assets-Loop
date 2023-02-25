@@ -5,7 +5,7 @@ from core.parsers import BankInvestParser, BankParser
 BANK_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
 TINKOFF_CURRENCIES = (
-    'RUB', 'USD', 'EUR', 'ILS', 'GBP', 'CHF', 'CAD', 'AUD', 'SGD', 'HKD',
+    'USD', 'EUR', 'RUB', 'ILS', 'GBP', 'CHF', 'CAD', 'AUD', 'SGD', 'HKD',
     'TRY', 'KZT', 'BYN', 'AMD'
 )
 

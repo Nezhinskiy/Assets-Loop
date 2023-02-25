@@ -46,7 +46,6 @@ class BaseLogger(ABC):
 
 
 class ParsingLogger(BaseLogger, ABC):
-
     def logger_end(self) -> None:
         self.get_all_objects()
         message = f'Finish {self.__class__.__name__} at {self.duration}. '
