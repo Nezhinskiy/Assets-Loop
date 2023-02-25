@@ -159,6 +159,7 @@
                   dataSrc: 'data',
               },
               "rowCallback": function( row, data, index ) {
+                  $('body>.tooltip').remove();
                   var updatedTime = updateTime(data.update.updated);
                   if (updatedTime > 120) {
                       $('td', row).addClass('obsolete');

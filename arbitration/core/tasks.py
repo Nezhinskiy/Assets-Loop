@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timezone
 
-from celery import chord, group, shared_task
+from celery import group
 from arbitration.celery import app
 from banks.tasks import (
                          parse_currency_market_tinkoff_rates,
@@ -46,7 +46,7 @@ def delete_tasks_wait_for_idle(self):
             stats.get('pool').get('writes').get('inqueues').get('active')
         )
         if active_tasks > 0:
-            logger.info(f"Есть активные задачи: {active_tasks}")
+            logger.info(f'Есть активные задачи: {active_tasks}')
             app.control.wait_for_workers([PARSING_WORKER_NAME], 90, force=True)
         app.control.purge()
         new_stats = app.control.inspect().stats().get(PARSING_WORKER_NAME)
@@ -55,7 +55,7 @@ def delete_tasks_wait_for_idle(self):
         )
         if new_active_tasks > 0:
             self.retry()
-        logger.info("Все задачи удалены из очереди")
+        logger.info('Все задачи удалены из очереди')
     except Exception as error:
         logger.info(stats)
         message = f'Нет доступной статистики по воркерам: {error}'
@@ -65,7 +65,7 @@ def delete_tasks_wait_for_idle(self):
 
 @app.task(queue='parsing')
 def assets_loop_stop():
-    delete_tasks_wait_for_idle.s().apply()
+    # delete_tasks_wait_for_idle.s().apply()
     try:
         target_loop = InfoLoop.objects.first()
         target_loop.value = False
@@ -80,71 +80,33 @@ def assets_loop_stop():
 
 @app.task
 def get_simpl_binance_tinkoff_inter_exchanges_calculate():
-    simpl_binance_tinkoff_inter_exchanges_calculate = (
-        SimplBinanceTinkoffInterExchangesCalculate()
-    )
-    try:
-        simpl_binance_tinkoff_inter_exchanges_calculate.logger_start()
-        simpl_binance_tinkoff_inter_exchanges_calculate.main()
-        simpl_binance_tinkoff_inter_exchanges_calculate.logger_end()
-    except Exception as error:
-        logger.error(error)
-        raise Exception
+    SimplBinanceTinkoffInterExchangesCalculate().main()
 
 
 @app.task
 def get_simpl_binance_wise_inter_exchanges_calculate():
-    simpl_binance_wise_inter_exchanges_calculate = (
-        SimplBinanceWiseInterExchangesCalculate()
-    )
-    try:
-        simpl_binance_wise_inter_exchanges_calculate.logger_start()
-        simpl_binance_wise_inter_exchanges_calculate.main()
-        simpl_binance_wise_inter_exchanges_calculate.logger_end()
-    except Exception as error:
-        logger.error(error)
-        raise Exception
+    SimplBinanceWiseInterExchangesCalculate().main()
 
 
 @app.task
 def get_complex_binance_tinkoff_inter_exchanges_calculate():
-    complex_binance_tinkoff_inter_exchanges_calculate = (
-        ComplexBinanceTinkoffInterExchangesCalculate()
-    )
-    try:
-        complex_binance_tinkoff_inter_exchanges_calculate.logger_start()
-        complex_binance_tinkoff_inter_exchanges_calculate.main()
-        complex_binance_tinkoff_inter_exchanges_calculate.logger_end()
-    except Exception as error:
-        logger.error(error)
-        raise Exception
+    ComplexBinanceTinkoffInterExchangesCalculate().main()
 
 
 @app.task
 def get_complex_binance_wise_inter_exchanges_calculate():
-    complex_binance_wise_inter_exchanges_calculate = (
-        ComplexBinanceWiseInterExchangesCalculate()
-    )
-    try:
-        complex_binance_wise_inter_exchanges_calculate.logger_start()
-        complex_binance_wise_inter_exchanges_calculate.main()
-        complex_binance_wise_inter_exchanges_calculate.logger_end()
-    except Exception as error:
-        logger.error(error)
-        raise Exception
+    ComplexBinanceWiseInterExchangesCalculate().main()
 
 
 @app.task(queue='parsing')
 def assets_loop():
-    get_start_binance_fiat_crypto_list.s().apply()
+    # get_start_binance_fiat_crypto_list.s().apply()
     group(
         get_tinkoff_p2p_binance_exchanges.s(),
         get_wise_p2p_binance_exchanges.s(),
         get_all_binance_crypto_exchanges.s(),
         get_binance_card_2_crypto_exchanges_buy.s(),
         get_binance_card_2_crypto_exchanges_sell.s(),
-        get_all_card_2_wallet_2_crypto_exchanges_buy.s(),
-        get_all_card_2_wallet_2_crypto_exchanges_sell.s(),
         parse_internal_tinkoff_rates.s(),
         parse_internal_wise_rates.s()
     ).delay()

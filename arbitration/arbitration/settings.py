@@ -1,4 +1,5 @@
 import os
+import random
 import sys
 from datetime import timedelta, datetime, timezone
 from pathlib import Path
@@ -210,36 +211,45 @@ CELERY_BEAT_SCHEDULE = {
     'get_binance_fiat_crypto_list': {
         'task': 'crypto_exchanges.tasks.get_binance_fiat_crypto_list',
         'schedule': timedelta(hours=12),
-        'options': {'queue': 'regular_tasks'}
+        'options': {'queue': 'parsing'}
+    },
+    'get_all_card_2_wallet_2_crypto_exchanges_buy': {
+        'task': 'crypto_exchanges.tasks.get_all_card_2_wallet_2_crypto_exchanges_buy',
+        'schedule': timedelta(seconds=random.randint(40, 55)),
+        'options': {'queue': 'calculating'}
+    },
+    'get_all_card_2_wallet_2_crypto_exchanges_sell': {
+        'task': 'crypto_exchanges.tasks.get_all_card_2_wallet_2_crypto_exchanges_sell',
+        'schedule': timedelta(seconds=random.randint(40, 55)),
+        'options': {'queue': 'calculating'}
     },
     'get_simpl_binance_tinkoff_inter_exchanges_calculate': {
         'task': 'core.tasks.get_simpl_binance_tinkoff_inter_exchanges_calculate',
-        'schedule': timedelta(seconds=20),
-        'options': {'queue': 'regular_tasks'}
+        'schedule': timedelta(seconds=random.randint(20, 25)),
+        'options': {'queue': 'calculating'}
 
     },
     'get_complex_binance_tinkoff_inter_exchanges_calculate': {
         'task': 'core.tasks.get_complex_binance_tinkoff_inter_exchanges_calculate',
-        'schedule': timedelta(seconds=25),
-        'options': {'queue': 'regular_tasks'}
+        'schedule': timedelta(seconds=random.randint(22, 28)),
+        'options': {'queue': 'calculating'}
     },
     'get_simpl_binance_wise_inter_exchanges_calculate': {
         'task': 'core.tasks.get_simpl_binance_wise_inter_exchanges_calculate',
-        'schedule': timedelta(seconds=20),
-        'options': {'queue': 'regular_tasks'}
+        'schedule': timedelta(seconds=random.randint(20, 25)),
+        'options': {'queue': 'calculating'}
     },
     'get_complex_binance_wise_inter_exchanges_calculate': {
         'task': 'core.tasks.get_complex_binance_wise_inter_exchanges_calculate',
-        'schedule': timedelta(seconds=25),
-        'options': {'queue': 'regular_tasks'}
+        'schedule': timedelta(seconds=random.randint(22, 28)),
+        'options': {'queue': 'calculating'}
     },
     'parse_currency_market_tinkoff_rates': {
         'task': 'banks.tasks.parse_currency_market_tinkoff_rates',
         'schedule': crontab(minute='*/2', hour='4-16', day_of_week='1-5'),
-        'options': {'queue': 'regular_tasks'}
+        'options': {'queue': 'calculating'}
     },
 }
-
 
 CACHES = {
     'default': {

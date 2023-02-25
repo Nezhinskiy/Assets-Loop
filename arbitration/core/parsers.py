@@ -37,13 +37,15 @@ class BaseParser(ABC):
         self.logger.error(message)
 
     def logger_end(self) -> None:
-        message1 = f'Finish {self.__class__.__name__} at {self.duration}.'
-        self.logger.error(message1)
-        message2 = (
-            f'{self.__class__.__name__} updated: '
-            f'{len(self.records_to_update) + len(self.records_to_create)}'
-        )
-        self.logger.error(message2)
+        message = f'Finish {self.__class__.__name__} at {self.duration}.'
+        count_updated_objects = (len(self.records_to_update)
+                                 + len(self.records_to_create))
+        if count_updated_objects > 0:
+            message += f'Updated: {count_updated_objects}'
+            self.logger.error(message)
+        else:
+            message += f'Has not been updated: {count_updated_objects}'
+            self.logger.error(message)
 
 
 class ParsingViaTor(BaseParser, ABC):
@@ -249,12 +251,14 @@ class BankParser(ParsingViaTor, ABC):
                 self.add_to_bulk_update_or_create(value_dict, price)
 
     def main(self) -> None:
+        self.logger_start()
         self.get_all_api_answers()
         BanksExchangeRates.objects.bulk_update(self.records_to_update,
                                                ['price', 'update'])
         self.duration = datetime.now() - self.start_time
         self.new_update.duration = self.duration
         self.new_update.save()
+        self.logger_end()
 
 
 class BankInvestParser(ParsingViaTor, ABC):
@@ -307,6 +311,7 @@ class BankInvestParser(ParsingViaTor, ABC):
         pass
 
     def main(self) -> None:
+        self.logger_start()
         self.get_all_api_answers()
         self.model.objects.bulk_create(self.records_to_create)
         self.model.objects.bulk_update(self.records_to_update,
@@ -314,6 +319,7 @@ class BankInvestParser(ParsingViaTor, ABC):
         self.duration = datetime.now() - self.start_time
         self.new_update.duration = self.duration
         self.new_update.save()
+        self.logger_end()
 
 
 class P2PParser(CryptoParser, ABC):
@@ -412,6 +418,7 @@ class P2PParser(CryptoParser, ABC):
             self.full_update = True
 
     def main(self) -> None:
+        self.logger_start()
         self.is_full_update()
         self.get_all_api_answers()
         self.model.objects.bulk_create(self.records_to_create)
@@ -420,6 +427,7 @@ class P2PParser(CryptoParser, ABC):
         self.duration = datetime.now() - self.start_time
         self.new_update.duration = self.duration
         self.new_update.save()
+        self.logger_end()
 
 
 class CryptoExchangesParser(BaseParser, ABC):
@@ -514,153 +522,14 @@ class CryptoExchangesParser(BaseParser, ABC):
                 self.add_to_bulk_update_or_create(value_dict, price)
 
     def main(self) -> None:
+        self.logger_start()
         self.get_all_api_answers()
         self.model.objects.bulk_update(self.records_to_update,
                                        ['price', 'update'])
         self.duration = datetime.now() - self.start_time
         self.new_update.duration = self.duration
         self.new_update.save()
-
-
-class Card2Wallet2CryptoExchangesParser(CryptoParser, ABC):
-    model = P2PCryptoExchangesRates
-    model_update = P2PCryptoExchangesRatesUpdates
-    payment_channel = 'Card2Wallet2CryptoExchange'
-    data_obsolete_in_minutes: int = DATA_OBSOLETE_IN_MINUTES
-    crypto_exchange_name: str
-
-    def __init__(self, trade_type: str) -> None:
-        super().__init__()
-        self.new_update = self.model_update.objects.create(
-            crypto_exchange=self.crypto_exchange,
-            payment_channel=self.payment_channel
-        )
-        self.trade_type = trade_type
-        self.deposit_fiats = self.crypto_exchanges_configs.get('deposit_fiats')
-        self.withdraw_fiats = self.crypto_exchanges_configs.get(
-            'withdraw_fiats')
-        self.invalid_params_list = self.crypto_exchanges_configs.get(
-            'invalid_params_list')
-        self.update_time = datetime.now(timezone.utc) - timedelta(
-            minutes=self.data_obsolete_in_minutes
-        )
-
-    def calculates_price_and_intra_crypto_exchange(
-            self, fiat: str, asset: str, transaction_fee: float
-    ) -> tuple:
-        fiat_price = 1 - transaction_fee / 100
-        if self.trade_type == 'BUY':
-            intra_crypto_exchange = IntraCryptoExchanges.objects.get(
-                from_asset=fiat, to_asset=asset)
-            crypto_price = intra_crypto_exchange.price
-        else:  # SELL
-            intra_crypto_exchange = IntraCryptoExchanges.objects.get(
-                from_asset=asset, to_asset=fiat)
-            crypto_price = intra_crypto_exchange.price
-        price = fiat_price * crypto_price
-        return price, intra_crypto_exchange
-
-    def generate_all_datas(self, fiat: str, asset: str,
-                           transaction_method: str,
-                           transaction_fee: float) -> dict:
-        return {
-            'asset': asset,
-            'fiat': fiat,
-            'trade_type': self.trade_type,
-            'transaction_method': transaction_method,
-            'transaction_fee': transaction_fee
-        }
-
-    def check_p2p_exchange_is_better(
-            self, value_dict: dict, price: float, bank: Banks
-    ) -> bool:
-        p2p_exchange = self.model.objects.filter(
-            crypto_exchange=self.crypto_exchange, bank=bank,
-            asset=value_dict['asset'], trade_type=value_dict['trade_type'],
-            fiat=value_dict['fiat'], payment_channel='P2P',
-            price__isnull=False, update__updated__gte=self.update_time
-        )
-        if p2p_exchange.exists():
-            p2p_price = p2p_exchange.get().price
-            if (
-                    value_dict['trade_type'] == 'BUY' and price > p2p_price
-                    or value_dict['trade_type'] == 'SELL'
-                    and price < p2p_price
-            ):
-                return True
-        return False
-
-    def get_all_datas(self) -> None:
-        fiats = (self.deposit_fiats if self.trade_type == 'BUY'
-                 else self.withdraw_fiats)
-        for fiat, methods in fiats.items():
-            for method, asset in product(methods, self.assets):
-                if ((fiat, asset) in self.invalid_params_list or (asset, fiat)
-                        in self.invalid_params_list):
-                    continue
-                transaction_method, transaction_fee = method
-                value_dict = self.generate_all_datas(
-                    fiat, asset, transaction_method, transaction_fee
-                )
-                price, intra_crypto_exchange = (
-                    self.calculates_price_and_intra_crypto_exchange(
-                        fiat, asset, transaction_fee
-                    )
-                )
-                self.add_to_bulk_update_or_create(
-                    value_dict, price, intra_crypto_exchange
-                )
-
-    def add_to_bulk_update_or_create(
-            self, value_dict: dict, price: float,
-            intra_crypto_exchange: IntraCryptoExchanges
-    ) -> None:
-        bank_names = []
-        for name, value in self.banks_config.items():
-            if self.payment_channel in value['payment_channels']:
-                bank_names.append(name)
-        for bank_name in bank_names:
-            bank = Banks.objects.get(name=bank_name)
-            target_object = self.model.objects.filter(
-                crypto_exchange=self.crypto_exchange, bank=bank,
-                asset=value_dict['asset'], trade_type=value_dict['trade_type'],
-                fiat=value_dict['fiat'],
-                transaction_method=value_dict['transaction_method'],
-                intra_crypto_exchange=intra_crypto_exchange,
-                payment_channel=self.payment_channel
-            )
-            if self.check_p2p_exchange_is_better(value_dict, price, bank):
-                if target_object.exists():
-                    target_object.delete()
-                return
-            if target_object.exists():
-                updated_object = target_object.get()
-                updated_object.price = price
-                updated_object.transaction_fee = value_dict['transaction_fee']
-                updated_object.update = self.new_update
-                self.records_to_update.append(updated_object)
-            else:
-                created_object = self.model(
-                    crypto_exchange=self.crypto_exchange, bank=bank,
-                    asset=value_dict['asset'], fiat=value_dict['fiat'],
-                    trade_type=value_dict['trade_type'],
-                    transaction_method=value_dict['transaction_method'],
-                    transaction_fee=value_dict['transaction_fee'],
-                    price=price, intra_crypto_exchange=intra_crypto_exchange,
-                    payment_channel=self.payment_channel,
-                    update=self.new_update
-                )
-                self.records_to_create.append(created_object)
-
-    def main(self):
-        self.get_all_datas()
-        P2PCryptoExchangesRates.objects.bulk_create(self.records_to_create)
-        P2PCryptoExchangesRates.objects.bulk_update(
-            self.records_to_update, ['price', 'update', 'transaction_fee']
-        )
-        self.duration = datetime.now() - self.start_time
-        self.new_update.duration = self.duration
-        self.new_update.save()
+        self.logger_end()
 
 
 class ListsFiatCryptoParser(CryptoParser, ABC):
@@ -765,10 +634,12 @@ class ListsFiatCryptoParser(CryptoParser, ABC):
         self.add_to_update_or_create(buy_dict, trade_type='BUY')
 
     def main(self) -> None:
+        self.logger_start()
         self.get_all_api_answers()
         self.duration = datetime.now() - self.start_time
         self.new_update.duration = self.duration
         self.new_update.save()
+        self.logger_end()
 
 
 class Card2CryptoExchangesParser(CryptoParser, ABC):
@@ -946,6 +817,7 @@ class Card2CryptoExchangesParser(CryptoParser, ABC):
             self.full_update = True
 
     def main(self) -> None:
+        self.logger_start()
         self.is_full_update()
         self.get_all_api_answers()
         self.model.objects.bulk_create(self.records_to_create)
@@ -956,3 +828,4 @@ class Card2CryptoExchangesParser(CryptoParser, ABC):
         self.duration = datetime.now() - self.start_time
         self.new_update.duration = self.duration
         self.new_update.save()
+        self.logger_end()

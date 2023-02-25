@@ -2,8 +2,6 @@ from banks.banks_config import BANKS_CONFIG
 from banks.currency_markets_registration.tinkoff_invest import \
     CURRENCY_MARKET_NAME
 from banks.models import Banks, CurrencyMarkets
-from crypto_exchanges.crypto_exchanges_registration.binance import \
-    get_all_binance_crypto_exchanges
 from crypto_exchanges.models import CryptoExchanges
 
 from crypto_exchanges.crypto_exchanges_registration.binance import \
@@ -45,4 +43,3 @@ def all_registration():
     currency_markets()
     crypto_exchanges()
     crypto_list()
-    get_all_binance_crypto_exchanges()

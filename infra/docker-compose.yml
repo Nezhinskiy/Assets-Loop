@@ -64,13 +64,13 @@ services:
       - arbitration
       - redis
 
-  celery-regular:
+  celery-calculating:
     restart: always
     build:
       context: ../arbitration
-    container_name: celery-regular
+    container_name: celery-calculating
     entrypoint: celery
-    command:  -A arbitration worker --loglevel=ERROR -Q regular_tasks -c 1 -n regular_worker
+    command:  -A arbitration worker --loglevel=ERROR -Q calculating -c 1 -n calculating_worker
     env_file:
       - .env
     links:
@@ -89,10 +89,12 @@ services:
     env_file:
       - .env
     links:
-      - celery-regular
+      - celery-parsing
+      - celery-calculating
       - redis
     depends_on:
-      - celery-regular
+      - celery-parsing
+      - celery-calculating
       - redis
       - tor_proxy
       - nginx

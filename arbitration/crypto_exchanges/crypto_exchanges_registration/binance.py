@@ -10,9 +10,8 @@ from typing import List, Dict
 import requests
 
 from banks.banks_config import BANKS_CONFIG
-from core.intra_exchanges import InterSimplExchangesCalculate
+from core.calculations import InterExchangesCalculate, Card2Wallet2CryptoExchangesCalculate
 from core.parsers import (Card2CryptoExchangesParser,
-                          Card2Wallet2CryptoExchangesParser,
                           CryptoExchangesParser, ListsFiatCryptoParser,
                           P2PParser)
 
@@ -64,22 +63,8 @@ TRADE_TYPES = (
     ('BUY', 'buy'),
     ('SELL', 'sell')
 )
-FIATS = (
-    ('RUB', 'rub'),
-    # ('USD', 'usd'),
-    # ('EUR', 'eur'),
-    # ('GBP', 'gbp'),
-)
 CRYPTO_FIATS = (
     'AUD', 'BRL', 'EUR', 'GBP', 'RUB', 'TRY', 'UAH'
-)
-PAY_TYPES = (
-    ('Tinkoff', 'Tinkoff'),
-    ('Wise', 'Wise'),
-    # 'TBCbank',
-    # 'BankofGeorgia',
-    ('RosBank', 'RosBank'),
-    ('RUBfiatbalance', 'RUBfiatbalance')
 )
 SPOT_ZERO_FEES = {
     'BTC': [
@@ -214,24 +199,24 @@ class BinanceListsFiatCryptoParser(ListsFiatCryptoParser):
     endpoint_buy = 'https://www.binance.com/bapi/fiat/v2/friendly/ocbs/buy/list-crypto'
 
 
-class BinanceCard2Wallet2CryptoExchangesParser(Card2Wallet2CryptoExchangesParser):
+class BinanceCard2Wallet2CryptoExchangesCalculate(Card2Wallet2CryptoExchangesCalculate):
     crypto_exchange_name = CRYPTO_EXCHANGES_NAME
 
 
-class SimplBinanceTinkoffInterExchangesCalculate(InterSimplExchangesCalculate):
+class SimplBinanceTinkoffInterExchangesCalculate(InterExchangesCalculate):
     crypto_exchange_name = CRYPTO_EXCHANGES_NAME
     bank_name = 'Tinkoff'
     simpl = True
 
 
-class SimplBinanceWiseInterExchangesCalculate(InterSimplExchangesCalculate):
+class SimplBinanceWiseInterExchangesCalculate(InterExchangesCalculate):
     crypto_exchange_name = CRYPTO_EXCHANGES_NAME
     bank_name = 'Wise'
     simpl = True
 
 
 class ComplexBinanceTinkoffInterExchangesCalculate(
-    InterSimplExchangesCalculate
+    InterExchangesCalculate
 ):
     crypto_exchange_name = CRYPTO_EXCHANGES_NAME
     bank_name = 'Tinkoff'
@@ -239,65 +224,8 @@ class ComplexBinanceTinkoffInterExchangesCalculate(
 
 
 class ComplexBinanceWiseInterExchangesCalculate(
-    InterSimplExchangesCalculate
+    InterExchangesCalculate
 ):
     crypto_exchange_name = CRYPTO_EXCHANGES_NAME
     bank_name = 'Wise'
     simpl = False
-
-
-def get_simpl_binance_tinkoff_inter_exchanges_calculate():
-    simpl_binance_tinkoff_inter_exchanges_calculate = (
-        SimplBinanceTinkoffInterExchangesCalculate()
-    )
-    simpl_binance_tinkoff_inter_exchanges_calculate.main()
-
-
-def get_simpl_binance_wise_inter_exchanges_calculate():
-    simpl_binance_wise_inter_exchanges_calculate = (
-        SimplBinanceWiseInterExchangesCalculate()
-    )
-    simpl_binance_wise_inter_exchanges_calculate.main()
-
-
-def get_complex_binance_tinkoff_inter_exchanges_calculate():
-    complex_binance_tinkoff_inter_exchanges_calculate = (
-        ComplexBinanceTinkoffInterExchangesCalculate()
-    )
-    complex_binance_tinkoff_inter_exchanges_calculate.main()
-
-
-def get_complex_binance_wise_inter_exchanges_calculate():
-    complex_binance_wise_inter_exchanges_calculate = (
-        ComplexBinanceWiseInterExchangesCalculate()
-    )
-    complex_binance_wise_inter_exchanges_calculate.main()
-
-
-def get_binance_card_2_crypto_exchanges():
-    binance_card_2_crypto_exchanges_parser = BinanceCard2CryptoExchangesParser()
-    message = binance_card_2_crypto_exchanges_parser.main()
-    return message
-
-
-def get_binance_fiat_crypto_list():
-    binance_fiat_crypto_list_parser = BinanceListsFiatCryptoParser()
-    message = binance_fiat_crypto_list_parser.main()
-    return message
-
-
-def get_all_binance_crypto_exchanges():
-    binance_crypto_parser = BinanceCryptoParser()
-    binance_crypto_parser.main()
-
-
-def get_all_p2p_binance_exchanges():
-    binance_parser = BinanceP2PParser()
-    message = binance_parser.main()
-    return message
-
-
-def get_all_card_2_wallet_2_crypto_exchanges():
-    card_2_wallet_2_crypto_exchanges_parser = BinanceCard2Wallet2CryptoExchangesParser()
-    message = card_2_wallet_2_crypto_exchanges_parser.main()
-    return message
