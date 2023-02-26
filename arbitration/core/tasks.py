@@ -8,25 +8,20 @@ from banks.tasks import (
                          parse_internal_tinkoff_rates,
                          parse_internal_wise_rates)
 from core.registration import all_registration
-from crypto_exchanges.crypto_exchanges_registration.binance import (
-    ComplexBinanceTinkoffInterExchangesCalculating,
-    ComplexBinanceWiseInterExchangesCalculating,
-    SimplBinanceTinkoffInterExchangesCalculating,
-    SimplBinanceWiseInterExchangesCalculating)
 from crypto_exchanges.tasks import (
                                     get_all_binance_crypto_exchanges,
                                     get_all_card_2_wallet_2_crypto_exchanges_buy,
                                     get_all_card_2_wallet_2_crypto_exchanges_sell,
                                     get_binance_card_2_crypto_exchanges_buy,
                                     get_binance_card_2_crypto_exchanges_sell,
-                                    get_tinkoff_p2p_binance_exchanges,
-                                    get_wise_p2p_binance_exchanges,
                                     get_start_binance_fiat_crypto_list
                                     )
 
 from core.models import InfoLoop
 
 from arbitration.settings import PARSING_WORKER_NAME
+
+from banks.tasks import get_tinkoff_p2p_binance_exchanges, get_wise_p2p_binance_exchanges, get_sberbank_p2p_binance_exchanges
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -79,32 +74,13 @@ def assets_loop_stop():
         raise Exception
 
 
-@app.task
-def get_simpl_binance_tinkoff_inter_exchanges_calculating():
-    SimplBinanceTinkoffInterExchangesCalculating().main()
-
-
-@app.task
-def get_simpl_binance_wise_inter_exchanges_calculating():
-    SimplBinanceWiseInterExchangesCalculating().main()
-
-
-@app.task
-def get_complex_binance_tinkoff_inter_exchanges_calculating():
-    ComplexBinanceTinkoffInterExchangesCalculating().main()
-
-
-@app.task
-def get_complex_binance_wise_inter_exchanges_calculating():
-    ComplexBinanceWiseInterExchangesCalculating().main()
-
-
 @app.task(queue='parsing')
 def assets_loop():
     # get_start_binance_fiat_crypto_list.s().apply()
     group(
         get_tinkoff_p2p_binance_exchanges.s(),
         get_wise_p2p_binance_exchanges.s(),
+        get_sberbank_p2p_binance_exchanges.s(),
         get_all_binance_crypto_exchanges.s(),
         get_binance_card_2_crypto_exchanges_buy.s(),
         get_binance_card_2_crypto_exchanges_sell.s(),

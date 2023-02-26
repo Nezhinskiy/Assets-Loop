@@ -9,7 +9,6 @@ from typing import List, Dict
 
 import requests
 
-from banks.banks_config import BANKS_CONFIG
 from core.calculations import InterExchangesCalculating, Card2Wallet2CryptoExchangesCalculating
 from core.parsers import (Card2CryptoExchangesParser,
                           CryptoExchangesParser, ListsFiatCryptoParser,
@@ -38,7 +37,6 @@ INVALID_PARAMS_LIST = (
 BINANCE_TRADE_TYPES = ('BUY', 'SELL')
 BINANCE_FIATS = ('RUB', 'USD', 'EUR')
 BINANCE_CRYPTO_FIATS = ('AUD', 'BRL', 'EUR', 'GBP', 'RUB', 'TRY', 'UAH')
-BINANCE_PAY_TYPES = (pay_type for pay_type in BANKS_CONFIG.keys())
 DEPOSIT_FIATS = {
     'UAH': (('SettlePay (Visa/MC)', 1.5),),
     'EUR': (('Bank Card (Visa/MC)', 1.8),),
@@ -75,10 +73,10 @@ SPOT_ZERO_FEES = {
 
 
 class BinanceP2PParser(P2PParser, ABC):
-    crypto_exchange_name = CRYPTO_EXCHANGES_NAME
-    endpoint = 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search'
-    page = 1
-    rows = 1
+    crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
+    endpoint: str = 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search'
+    page: int = 1
+    rows: int = 1
 
     def create_body(self, asset: str, fiat: str, trade_type: str) -> dict:
         return {
@@ -99,14 +97,6 @@ class BinanceP2PParser(P2PParser, ABC):
         internal_data = data[0]
         adv = internal_data.get('adv')
         return float(adv.get('price'))
-
-
-class TinkoffBinanceP2PParser(BinanceP2PParser):
-    bank_name = 'Tinkoff'
-
-
-class WiseBinanceP2PParser(BinanceP2PParser):
-    bank_name = 'Wise'
 
 
 class BinanceCryptoParser(CryptoExchangesParser):
@@ -189,43 +179,31 @@ class BinanceCryptoParser(CryptoExchangesParser):
 
 class BinanceCard2CryptoExchangesParser(Card2CryptoExchangesParser):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
-    endpoint_sell: str = 'https://www.binance.com/bapi/fiat/v1/public/ocbs/get-quote'
-    endpoint_buy: str = 'https://www.binance.com/bapi/fiat/v2/public/ocbs/fiat-channel-gateway/get-quotation?'
+    endpoint_sell: str = ('https://www.binance.com/bapi/fiat/v1/public/ocbs'
+                          '/get-quote')
+    endpoint_buy: str = ('https://www.binance.com/bapi/fiat/v2/public/ocbs'
+                         '/fiat-channel-gateway/get-quotation?')
 
 
 class BinanceListsFiatCryptoParser(ListsFiatCryptoParser):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
-    endpoint_sell: str = 'https://www.binance.com/bapi/fiat/v2/friendly/ocbs/sell/list-fiat'
-    endpoint_buy: str = 'https://www.binance.com/bapi/fiat/v2/friendly/ocbs/buy/list-crypto'
+    endpoint_sell: str = ('https://www.binance.com/bapi/fiat/v2/friendly/ocbs'
+                          '/sell/list-fiat')
+    endpoint_buy: str = ('https://www.binance.com/bapi/fiat/v2/friendly/ocbs'
+                         '/buy/list-crypto')
 
 
-class BinanceCard2Wallet2CryptoExchangesCalculating(Card2Wallet2CryptoExchangesCalculating):
+class BinanceCard2Wallet2CryptoExchangesCalculating(
+    Card2Wallet2CryptoExchangesCalculating
+):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
 
 
-class SimplBinanceTinkoffInterExchangesCalculating(InterExchangesCalculating):
+class SimplBinanceInterExchangesCalculating(InterExchangesCalculating, ABC):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
-    bank_name: str = 'Tinkoff'
     simpl: bool = True
 
 
-class SimplBinanceWiseInterExchangesCalculating(InterExchangesCalculating):
+class ComplexBinanceInterExchangesCalculating(InterExchangesCalculating, ABC):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
-    bank_name: str = 'Wise'
-    simpl: bool = True
-
-
-class ComplexBinanceTinkoffInterExchangesCalculating(
-    InterExchangesCalculating
-):
-    crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
-    bank_name: str = 'Tinkoff'
-    simpl: bool = False
-
-
-class ComplexBinanceWiseInterExchangesCalculating(
-    InterExchangesCalculating
-):
-    crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
-    bank_name: str = 'Wise'
     simpl: bool = False

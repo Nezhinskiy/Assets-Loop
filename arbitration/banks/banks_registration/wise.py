@@ -2,6 +2,10 @@ import os
 
 from core.parsers import BankParser
 
+from crypto_exchanges.crypto_exchanges_registration.binance import \
+    SimplBinanceInterExchangesCalculating, \
+    ComplexBinanceInterExchangesCalculating, BinanceP2PParser
+
 BANK_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
 WISE_CURRENCIES = (
@@ -12,14 +16,14 @@ WISE_CURRENCIES_WITH_REQUISITES = ('USD', 'EUR', )
 
 
 class WiseParser(BankParser):
-    bank_name = BANK_NAME
-    endpoint = 'https://wise.com/gateway/v3/price?'
-    name_from = 'sourceCurrency'
-    name_to = 'targetCurrency'
-    buy_and_sell = False
+    bank_name: str = BANK_NAME
+    endpoint: str = 'https://wise.com/gateway/v3/price?'
+    name_from: str = 'sourceCurrency'
+    name_to: str = 'targetCurrency'
+    buy_and_sell: bool = False
     # custom_settings
-    sourceAmount = 10000
-    profileCountry = 'RU'
+    sourceAmount: int = 10000
+    profileCountry: str = 'RU'
 
     def create_params(self, fiats_combinations):
         params = [dict([('sourceAmount', self.sourceAmount),
@@ -43,7 +47,17 @@ class WiseParser(BankParser):
                     return price
 
 
-def get_all_wise_exchanges():
-    wise_parser = WiseParser()
-    message = wise_parser.main()
-    return message
+class WiseBinanceP2PParser(BinanceP2PParser):
+    bank_name: str = BANK_NAME
+
+
+class SimplBinanceWiseInterExchangesCalculating(
+    SimplBinanceInterExchangesCalculating
+):
+    bank_name: str = BANK_NAME
+
+
+class ComplexBinanceWiseInterExchangesCalculating(
+    ComplexBinanceInterExchangesCalculating
+):
+    bank_name: str = BANK_NAME

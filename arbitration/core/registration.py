@@ -8,9 +8,8 @@ from crypto_exchanges.models import CryptoExchanges
 def banks():
     for bank_name in BANKS_CONFIG.keys():
         if not Banks.objects.filter(name=bank_name).exists():
-            binance_name = (
-                bank_name if bank_name != 'Tinkoff' else 'TinkoffNew'
-            )
+            bank_config = BANKS_CONFIG[bank_name]
+            binance_name = bank_config['binance_name']
             Banks.objects.create(name=bank_name, binance_name=binance_name)
 
 

@@ -2,6 +2,10 @@ import os
 
 from core.parsers import BankInvestParser, BankParser
 
+from crypto_exchanges.crypto_exchanges_registration.binance import \
+    SimplBinanceInterExchangesCalculating, \
+    ComplexBinanceInterExchangesCalculating, BinanceP2PParser
+
 BANK_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
 TINKOFF_CURRENCIES = (
@@ -13,11 +17,11 @@ TINKOFF_CURRENCIES_WITH_REQUISITES = ('RUB', 'USD', 'EUR', )
 
 
 class TinkoffParser(BankParser):
-    bank_name = BANK_NAME
-    endpoint = 'https://api.tinkoff.ru/v1/currency_rates?'
-    buy_and_sell = True
-    name_from = 'from'
-    name_to = 'to'
+    bank_name: str = BANK_NAME
+    endpoint: str = 'https://api.tinkoff.ru/v1/currency_rates?'
+    buy_and_sell: bool = True
+    name_from: str = 'from'
+    name_to: str = 'to'
 
     def create_params(self, fiats_combinations):
         params = [
@@ -45,7 +49,17 @@ class TinkoffParser(BankParser):
         return buy, sell
 
 
-def get_all_tinkoff_exchanges():
-    tinkoff_parser = TinkoffParser()
-    message = tinkoff_parser.main()
-    return message
+class TinkoffBinanceP2PParser(BinanceP2PParser):
+    bank_name: str = BANK_NAME
+
+
+class SimplBinanceTinkoffInterExchangesCalculating(
+    SimplBinanceInterExchangesCalculating
+):
+    bank_name: str = BANK_NAME
+
+
+class ComplexBinanceTinkoffInterExchangesCalculating(
+    ComplexBinanceInterExchangesCalculating
+):
+    bank_name: str = BANK_NAME

@@ -4,28 +4,9 @@ from arbitration.celery import app
 from crypto_exchanges.crypto_exchanges_registration.binance import (
     BinanceCard2CryptoExchangesParser,
     BinanceCard2Wallet2CryptoExchangesCalculating, BinanceCryptoParser,
-    BinanceListsFiatCryptoParser, TinkoffBinanceP2PParser,
-    WiseBinanceP2PParser)
+    BinanceListsFiatCryptoParser)
 
 logger = logging.getLogger(__name__)
-
-
-@app.task(
-    bind=True, max_retries=None, queue='parsing', autoretry_for=(Exception,),
-    retry_backoff=True
-)
-def get_tinkoff_p2p_binance_exchanges(self):
-    TinkoffBinanceP2PParser().main()
-    self.retry(countdown=70)
-
-
-@app.task(
-    bind=True, max_retries=None, queue='parsing', autoretry_for=(Exception,),
-    retry_backoff=True
-)
-def get_wise_p2p_binance_exchanges(self):
-    WiseBinanceP2PParser().main()
-    self.retry(countdown=70)
 
 
 @app.task(
