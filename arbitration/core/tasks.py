@@ -23,7 +23,7 @@ from core.models import InfoLoop
 
 from arbitration.settings import PARSING_WORKER_NAME
 
-from banks.tasks import get_tinkoff_p2p_binance_exchanges, get_wise_p2p_binance_exchanges, get_sberbank_p2p_binance_exchanges, get_raiffeisen_p2p_binance_exchanges
+from banks.tasks import get_tinkoff_p2p_binance_exchanges, get_wise_p2p_binance_exchanges, get_sberbank_p2p_binance_exchanges, get_raiffeisen_p2p_binance_exchanges, get_qiwi_p2p_binance_exchanges
 
 from banks.banks_config import BANKS_CONFIG
 from crypto_exchanges.crypto_exchanges_registration.binance import \
@@ -94,6 +94,7 @@ def assets_loop():
         get_binance_card_2_crypto_exchanges_sell.s(),
         parse_internal_tinkoff_rates.s(),
         parse_internal_raiffeisen_rates.s(),
+        get_qiwi_p2p_binance_exchanges.s(),
         parse_internal_wise_rates.s()
     ).delay()
 

@@ -12,6 +12,8 @@ from banks.banks_registration.wise import WiseBinanceP2PParser
 
 from banks.banks_registration.raiffeisen import RaiffeisenParser, RaiffeisenBinanceP2PParser
 
+from banks.banks_registration.qiwi import QIWIBinanceP2PParser
+
 logger = logging.getLogger(__name__)
 
 
@@ -59,6 +61,15 @@ def get_tinkoff_p2p_binance_exchanges(self):
 )
 def get_raiffeisen_p2p_binance_exchanges(self):
     RaiffeisenBinanceP2PParser().main()
+    self.retry(countdown=70)
+
+
+@app.task(
+    bind=True, max_retries=None, queue='parsing', autoretry_for=(Exception,),
+    retry_backoff=True
+)
+def get_qiwi_p2p_binance_exchanges(self):
+    QIWIBinanceP2PParser().main()
     self.retry(countdown=70)
 
 

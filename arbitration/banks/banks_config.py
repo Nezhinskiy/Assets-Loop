@@ -7,6 +7,8 @@ from banks.banks_registration.sberbank import SBERBANK_CURRENCIES
 from banks.banks_registration.raiffeisen import \
     RAIFFEISEN_CURRENCIES
 
+from banks.banks_registration.qiwi import QIWI_CURRENCIES
+
 BANKS_CONFIG = {
     'Tinkoff': {
         'bank_parser': True,
@@ -35,6 +37,17 @@ BANKS_CONFIG = {
         'currencies': RAIFFEISEN_CURRENCIES,
         'crypto_exchanges': ('Binance',),
         'binance_name': 'RaiffeisenBank',
+        'payment_channels': (
+            P2PCryptoExchangesRates,
+        ),
+        'transaction_methods': (),
+        'bank_invest_exchanges': []
+    },
+    'QIWI': {
+        'bank_parser': False,
+        'currencies': QIWI_CURRENCIES,
+        'crypto_exchanges': ('Binance',),
+        'binance_name': 'QIWI',
         'payment_channels': (
             P2PCryptoExchangesRates,
         ),
