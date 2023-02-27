@@ -55,7 +55,7 @@ class InfoLoopList(ListView):
 
 class InterExchangesListNew(FilterView):
     model = InterExchanges
-    template_name = 'crypto_exchanges/new.html'
+    template_name = 'crypto_exchanges/main.html'
     filterset_class = ExchangesFilter
 
 

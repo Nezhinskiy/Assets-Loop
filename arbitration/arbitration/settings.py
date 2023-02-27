@@ -197,6 +197,9 @@ INTER_EXCHANGES_OBSOLETE_IN_MINUTES = 15
 INTER_EXCHANGES_BEGIN_OBSOLETE_MINUTES = 2
 ALLOWED_PERCENTAGE = int(os.getenv('ALLOWED_PERCENTAGE', 8))
 MINIMUM_PERCENTAGE = -10
+UPDATE_RATE = (
+    10, 10, 10, 5, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 10, 10
+)
 
 # Celery settings
 
@@ -221,28 +224,27 @@ CELERY_BEAT_SCHEDULE = {
     },
     'get_all_card_2_wallet_2_crypto_exchanges_buy': {
         'task': 'crypto_exchanges.tasks.get_all_card_2_wallet_2_crypto_exchanges_buy',
-        'schedule': timedelta(seconds=random.randint(40, 55)),
+        'schedule': timedelta(seconds=random.randint(45, 50)),
         'options': {'queue': 'calculating'}
     },
     'get_all_card_2_wallet_2_crypto_exchanges_sell': {
         'task': 'crypto_exchanges.tasks.get_all_card_2_wallet_2_crypto_exchanges_sell',
-        'schedule': timedelta(seconds=random.randint(40, 55)),
+        'schedule': timedelta(seconds=random.randint(45, 50)),
         'options': {'queue': 'calculating'}
     },
     'get_simpl_binance_inter_exchanges_calculating': {
         'task': 'core.tasks.get_simpl_binance_inter_exchanges_calculating',
         'schedule': timedelta(seconds=random.randint(20, 25)),
         'options': {'queue': 'calculating'}
-
     },
     'get_complex_binance_inter_exchanges_calculating': {
         'task': 'core.tasks.get_complex_binance_inter_exchanges_calculating',
-        'schedule': timedelta(seconds=random.randint(35, 40)),
+        'schedule': timedelta(seconds=random.randint(30, 35)),
         'options': {'queue': 'calculating'}
     },
     'get_complex_binance_international_inter_exchanges_calculating': {
         'task': 'core.tasks.get_complex_binance_international_inter_exchanges_calculating',
-        'schedule': timedelta(seconds=random.randint(35, 40)),
+        'schedule': timedelta(seconds=random.randint(30, 35)),
         'options': {'queue': 'calculating'}
     },
 }

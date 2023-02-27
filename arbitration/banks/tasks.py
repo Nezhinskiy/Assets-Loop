@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 
 from arbitration.celery import app
 from banks.banks_registration.tinkoff import TinkoffParser
@@ -17,6 +18,8 @@ from banks.banks_registration.qiwi import QIWIBinanceP2PParser
 from banks.banks_registration.yoomoney import \
     YoomoneyBinanceP2PParser
 
+from arbitration.settings import UPDATE_RATE
+
 logger = logging.getLogger(__name__)
 
 
@@ -27,7 +30,7 @@ logger = logging.getLogger(__name__)
 )
 def parse_internal_tinkoff_rates(self):
     TinkoffParser().main()
-    self.retry(countdown=200)
+    self.retry(countdown=200 * UPDATE_RATE[datetime.now(timezone.utc).hour])
 
 
 @app.task(
@@ -36,7 +39,7 @@ def parse_internal_tinkoff_rates(self):
 )
 def parse_internal_raiffeisen_rates(self):
     RaiffeisenParser().main()
-    self.retry(countdown=200)
+    self.retry(countdown=200 * UPDATE_RATE[datetime.now(timezone.utc).hour])
 
 
 @app.task(
@@ -45,7 +48,7 @@ def parse_internal_raiffeisen_rates(self):
 )
 def parse_internal_wise_rates(self):
     WiseParser().main()
-    self.retry(countdown=200)
+    self.retry(countdown=200 * UPDATE_RATE[datetime.now(timezone.utc).hour])
 
 
 # Banks P2P rates
@@ -55,7 +58,7 @@ def parse_internal_wise_rates(self):
 )
 def get_tinkoff_p2p_binance_exchanges(self):
     TinkoffBinanceP2PParser().main()
-    self.retry(countdown=70)
+    self.retry(countdown=70 * UPDATE_RATE[datetime.now(timezone.utc).hour])
 
 
 @app.task(
@@ -64,7 +67,7 @@ def get_tinkoff_p2p_binance_exchanges(self):
 )
 def get_sberbank_p2p_binance_exchanges(self):
     SberbankBinanceP2PParser().main()
-    self.retry(countdown=70)
+    self.retry(countdown=70 * UPDATE_RATE[datetime.now(timezone.utc).hour])
 
 
 @app.task(
@@ -73,7 +76,7 @@ def get_sberbank_p2p_binance_exchanges(self):
 )
 def get_raiffeisen_p2p_binance_exchanges(self):
     RaiffeisenBinanceP2PParser().main()
-    self.retry(countdown=70)
+    self.retry(countdown=70 * UPDATE_RATE[datetime.now(timezone.utc).hour])
 
 
 @app.task(
@@ -82,7 +85,7 @@ def get_raiffeisen_p2p_binance_exchanges(self):
 )
 def get_qiwi_p2p_binance_exchanges(self):
     QIWIBinanceP2PParser().main()
-    self.retry(countdown=70)
+    self.retry(countdown=70 * UPDATE_RATE[datetime.now(timezone.utc).hour])
 
 
 @app.task(
@@ -91,7 +94,7 @@ def get_qiwi_p2p_binance_exchanges(self):
 )
 def get_yoomoney_p2p_binance_exchanges(self):
     YoomoneyBinanceP2PParser().main()
-    self.retry(countdown=70)
+    self.retry(countdown=70 * UPDATE_RATE[datetime.now(timezone.utc).hour])
 
 
 @app.task(
@@ -100,7 +103,7 @@ def get_yoomoney_p2p_binance_exchanges(self):
 )
 def get_wise_p2p_binance_exchanges(self):
     WiseBinanceP2PParser().main()
-    self.retry(countdown=70)
+    self.retry(countdown=70 * UPDATE_RATE[datetime.now(timezone.utc).hour])
 
 
 # Currency markets

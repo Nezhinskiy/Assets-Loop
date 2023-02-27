@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% load i18n static %}
+
+{% block title %}
+  Арбитражные связки
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <div class="row">
+      <div class="col-sm-4">
+        {% include 'crypto_exchanges/includes/product_filter.html' %}
+      </div>
+      <div class="col-sm-8">
+        <h1>
+          Все актуальные арбитражные связки:
+        </h1>
+        <table id="dynamicDatatable" data-url="{% url "core:inter_exchanges_data" %}" data-filter="{{ request.get_full_path|last_url_path:0 | safe }}" class="table">
+          <thead class="table-dark">
+            <tr>
+              <th style="width:80%" scope="col">Связка</th>
+              <th style="width:10%" scope="col">Маржинальность</th>
+              <th style="width:10%" scope="col">Обновлено</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="myModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modalTitle"></h3>
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        </div>
+        <div class="modal-body"></div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-dismiss="modal" aria-hidden="true">Закрыть</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script type="text/javascript">
+    let dt_language = {
+        "emptyTable":     "{% trans 'С данным фильтром связок не найдено' %}",
+        "info":           "{% trans 'Всего связок: _TOTAL_ <br>Отображаются с _START_ по _END_' %}",
+        "infoEmpty":      "{% trans 'Нет данных' %}",
+        "infoFiltered":   "{% trans '(filtered from _MAX_ total entries)' %}",
+        "infoPostFix":    "",
+        "thousands":      ",",
+        "lengthMenu":     "{% trans 'Показать _MENU_ связок на странице' %}",
+        "loadingRecords": "{% trans 'Loading...' %}",
+        "processing":     "{% trans 'Квантовые вычисления...' %}",
+        "search":         "{% trans 'Search:' %}",
+        "zeroRecords":    "{% trans 'No matching records found' %}",
+        "paginate": {
+            "first":      "{% trans 'Первая' %}",
+            "last":       "{% trans 'Последняя' %}",
+            "next":       "{% trans 'Следующая' %}",
+            "previous":   "{% trans 'Предыдущая' %}"
+        },
+        "aria": {
+            "sortAscending":  "{% trans ': activate to sort column ascending' %}",
+            "sortDescending": "{% trans ': activate to sort column descending' %}"
+        }
+    }
+  </script>
+  <script src="{% static 'js/main_datatable.js' %}"></script>
+{% endblock %}

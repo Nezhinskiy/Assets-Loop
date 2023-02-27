@@ -27,7 +27,7 @@
       </div>
     </div>
   </div>
-  <table id="dynamicDatatable" class="table">
+  <table id="staticDatatable" class="table">
     <thead class="table-dark">
       <tr>
         <th scope="col">#</th>
@@ -50,15 +50,5 @@
 {% endblock %}
 
 {% block extra_js %}
-  <script>
-    $(document).ready(function () {
-          $('#dynamicDatatable').DataTable({
-              "searching": false,
-              "pageLength": 15,
-              "lengthMenu": [[15, 30, 60, 100], [15, 30, 60, 100]],
-              "info": true,
-              {#'order': [[0, 'desc']],#}
-        });
-    });
-  </script>
+  <script src="{% static 'js/info_datatable.js' %}"></script>
 {% endblock %}
