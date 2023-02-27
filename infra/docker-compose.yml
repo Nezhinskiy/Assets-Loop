@@ -70,7 +70,7 @@ services:
       context: ../arbitration
     container_name: celery-calculating
     entrypoint: celery
-    command:  -A arbitration worker --loglevel=ERROR -Q calculating -c 1 -n calculating_worker
+    command:  -A arbitration worker --loglevel=ERROR -Q calculating -c 2 -n calculating_worker
     env_file:
       - .env
     links:

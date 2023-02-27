@@ -207,3 +207,12 @@ class SimplBinanceInterExchangesCalculating(InterExchangesCalculating, ABC):
 class ComplexBinanceInterExchangesCalculating(InterExchangesCalculating, ABC):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
     simpl: bool = False
+    international: bool = False
+
+
+class ComplexBinanceInternationalInterExchangesCalculating(
+    InterExchangesCalculating, ABC
+):
+    crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
+    simpl: bool = False
+    international: bool = True

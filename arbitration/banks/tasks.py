@@ -14,6 +14,9 @@ from banks.banks_registration.raiffeisen import RaiffeisenParser, RaiffeisenBina
 
 from banks.banks_registration.qiwi import QIWIBinanceP2PParser
 
+from banks.banks_registration.yoomoney import \
+    YoomoneyBinanceP2PParser
+
 logger = logging.getLogger(__name__)
 
 
@@ -59,6 +62,15 @@ def get_tinkoff_p2p_binance_exchanges(self):
     bind=True, max_retries=None, queue='parsing', autoretry_for=(Exception,),
     retry_backoff=True
 )
+def get_sberbank_p2p_binance_exchanges(self):
+    SberbankBinanceP2PParser().main()
+    self.retry(countdown=70)
+
+
+@app.task(
+    bind=True, max_retries=None, queue='parsing', autoretry_for=(Exception,),
+    retry_backoff=True
+)
 def get_raiffeisen_p2p_binance_exchanges(self):
     RaiffeisenBinanceP2PParser().main()
     self.retry(countdown=70)
@@ -77,8 +89,8 @@ def get_qiwi_p2p_binance_exchanges(self):
     bind=True, max_retries=None, queue='parsing', autoretry_for=(Exception,),
     retry_backoff=True
 )
-def get_wise_p2p_binance_exchanges(self):
-    WiseBinanceP2PParser().main()
+def get_yoomoney_p2p_binance_exchanges(self):
+    YoomoneyBinanceP2PParser().main()
     self.retry(countdown=70)
 
 
@@ -86,8 +98,8 @@ def get_wise_p2p_binance_exchanges(self):
     bind=True, max_retries=None, queue='parsing', autoretry_for=(Exception,),
     retry_backoff=True
 )
-def get_sberbank_p2p_binance_exchanges(self):
-    SberbankBinanceP2PParser().main()
+def get_wise_p2p_binance_exchanges(self):
+    WiseBinanceP2PParser().main()
     self.retry(countdown=70)
 
 

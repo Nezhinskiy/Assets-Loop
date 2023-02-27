@@ -8,8 +8,9 @@ from crypto_exchanges.crypto_exchanges_registration.binance import \
 BANK_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
 WISE_CURRENCIES = (
-    'USD', 'EUR', 'ILS', 'GBP', 'CHF', 'CAD', 'AUD', 'SGD', 'GEL'
-)
+    'USD', 'EUR', 'UAH', 'ILS', 'GBP', 'GEL', 'TRY', 'CHF', 'AUD'
+)  # 'CZK', 'RON', 'NZD', 'AED', 'CLP', 'INR', 'SGD', 'HUF', 'PLN', 'CAD',
+# 'CHF', 'AUD', 'CNY', 'JPY'
 
 WISE_CURRENCIES_WITH_REQUISITES = ('USD', 'EUR', )
 

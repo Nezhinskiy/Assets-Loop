@@ -9,6 +9,8 @@ from banks.banks_registration.raiffeisen import \
 
 from banks.banks_registration.qiwi import QIWI_CURRENCIES
 
+from banks.banks_registration.yoomoney import YOOMONEY_CURRENCIES
+
 BANKS_CONFIG = {
     'Tinkoff': {
         'bank_parser': True,
@@ -54,6 +56,17 @@ BANKS_CONFIG = {
         'transaction_methods': (),
         'bank_invest_exchanges': []
     },
+    'Yoomoney': {
+        'bank_parser': False,
+        'currencies': YOOMONEY_CURRENCIES,
+        'crypto_exchanges': ('Binance',),
+        'binance_name': 'YandexMoneyNew',
+        'payment_channels': (
+            P2PCryptoExchangesRates,
+        ),
+        'transaction_methods': (),
+        'bank_invest_exchanges': []
+    },
     'Wise': {
         'bank_parser': True,
         'currencies': WISE_CURRENCIES,
@@ -69,3 +82,5 @@ BANKS_CONFIG = {
         'bank_invest_exchanges': []
     }
 }
+
+INTERNATIONAL_BANKS = ('Wise',)

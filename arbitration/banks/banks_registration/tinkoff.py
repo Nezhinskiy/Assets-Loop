@@ -8,11 +8,9 @@ from crypto_exchanges.crypto_exchanges_registration.binance import \
 BANK_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
 TINKOFF_CURRENCIES = (
-    'USD', 'EUR', 'RUB', 'ILS', 'GBP', 'CHF', 'CAD', 'AUD', 'SGD', 'HKD',
-    'TRY', 'KZT', 'BYN', 'AMD'
+    'USD', 'EUR', 'RUB', 'GBP', 'KZT', 'BYN', 'AMD', 'TRY', 'CNY', 'JPY',
+    'CHF', 'HKD'
 )
-
-TINKOFF_CURRENCIES_WITH_REQUISITES = ('RUB', 'USD', 'EUR', )
 
 
 class TinkoffParser(BankParser):

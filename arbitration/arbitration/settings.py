@@ -196,6 +196,7 @@ DATA_OBSOLETE_IN_MINUTES = 10
 INTER_EXCHANGES_OBSOLETE_IN_MINUTES = 15
 INTER_EXCHANGES_BEGIN_OBSOLETE_MINUTES = 2
 ALLOWED_PERCENTAGE = int(os.getenv('ALLOWED_PERCENTAGE', 8))
+MINIMUM_PERCENTAGE = -10
 
 # Celery settings
 
@@ -215,7 +216,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'parse_currency_market_tinkoff_rates': {
         'task': 'banks.tasks.parse_currency_market_tinkoff_rates',
-        'schedule': crontab(minute='*/2', hour='4-16', day_of_week='1-5'),
+        'schedule': crontab(minute='*/2', hour='4-15', day_of_week='1-5'),
         'options': {'queue': 'parsing'}
     },
     'get_all_card_2_wallet_2_crypto_exchanges_buy': {
@@ -236,7 +237,12 @@ CELERY_BEAT_SCHEDULE = {
     },
     'get_complex_binance_inter_exchanges_calculating': {
         'task': 'core.tasks.get_complex_binance_inter_exchanges_calculating',
-        'schedule': timedelta(seconds=random.randint(22, 28)),
+        'schedule': timedelta(seconds=random.randint(35, 40)),
+        'options': {'queue': 'calculating'}
+    },
+    'get_complex_binance_international_inter_exchanges_calculating': {
+        'task': 'core.tasks.get_complex_binance_international_inter_exchanges_calculating',
+        'schedule': timedelta(seconds=random.randint(35, 40)),
         'options': {'queue': 'calculating'}
     },
 }

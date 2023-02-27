@@ -18,12 +18,14 @@ from crypto_exchanges.models import P2PCryptoExchangesRatesUpdates
 
 from core.loggers import ParsingLogger, CalculatingLogger
 
+from arbitration.settings import MINIMUM_PERCENTAGE
+
 
 class BaseCalculating(ABC):
     crypto_exchange_name: str
 
     def __init__(self):
-        from banks.banks_config import BANKS_CONFIG
+        from banks.banks_config import BANKS_CONFIG, INTERNATIONAL_BANKS
         self.start_time = datetime.now(timezone.utc)
         self.records_to_create = []
         self.records_to_update = []
@@ -32,12 +34,14 @@ class BaseCalculating(ABC):
             name=self.crypto_exchange_name
         )
         self.banks_config = BANKS_CONFIG
+        self.international_banks = INTERNATIONAL_BANKS
 
 
 class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
     model = InterExchanges
     model_update = InterExchangesUpdates
     simpl: bool
+    international: bool
     base_asset: str = BASE_ASSET
     output_bank: Banks
     input_crypto_exchanges: P2PCryptoExchangesRates
@@ -65,6 +69,14 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
 
     def get_count_updated_objects(self) -> None:
         self.count_updated_objects = len(self.records_to_update)
+
+    def check_if_international(self) -> None:
+        if self.international:
+            self.banks = self.international_banks
+        else:
+            self.banks = list(self.banks)
+            for international_bank in self.international_banks:
+                self.banks.remove(international_bank)
 
     def filter_input_crypto_exchanges(self, input_fiat: str) -> None:
         self.input_crypto_exchanges = P2PCryptoExchangesRates.objects.filter(
@@ -133,6 +145,7 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
             return None, None
 
     def get_complex_interbank_exchange(self) -> None:
+        self.check_if_international()
         for output_bank_name in self.banks:
             self.output_bank = Banks.objects.get(name=output_bank_name)
             output_bank_config = self.banks_config.get(output_bank_name)
@@ -171,6 +184,8 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
                                 output_crypto_exchange, bank_exchange
                             )
                         )
+                        if marginality_percentage < MINIMUM_PERCENTAGE:
+                            continue
                         if self.crypto_exchange_bug_handler(
                                 marginality_percentage,
                                 input_crypto_exchange, interim_exchange,
@@ -216,6 +231,8 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
                             interim_second_exchange, output_crypto_exchange
                         )
                     )
+                    if marginality_percentage < MINIMUM_PERCENTAGE:
+                        continue
                     if self.crypto_exchange_bug_handler(
                             marginality_percentage, input_crypto_exchange,
                             interim_exchange, interim_second_exchange,
