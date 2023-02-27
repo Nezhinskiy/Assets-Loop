@@ -4,8 +4,8 @@ from core.models import UpdatesModel
 
 
 class Banks(models.Model):
-    name = models.CharField(max_length=10, null=True, blank=True)
-    binance_name = models.CharField(max_length=15, null=True, blank=True)
+    name = models.CharField(max_length=20, null=True, blank=True)
+    binance_name = models.CharField(max_length=20, null=True, blank=True)
 
 
 class CurrencyMarkets(models.Model):

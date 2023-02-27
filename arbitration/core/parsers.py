@@ -5,7 +5,7 @@ from datetime import datetime, time, timedelta, timezone
 from http import HTTPStatus
 from itertools import combinations, permutations, product
 from sys import getsizeof
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional, Any
 
 from banks.models import (Banks, BanksExchangeRates, BanksExchangeRatesUpdates,
                           CurrencyMarkets)
@@ -31,7 +31,7 @@ class BaseParser(ParsingLogger, ABC):
         self.banks_config = BANKS_CONFIG
 
     def get_count_created_objects(self) -> None:
-        self.count_created_objects = len(self.count_created_objects)
+        self.count_created_objects = len(self.records_to_create)
 
     def get_count_updated_objects(self) -> None:
         self.count_updated_objects = len(self.records_to_update)
@@ -48,7 +48,7 @@ class BaseParser(ParsingLogger, ABC):
             self.model.objects.bulk_update(
                 self.records_to_update, self.updated_fields
             )
-            self.duration = datetime.now() - self.start_time
+            self.duration = datetime.now(timezone.utc) - self.start_time
             self.new_update.duration = self.duration
             self.new_update.save()
             self.logger_end()
@@ -151,6 +151,7 @@ class BankParser(ParsingViaTor, ABC):
     bank_name: str
     endpoint: str
     buy_and_sell: bool
+    all_values: bool = False
     name_from: str
     name_to: str
     CURRENCY_PAIR = 2
@@ -160,7 +161,6 @@ class BankParser(ParsingViaTor, ABC):
         self.bank = Banks.objects.get(name=self.bank_name)
         self.new_update = self.model_update.objects.create(bank=self.bank)
 
-    @abstractmethod
     def create_params(self, fiats_combinations: tuple) -> list[dict[str]]:
         pass
 
@@ -179,7 +179,7 @@ class BankParser(ParsingViaTor, ABC):
         params_list = self.create_params(currencies_combinations)
         return params_list
 
-    def get_api_answer(self, params: dict) -> dict:
+    def get_api_answer(self, params=None) -> dict:
         """Делает запрос к эндпоинту API Tinfoff."""
         response = self.get_api_answer_get(params)
         return response
@@ -189,6 +189,10 @@ class BankParser(ParsingViaTor, ABC):
         pass
 
     def extract_price_from_json(self, json_data: dict) -> float:
+        pass
+
+    def extract_all_values_from_json(self, json_data: dict
+                                     ) -> Optional[List[Dict[str, Any]]]:
         pass
 
     def calculates_buy_and_sell_data(self, params: dict) -> tuple[dict, dict]:
@@ -227,9 +231,16 @@ class BankParser(ParsingViaTor, ABC):
                        f'Error: {error}')
             self.logger.error(message)
 
-    def choice_buy_and_sell_or_price(self, params
+    def calculates_all_values_data(self) -> tuple[dict, dict]:
+        json_data = self.get_api_answer()
+        all_values = self.extract_all_values_from_json(json_data)
+        return all_values
+
+    def choice_buy_and_sell_or_price(self, params=None
                                      ) -> tuple[dict, dict] | list[dict]:
-        if self.buy_and_sell:
+        if self.all_values:
+            return self.calculates_all_values_data()
+        elif self.buy_and_sell:
             return self.calculates_buy_and_sell_data(params)
         return self.calculates_price_data(params)
 
@@ -307,10 +318,6 @@ class BankInvestParser(ParsingViaTor, ABC):
                     update=self.new_update
                 )
                 self.records_to_create.append(created_object)
-
-    @abstractmethod
-    def get_all_api_answers(self) -> None:
-        pass
 
 
 class P2PParser(CryptoParser, ABC):

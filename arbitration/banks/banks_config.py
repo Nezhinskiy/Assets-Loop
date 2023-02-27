@@ -1,12 +1,15 @@
 from banks.banks_registration.tinkoff import (
-    TINKOFF_CURRENCIES, TinkoffParser)
-from banks.banks_registration.wise import WISE_CURRENCIES, WiseParser
+    TINKOFF_CURRENCIES)
+from banks.banks_registration.wise import WISE_CURRENCIES
 from crypto_exchanges.models import P2PCryptoExchangesRates
 from banks.banks_registration.sberbank import SBERBANK_CURRENCIES
 
+from banks.banks_registration.raiffeisen import \
+    RAIFFEISEN_CURRENCIES
+
 BANKS_CONFIG = {
     'Tinkoff': {
-        'bank_parser': TinkoffParser,
+        'bank_parser': True,
         'currencies': TINKOFF_CURRENCIES,
         'crypto_exchanges': ('Binance',),
         'binance_name': 'TinkoffNew',
@@ -17,7 +20,7 @@ BANKS_CONFIG = {
         'bank_invest_exchanges': ['Tinkoff invest']
     },
     'Sberbank': {
-        'bank_parser': None,
+        'bank_parser': False,
         'currencies': SBERBANK_CURRENCIES,
         'crypto_exchanges': ('Binance',),
         'binance_name': 'RosBankNew',
@@ -27,8 +30,19 @@ BANKS_CONFIG = {
         'transaction_methods': (),
         'bank_invest_exchanges': []
     },
+    'Raiffeisen': {
+        'bank_parser': True,
+        'currencies': RAIFFEISEN_CURRENCIES,
+        'crypto_exchanges': ('Binance',),
+        'binance_name': 'RaiffeisenBank',
+        'payment_channels': (
+            P2PCryptoExchangesRates,
+        ),
+        'transaction_methods': (),
+        'bank_invest_exchanges': []
+    },
     'Wise': {
-        'bank_parser': WiseParser,
+        'bank_parser': True,
         'currencies': WISE_CURRENCIES,
         'crypto_exchanges': ('Binance',),
         'binance_name': 'Wise',

@@ -1,6 +1,6 @@
 import os
 from crypto_exchanges.crypto_exchanges_registration.binance import \
-    SimplBinanceInterExchangesCalculating, BinanceP2PParser
+    BinanceP2PParser
 
 BANK_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
@@ -11,10 +11,4 @@ SBERBANK_CURRENCIES = (
 
 
 class SberbankBinanceP2PParser(BinanceP2PParser):
-    bank_name: str = BANK_NAME
-
-
-class SimplBinanceSberbankInterExchangesCalculating(
-    SimplBinanceInterExchangesCalculating
-):
     bank_name: str = BANK_NAME

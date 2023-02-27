@@ -3,8 +3,7 @@ import os
 from core.parsers import BankInvestParser, BankParser
 
 from crypto_exchanges.crypto_exchanges_registration.binance import \
-    SimplBinanceInterExchangesCalculating, \
-    ComplexBinanceInterExchangesCalculating, BinanceP2PParser
+    BinanceP2PParser
 
 BANK_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
@@ -50,16 +49,4 @@ class TinkoffParser(BankParser):
 
 
 class TinkoffBinanceP2PParser(BinanceP2PParser):
-    bank_name: str = BANK_NAME
-
-
-class SimplBinanceTinkoffInterExchangesCalculating(
-    SimplBinanceInterExchangesCalculating
-):
-    bank_name: str = BANK_NAME
-
-
-class ComplexBinanceTinkoffInterExchangesCalculating(
-    ComplexBinanceInterExchangesCalculating
-):
     bank_name: str = BANK_NAME

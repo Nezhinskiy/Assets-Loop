@@ -16,7 +16,7 @@ class UpdatesModel(models.Model):
 class InfoLoop(models.Model):
     value = models.BooleanField(default=False)
     started = models.DateTimeField('Started date', auto_now_add=True)
-    stopped = models.DateTimeField('Stopped date', blank=True)
+    stopped = models.DateTimeField('Stopped date', blank=True, null=True)
     duration = models.DurationField(default=timedelta())
 
     class Meta:

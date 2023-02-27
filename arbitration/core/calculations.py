@@ -37,7 +37,6 @@ class BaseCalculating(ABC):
 class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
     model = InterExchanges
     model_update = InterExchangesUpdates
-    bank_name: str
     simpl: bool
     base_asset: str = BASE_ASSET
     output_bank: Banks
@@ -46,8 +45,9 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
     data_obsolete_in_minutes: int = DATA_OBSOLETE_IN_MINUTES
     allowed_percentage: int = ALLOWED_PERCENTAGE
 
-    def __init__(self) -> None:
+    def __init__(self, bank_name: str) -> None:
         super().__init__()
+        self.bank_name = bank_name
         self.bank = Banks.objects.get(name=self.bank_name)
         self.new_update = self.model_update.objects.create(
             crypto_exchange=self.crypto_exchange, bank=self.bank
