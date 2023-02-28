@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 
 class BaseLogger(ABC):
@@ -14,7 +14,7 @@ class BaseLogger(ABC):
 
     def logger_start(self) -> None:
         message = f'Start {self.__class__.__name__} at {self.start_time}.'
-        self.logger.error(message)
+        self.logger.info(message)
 
     @abstractmethod
     def get_count_created_objects(self) -> None:
@@ -52,7 +52,7 @@ class ParsingLogger(BaseLogger, ABC):
         if self.count_created_objects + self.count_updated_objects > 0:
             message += f'Updated: {self.count_updated_objects}, '
             message += f'Created: {self.count_created_objects}. '
-            self.logger.error(message)
+            self.logger.info(message)
         else:
             message += (f'Has not been Created and updated: '
                         f'{self.count_updated_objects}. ')
@@ -65,4 +65,4 @@ class CalculatingLogger(BaseLogger, ABC):
         message = f'Finish {self.__class__.__name__} at {self.duration}. '
         message += f'Updated: {self.count_updated_objects}, '
         message += f'Created: {self.count_created_objects}. '
-        self.logger.error(message)
+        self.logger.info(message)

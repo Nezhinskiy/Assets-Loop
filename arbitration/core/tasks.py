@@ -2,42 +2,38 @@ import logging
 from datetime import datetime, timezone
 
 from celery import group
+
 from arbitration.celery import app
-from banks.tasks import (
-                         parse_currency_market_tinkoff_rates,
-                         parse_internal_tinkoff_rates,
-                         parse_internal_wise_rates,
+from arbitration.settings import PARSING_WORKER_NAME
+from banks.banks_config import BANKS_CONFIG
+from banks.tasks import (get_qiwi_p2p_binance_exchanges,
+                         get_raiffeisen_p2p_binance_exchanges,
+                         get_sberbank_p2p_binance_exchanges,
+                         get_tinkoff_p2p_binance_exchanges,
+                         get_wise_p2p_binance_exchanges,
+                         get_yoomoney_p2p_binance_exchanges,
                          parse_internal_raiffeisen_rates,
-)
+                         parse_internal_tinkoff_rates,
+                         parse_internal_wise_rates)
+from core.models import InfoLoop
 from core.registration import all_registration
-from crypto_exchanges.tasks import (
-                                    get_all_binance_crypto_exchanges,
-                                    get_all_card_2_wallet_2_crypto_exchanges_buy,
-                                    get_all_card_2_wallet_2_crypto_exchanges_sell,
+from crypto_exchanges.crypto_exchanges_registration.binance import (
+    ComplexBinanceInterExchangesCalculating,
+    ComplexBinanceInternationalInterExchangesCalculating,
+    SimplBinanceInterExchangesCalculating)
+from crypto_exchanges.tasks import (get_all_binance_crypto_exchanges,
                                     get_binance_card_2_crypto_exchanges_buy,
                                     get_binance_card_2_crypto_exchanges_sell,
-                                    get_start_binance_fiat_crypto_list
-                                    )
+                                    get_start_binance_fiat_crypto_list)
 
-from core.models import InfoLoop
-
-from arbitration.settings import PARSING_WORKER_NAME
-
-from banks.tasks import get_tinkoff_p2p_binance_exchanges, get_wise_p2p_binance_exchanges, get_sberbank_p2p_binance_exchanges, get_raiffeisen_p2p_binance_exchanges, get_qiwi_p2p_binance_exchanges, get_yoomoney_p2p_binance_exchanges
-
-from banks.banks_config import BANKS_CONFIG
-from crypto_exchanges.crypto_exchanges_registration.binance import \
-    SimplBinanceInterExchangesCalculating, \
-    ComplexBinanceInterExchangesCalculating, ComplexBinanceInternationalInterExchangesCalculating
-
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 @app.task(queue='parsing')
 def all_reg():
     all_registration()
-    get_start_binance_fiat_crypto_list.s().delay()
+    get_start_binance_fiat_crypto_list.s().apply()
+    logger.error('Finish registration')
 
 
 @app.task(bind=True, max_retries=4, queue='parsing')

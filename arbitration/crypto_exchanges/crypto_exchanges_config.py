@@ -3,8 +3,8 @@ from collections import OrderedDict
 from banks.banks_config import BANKS_CONFIG
 from crypto_exchanges.crypto_exchanges_registration.binance import (
     BINANCE_ASSETS, BINANCE_ASSETS_FOR_FIAT, BINANCE_CRYPTO_FIATS,
-    BINANCE_FIATS, BINANCE_TRADE_TYPES, DEPOSIT_FIATS,
-    INVALID_PARAMS_LIST, WITHDRAW_FIATS, BinanceCryptoParser, BinanceP2PParser)
+    BINANCE_FIATS, BINANCE_TRADE_TYPES, DEPOSIT_FIATS, INVALID_PARAMS_LIST,
+    WITHDRAW_FIATS, BinanceCryptoParser, BinanceP2PParser)
 from crypto_exchanges.models import P2PCryptoExchangesRates
 
 CRYPTO_EXCHANGES_CONFIG = {

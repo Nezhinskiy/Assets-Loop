@@ -1,6 +1,6 @@
 from banks.banks_config import BANKS_CONFIG
-from banks.currency_markets_registration.tinkoff_invest import \
-    CURRENCY_MARKET_NAME
+from banks.currency_markets_registration.tinkoff_invest import (
+    CURRENCY_MARKET_NAME)
 from banks.models import Banks, CurrencyMarkets
 from crypto_exchanges.models import CryptoExchanges
 
@@ -20,8 +20,8 @@ def currency_markets():
 
 
 def crypto_exchanges():
-    from crypto_exchanges.crypto_exchanges_config import \
-        CRYPTO_EXCHANGES_CONFIG
+    from crypto_exchanges.crypto_exchanges_config import (
+        CRYPTO_EXCHANGES_CONFIG)
     for crypto_exchange_name in list(CRYPTO_EXCHANGES_CONFIG.keys())[1:]:
         if not CryptoExchanges.objects.filter(
                 name=crypto_exchange_name

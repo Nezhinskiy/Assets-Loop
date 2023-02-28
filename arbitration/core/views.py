@@ -1,23 +1,21 @@
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 from django.shortcuts import redirect
 from django.views.generic import ListView
-
-from core.models import InfoLoop
-from core.tasks import assets_loop,  all_reg, assets_loop_stop
 from django_filters.views import FilterView
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 
-from arbitration.settings import \
-    INTER_EXCHANGES_OBSOLETE_IN_MINUTES
+from arbitration.settings import INTER_EXCHANGES_OBSOLETE_IN_MINUTES
 from core.filters import ExchangesFilter
+from core.models import InfoLoop
 from core.serializers import InterExchangesSerializer
+from core.tasks import all_reg, assets_loop, assets_loop_stop
 from crypto_exchanges.models import InterExchanges
-from arbitration.celery import app
 
 logger = logging.getLogger(__name__)
+
 
 def registration(request):
     all_reg.s().delay()
@@ -92,7 +90,7 @@ class InterExchangesAPIView(ListAPIView, FilterView):
         if ordering and ordering_direction == 'desc':
             ordering = f"-{ordering}"
         if ordering:
-            queryset = queryset.order_by(ordering)
+            return queryset.order_by(ordering)
         return queryset
 
     def list(self, request, *args, **kwargs):

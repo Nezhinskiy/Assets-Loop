@@ -13,8 +13,7 @@ class RestrictIPMiddleware:
                                       request.META.get('REMOTE_ADDR'))
         if ip_address not in self.allowed_ips and '*' not in self.allowed_ips:
             return HttpResponseForbidden('Access denied')
-        response = self.get_response(request)
-        return response
+        return self.get_response(request)
 
 
 class RestrictIPMiddlewareForAPIData(RestrictIPMiddleware):

@@ -1,9 +1,8 @@
 import os
 
 from core.parsers import BankParser
-
-from crypto_exchanges.crypto_exchanges_registration.binance import \
-    BinanceP2PParser
+from crypto_exchanges.crypto_exchanges_registration.binance import (
+    BinanceP2PParser)
 
 BANK_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
@@ -22,14 +21,14 @@ class WiseParser(BankParser):
     name_to: str = 'targetCurrency'
     buy_and_sell: bool = False
     # custom_settings
-    sourceAmount: int = 10000
-    profileCountry: str = 'RU'
+    source_amount: int = 10000
+    profile_country: str = 'RU'
 
     def create_params(self, fiats_combinations):
-        params = [dict([('sourceAmount', self.sourceAmount),
+        params = [dict([('sourceAmount', self.source_amount),
                         ('sourceCurrency', params[0]),
                         ('targetCurrency', params[-1]),
-                        ('profileCountry', self.profileCountry)])
+                        ('profileCountry', self.profile_country)])
                   for params in fiats_combinations]
         return params
 
@@ -37,12 +36,14 @@ class WiseParser(BankParser):
         if json_data and len(json_data) > 1:
             for exchange_data in json_data:
                 if (
-                        exchange_data.get('payInMethod') ==
-                        exchange_data.get('payOutMethod') == 'BALANCE'
+                        exchange_data.get('payInMethod'
+                                          ) == exchange_data.get('payOutMethod'
+                                                                 ) == 'BALANCE'
                 ):
                     price_before_commission = exchange_data.get('midRate')
-                    commission = (exchange_data.get('total')
-                                  / self.sourceAmount * 100)
+                    commission = (
+                        exchange_data.get('total') / self.source_amount * 100
+                    )
                     price = price_before_commission * 100 / (100 + commission)
                     return price
 

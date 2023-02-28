@@ -1,9 +1,8 @@
 import os
 
-from core.parsers import BankInvestParser, BankParser
-
-from crypto_exchanges.crypto_exchanges_registration.binance import \
-    BinanceP2PParser
+from core.parsers import BankParser
+from crypto_exchanges.crypto_exchanges_registration.binance import (
+    BinanceP2PParser)
 
 BANK_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
@@ -30,7 +29,7 @@ class TinkoffParser(BankParser):
     def extract_buy_and_sell_from_json(self, json_data: dict
                                        ) -> tuple[float, float] or None:
         if not json_data:
-            return
+            return None
         payload = json_data['payload']
         rates = payload['rates']
         buy = sell = float()

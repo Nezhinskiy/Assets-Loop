@@ -1,15 +1,10 @@
-from banks.banks_registration.tinkoff import (
-    TINKOFF_CURRENCIES)
-from banks.banks_registration.wise import WISE_CURRENCIES
-from crypto_exchanges.models import P2PCryptoExchangesRates
-from banks.banks_registration.sberbank import SBERBANK_CURRENCIES
-
-from banks.banks_registration.raiffeisen import \
-    RAIFFEISEN_CURRENCIES
-
 from banks.banks_registration.qiwi import QIWI_CURRENCIES
-
+from banks.banks_registration.raiffeisen import RAIFFEISEN_CURRENCIES
+from banks.banks_registration.sberbank import SBERBANK_CURRENCIES
+from banks.banks_registration.tinkoff import TINKOFF_CURRENCIES
+from banks.banks_registration.wise import WISE_CURRENCIES
 from banks.banks_registration.yoomoney import YOOMONEY_CURRENCIES
+from crypto_exchanges.models import P2PCryptoExchangesRates
 
 BANKS_CONFIG = {
     'Tinkoff': {

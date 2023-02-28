@@ -1,5 +1,4 @@
 import django_filters
-
 from django_select2.forms import Select2MultipleWidget
 
 from banks.banks_config import BANKS_CONFIG
@@ -112,20 +111,18 @@ class ExchangesFilter(django_filters.FilterSet):
     @staticmethod
     def bank_exchange_filter(queryset, _, values):
         if values in ('1', '0'):
-            qs = queryset.filter(
+            return queryset.filter(
                 bank_exchange__isnull=bool(int(values))
             )
-        elif values == 'banks':
-            qs = queryset.filter(
+        if values == 'banks':
+            return queryset.filter(
                 bank_exchange__isnull=False,
                 bank_exchange__currency_market__isnull=True
             )
-        else:
-            qs = queryset.filter(
-                bank_exchange__isnull=False,
-                bank_exchange__currency_market__isnull=False
-            )
-        return qs
+        return queryset.filter(
+            bank_exchange__isnull=False,
+            bank_exchange__currency_market__isnull=False
+        )
 
     class Meta:
         model = InterExchanges

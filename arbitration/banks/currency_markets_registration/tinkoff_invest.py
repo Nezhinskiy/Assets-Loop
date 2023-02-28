@@ -1,9 +1,9 @@
 import os
+from datetime import datetime, time
+
+import pytz
 
 from core.parsers import BankInvestParser
-
-from datetime import datetime, time
-import pytz
 
 CURRENCY_MARKET_NAME = (
     os.path.basename(__file__).split('.')[0].capitalize().replace('_', ' '))
@@ -25,14 +25,14 @@ class TinkoffCurrencyMarketParser(BankInvestParser):
         end_work_time = time(hour=19)
         time_zone = 'Europe/Moscow'
         local_datatime = datetime.now(pytz.timezone(time_zone))
-        return (local_datatime.weekday() in range(0, 5)
-                and start_work_time <= local_datatime.time() < end_work_time)
+        if_work_day = local_datatime.weekday() in range(0, 5)
+        if_work_time = start_work_time <= local_datatime.time() < end_work_time
+        return if_work_day and if_work_time
 
     def get_api_answer(self, link_end: str) -> dict:
         """Делает запрос к эндпоинту API Tinfoff."""
         endpoint = self.endpoint + link_end
-        response = self.get_api_answer_get(endpoint=endpoint)
-        return response
+        return self.get_api_answer_get(endpoint=endpoint)
 
     @staticmethod
     def extract_buy_and_sell_from_json(json_data: dict, link_end: str
@@ -84,9 +84,3 @@ class TinkoffCurrencyMarketParser(BankInvestParser):
                 self.add_to_bulk_update_or_create(
                     buy_or_sell_data
                 )
-
-
-def get_tinkoff_invest_exchanges():
-    tinkoff_invest_parser = TinkoffCurrencyMarketParser()
-    message = tinkoff_invest_parser.main()
-    return message

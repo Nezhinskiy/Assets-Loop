@@ -1,10 +1,9 @@
 import os
-from typing import Optional, List, Dict, Any
-
-from crypto_exchanges.crypto_exchanges_registration.binance import \
-    BinanceP2PParser
+from typing import Any, Dict, List, Optional
 
 from core.parsers import BankParser
+from crypto_exchanges.crypto_exchanges_registration.binance import (
+    BinanceP2PParser)
 
 BANK_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
@@ -22,7 +21,7 @@ class RaiffeisenParser(BankParser):
     def extract_all_values_from_json(self, json_data: dict
                                      ) -> Optional[List[Dict[str, Any]]]:
         if not json_data:
-            return
+            return None
         value_lst = []
         data = json_data['data']
         rates = data['rates'][0]

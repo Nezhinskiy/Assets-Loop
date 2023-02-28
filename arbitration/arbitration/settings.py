@@ -1,13 +1,13 @@
+import logging.config
 import os
 import random
 import sys
-from datetime import timedelta, datetime, timezone
+from datetime import timedelta, timezone
 from pathlib import Path
-import logging.config
 
 from celery.schedules import crontab
-from django.utils.log import DEFAULT_LOGGING
 from django.core.management.utils import get_random_secret_key
+from django.utils.log import DEFAULT_LOGGING
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -83,9 +83,9 @@ MULTITHREADING_MODE = os.getenv("MULTITHREADING_MODE", "True") == "True"
 
 # Database
 
-DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "True") == "True"
+DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
 
-if DEVELOPMENT_MODE is True:
+if DEVELOPMENT_MODE:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -101,7 +101,7 @@ elif len(sys.argv) > 0 and sys.argv[1] != 'collectstatic':
             'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
             'HOST': os.getenv('DB_HOST'),
             'PORT': os.getenv('DB_PORT'),
-            },
+        },
     }
 
 

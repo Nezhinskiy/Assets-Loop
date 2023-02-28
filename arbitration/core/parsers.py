@@ -1,22 +1,21 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from datetime import datetime, time, timedelta, timezone
+from datetime import datetime, timezone
 from http import HTTPStatus
 from itertools import combinations, permutations, product
 from sys import getsizeof
-from typing import List, Tuple, Dict, Optional, Any
+from typing import Any, Dict, List, Optional
 
 from banks.models import (Banks, BanksExchangeRates, BanksExchangeRatesUpdates,
                           CurrencyMarkets)
+from core.loggers import ParsingLogger
+from core.tor import Tor
 from crypto_exchanges.models import (CryptoExchanges, IntraCryptoExchanges,
                                      IntraCryptoExchangesUpdates,
                                      ListsFiatCrypto, ListsFiatCryptoUpdates,
                                      P2PCryptoExchangesRates,
                                      P2PCryptoExchangesRatesUpdates)
-from core.tor import Tor
-
-from core.loggers import ParsingLogger
 
 
 class BaseParser(ParsingLogger, ABC):
@@ -35,6 +34,21 @@ class BaseParser(ParsingLogger, ABC):
 
     def get_count_updated_objects(self) -> None:
         self.count_updated_objects = len(self.records_to_update)
+
+    def successful_response_handler(self) -> None:
+        message = (f'Successful response with class: '
+                   f'{self.__class__.__name__}')
+        self.logger.info(message)
+
+    def unsuccessful_response_handler(self, error) -> None:
+        message = (f'{error} with response, class: '
+                   f'{self.__class__.__name__}.')
+        self.logger.error(message)
+
+    def negative_response_status_handler(self, response) -> None:
+        message = (f'{response.status_code} with response, class: '
+                   f'{self.__class__.__name__}.')
+        self.logger.error(message)
 
     @abstractmethod
     def get_all_api_answers(self) -> None:
@@ -102,23 +116,18 @@ class ParsingViaTor(BaseParser, ABC):
         return False
 
     def unsuccessful_response_handler(self, error) -> None:
-        message = (f'{error} with class: '
+        message = (f'{error} with response, class: '
                    f'{self.__class__.__name__}, count try: {self.count_try}')
         self.logger.error(message)
         self.tor.renew_connection()
         self.count_try += 1
 
     def negative_response_status_handler(self, response) -> None:
-        message = (f'{response.status_code} with class: '
+        message = (f'{response.status_code} with response, class: '
                    f'{self.__class__.__name__}, count try: {self.count_try}')
         self.logger.error(message)
         self.tor.renew_connection()
         self.count_try += 1
-
-    def successful_response_handler(self) -> None:
-        message = (f'Successful response with class: '
-                   f'{self.__class__.__name__}')
-        self.logger.info(message)
 
 
 class CryptoParser(ParsingViaTor, ABC):
@@ -126,8 +135,8 @@ class CryptoParser(ParsingViaTor, ABC):
 
     def __init__(self) -> None:
         super().__init__()
-        from crypto_exchanges.crypto_exchanges_config import \
-            CRYPTO_EXCHANGES_CONFIG
+        from crypto_exchanges.crypto_exchanges_config import (
+            CRYPTO_EXCHANGES_CONFIG)
         self.crypto_exchanges_configs = CRYPTO_EXCHANGES_CONFIG.get(
             self.crypto_exchange_name)
         self.assets = set(self.crypto_exchanges_configs.get('assets'))
@@ -176,13 +185,11 @@ class BankParser(ParsingViaTor, ABC):
                 random_currencies, self.CURRENCY_PAIR
             )
         )
-        params_list = self.create_params(currencies_combinations)
-        return params_list
+        return self.create_params(currencies_combinations)
 
     def get_api_answer(self, params=None) -> dict:
         """Делает запрос к эндпоинту API Tinfoff."""
-        response = self.get_api_answer_get(params)
-        return response
+        return self.get_api_answer_get(params)
 
     def extract_buy_and_sell_from_json(self, json_data: dict) -> tuple[float,
                                                                        float]:
@@ -231,16 +238,15 @@ class BankParser(ParsingViaTor, ABC):
                        f'Error: {error}')
             self.logger.error(message)
 
-    def calculates_all_values_data(self) -> tuple[dict, dict]:
+    def calculates_all_values_data(self) -> list[dict[str, Any]] | None:
         json_data = self.get_api_answer()
-        all_values = self.extract_all_values_from_json(json_data)
-        return all_values
+        return self.extract_all_values_from_json(json_data)
 
     def choice_buy_and_sell_or_price(self, params=None
                                      ) -> tuple[dict, dict] | list[dict]:
         if self.all_values:
             return self.calculates_all_values_data()
-        elif self.buy_and_sell:
+        if self.buy_and_sell:
             return self.calculates_buy_and_sell_data(params)
         return self.calculates_price_data(params)
 
@@ -342,14 +348,12 @@ class P2PParser(CryptoParser, ABC):
         self.trade_types = self.crypto_exchanges_configs.get('trade_types')
         self.banks_configs = self.banks_config[self.bank_name]
         self.fiats = set(self.banks_configs['currencies'])
-        if (
-                self.model_update.objects.filter(
-                payment_channel=self.payment_channel).count() == 0
-                or datetime.now(timezone.utc).time().hour
-                != self.model_update.objects.last().updated.time().hour
-        ):
-            self.full_update = True
-        self.full_update = False
+        self.if_no_objects = self.model.objects.filter(
+            payment_channel=self.payment_channel).count() == 0
+        self.if_new_hour = datetime.now(
+            timezone.utc
+        ).time().hour != self.model_update.objects.last().updated.time().hour
+        self.full_update = self.if_no_objects or self.if_new_hour
 
     @abstractmethod
     def create_body(self, asset: str, trade_type: str, fiat: str) -> dict:
@@ -364,8 +368,7 @@ class P2PParser(CryptoParser, ABC):
         """Делает запрос к эндпоинту API."""
         body = self.create_body(asset, trade_type, fiat)
         headers = self.create_headers(body)
-        response = self.get_api_answer_post(body, headers)
-        return response
+        return self.get_api_answer_post(body, headers)
 
     def add_to_bulk_update_or_create(
             self, asset: str, trade_type: str, fiat: str, price: float
@@ -426,8 +429,8 @@ class CryptoExchangesParser(BaseParser, ABC):
 
     def __init__(self) -> None:
         super().__init__()
-        from crypto_exchanges.crypto_exchanges_config import \
-            CRYPTO_EXCHANGES_CONFIG
+        from crypto_exchanges.crypto_exchanges_config import (
+            CRYPTO_EXCHANGES_CONFIG)
         self.crypto_exchange = CryptoExchanges.objects.get(
             name=self.crypto_exchange_name
         )
@@ -470,8 +473,7 @@ class CryptoExchangesParser(BaseParser, ABC):
             in currencies_combinations
             if currencies_combination not in invalid_params_list
         )
-        params_list = self.create_params(currencies_combinations)
-        return params_list
+        return self.create_params(currencies_combinations)
 
     def add_to_bulk_update_or_create(self, value_dict: dict, price: float
                                      ) -> None:
@@ -500,9 +502,10 @@ class CryptoExchangesParser(BaseParser, ABC):
             self.records_to_create.append(created_object)
 
     def get_all_api_answers(self):
-        for params in self.generate_unique_params():
+        unique_params = self.generate_unique_params()
+        for params in unique_params:
             values = self.calculates_buy_and_sell_data(params)
-            if not values:
+            if values is None:
                 continue
             for value_dict in values:
                 price = value_dict.pop('price')
@@ -562,8 +565,7 @@ class ListsFiatCryptoParser(CryptoParser, ABC):
             body = self.create_body_buy(fiat)
             endpoint = self.endpoint_buy
         headers = self.create_headers(body)
-        response = self.get_api_answer_post(body, headers, endpoint=endpoint)
-        return response
+        return self.get_api_answer_post(body, headers, endpoint=endpoint)
 
     def add_to_update_or_create(self, list_fiat_crypto: dict, trade_type: str
                                 ) -> None:
@@ -629,14 +631,12 @@ class Card2CryptoExchangesParser(CryptoParser, ABC):
             payment_channel=self.payment_channel
         )
         self.trade_type = trade_type
-        if (
-                self.model_update.objects.filter(
-                payment_channel=self.payment_channel).count() == 0
-                or datetime.now(timezone.utc).time().hour
-                != self.model_update.objects.last().updated.time().hour
-        ):
-            self.full_update = True
-        self.full_update = False
+        self.if_no_objects = self.model.objects.filter(
+            payment_channel=self.payment_channel).count() == 0
+        self.if_new_hour = datetime.now(
+            timezone.utc
+        ).time().hour != self.model_update.objects.last().updated.time().hour
+        self.full_update = self.if_no_objects or self.if_new_hour
 
     @staticmethod
     def create_body_sell(fiat: str, asset: str, amount: int) -> dict:
@@ -676,7 +676,7 @@ class Card2CryptoExchangesParser(CryptoParser, ABC):
             data = json_data['data'].get('rows')
             pre_price = data.get('quotePrice')
             if not pre_price:
-                return
+                return None
             commission = data.get('totalFee') / amount
             price = pre_price / (1 + commission)
             commission *= 100
@@ -684,7 +684,7 @@ class Card2CryptoExchangesParser(CryptoParser, ABC):
             data = json_data['data']
             pre_price = data['price']
             if not pre_price:
-                return
+                return None
             pre_price = float(pre_price)
             commission = 0.02
             price = 1 / (pre_price * (1 + commission))
@@ -696,15 +696,30 @@ class Card2CryptoExchangesParser(CryptoParser, ABC):
         if self.trade_type == 'SELL':
             body = self.create_body_sell(fiat, asset, amount)
             headers = self.create_headers(body)
-            response = self.get_api_answer_post(
+            return self.get_api_answer_post(
                 body, headers, endpoint=self.endpoint_sell
             )
-        else:
-            params = self.create_params_buy(fiat, asset)
-            response = self.get_api_answer_get(
-                params, endpoint=self.endpoint_buy
-            )
-        return response
+        params = self.create_params_buy(fiat, asset)
+        return self.get_api_answer_get(params, endpoint=self.endpoint_buy)
+
+    def check_p2p_exchange_is_better(self, asset: str, fiat: str, price: float,
+                                     bank: Banks
+                                     ) -> bool:
+        p2p_exchange = P2PCryptoExchangesRates.objects.filter(
+            crypto_exchange=self.crypto_exchange, bank=bank,
+            asset=asset,
+            trade_type=self.trade_type, fiat=fiat,
+            payment_channel='P2P', price__isnull=False
+        )
+        if p2p_exchange.exists():
+            p2p_price = p2p_exchange.get().price
+            if_bad_buy_price = (
+                self.trade_type == 'BUY' and price > p2p_price)
+            if_bad_sell_price = (
+                self.trade_type == 'SELL' and price < p2p_price)
+            if if_bad_buy_price or if_bad_sell_price:
+                return True
+        return False
 
     def add_to_bulk_update_or_create(self, asset: str, fiat: str, price: float,
                                      pre_price: float, transaction_fee: float
@@ -721,21 +736,10 @@ class Card2CryptoExchangesParser(CryptoParser, ABC):
                 transaction_method=self.transaction_method,
                 payment_channel=self.payment_channel
             )
-            p2p_exchange = P2PCryptoExchangesRates.objects.filter(
-                crypto_exchange=self.crypto_exchange, bank=bank,
-                asset=asset,
-                trade_type=self.trade_type, fiat=fiat,
-                payment_channel='P2P', price__isnull=False
-            )
-            if p2p_exchange.exists():
-                p2p_price = p2p_exchange.get().price
-                if (
-                        self.trade_type == 'BUY' and price > p2p_price
-                        or self.trade_type == 'SELL' and price < p2p_price
-                ):
-                    if target_object.exists():
-                        target_object.delete()
-                    return
+            if self.check_p2p_exchange_is_better(asset, fiat, price, bank):
+                if target_object.exists():
+                    target_object.delete()
+                return
             if target_object.exists():
                 updated_object = target_object.get()
                 updated_object.price = price
@@ -755,7 +759,6 @@ class Card2CryptoExchangesParser(CryptoParser, ABC):
                 self.records_to_create.append(created_object)
 
     def get_all_api_answers(self) -> None:
-
         list_fiat_crypto = ListsFiatCrypto.objects.get(
             crypto_exchange=self.crypto_exchange, trade_type=self.trade_type
         ).list_fiat_crypto
@@ -769,17 +772,17 @@ class Card2CryptoExchangesParser(CryptoParser, ABC):
                     continue
                 if not self.full_update:
                     target_rates = P2PCryptoExchangesRates.objects.filter(
-                        crypto_exchange=self.crypto_exchange,
-                        asset=asset, trade_type=self.trade_type, fiat=fiat,
+                        crypto_exchange=self.crypto_exchange, asset=asset,
+                        trade_type=self.trade_type, fiat=fiat,
                         payment_channel=self.payment_channel
                     )
                     if not target_rates.exists():
                         continue
                 response = self.get_api_answer(asset, fiat, amount)
-                if not response:
+                if response is None:
                     continue
                 values = self.extract_values_from_json(response, amount)
-                if not values:
+                if values is None:
                     continue
                 price, pre_price, commission = values
                 self.add_to_bulk_update_or_create(

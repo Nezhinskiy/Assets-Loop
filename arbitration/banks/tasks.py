@@ -2,23 +2,17 @@ import logging
 from datetime import datetime, timezone
 
 from arbitration.celery import app
-from banks.banks_registration.tinkoff import TinkoffParser
-from banks.banks_registration.wise import WiseParser
-from banks.currency_markets_registration.tinkoff_invest import \
-    TinkoffCurrencyMarketParser
-
-from banks.banks_registration.sberbank import SberbankBinanceP2PParser
-from banks.banks_registration.tinkoff import TinkoffBinanceP2PParser
-from banks.banks_registration.wise import WiseBinanceP2PParser
-
-from banks.banks_registration.raiffeisen import RaiffeisenParser, RaiffeisenBinanceP2PParser
-
-from banks.banks_registration.qiwi import QIWIBinanceP2PParser
-
-from banks.banks_registration.yoomoney import \
-    YoomoneyBinanceP2PParser
-
 from arbitration.settings import UPDATE_RATE
+from banks.banks_registration.qiwi import QIWIBinanceP2PParser
+from banks.banks_registration.raiffeisen import (RaiffeisenBinanceP2PParser,
+                                                 RaiffeisenParser)
+from banks.banks_registration.sberbank import SberbankBinanceP2PParser
+from banks.banks_registration.tinkoff import (TinkoffBinanceP2PParser,
+                                              TinkoffParser)
+from banks.banks_registration.wise import WiseBinanceP2PParser, WiseParser
+from banks.banks_registration.yoomoney import YoomoneyBinanceP2PParser
+from banks.currency_markets_registration.tinkoff_invest import (
+    TinkoffCurrencyMarketParser)
 
 logger = logging.getLogger(__name__)
 

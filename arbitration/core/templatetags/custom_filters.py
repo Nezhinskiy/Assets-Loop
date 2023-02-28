@@ -17,8 +17,7 @@ def is_empty(value, channel):
     currency_markets = BANKS_CONFIG[value][channel]
     if not currency_markets:
         return True
-    else:
-        return False
+    return False
 
 
 @register.filter
@@ -35,22 +34,21 @@ def round_up(value):
 def payment_channel_name(value, trade_type):
     if value == 'P2PCryptoExchangesRates':
         return 'P2P'
-    elif value == 'Card2Wallet2CryptoExchanges':
+    if value == 'Card2Wallet2CryptoExchanges':
         if trade_type == 'BUY':
             return 'Card-Wallet-Crypto'
-        else:
-            return 'Crypto-Wallet-Card'
-    elif value == 'Card2CryptoExchanges':
+        return 'Crypto-Wallet-Card'
+    if value == 'Card2CryptoExchanges':
         if trade_type == 'BUY':
             return 'Card-Crypto'
-        else:
-            return 'Crypto-Card'
+        return 'Crypto-Card'
 
 
 @register.filter
 def updated_time(value):
-    seconds = int((datetime.now()
-                   - value.replace(tzinfo=None)).total_seconds())
+    seconds = int(
+        (datetime.now() - value.replace(tzinfo=None)).total_seconds()
+    )
     if seconds > 999:
-        seconds = 999
+        return 999
     return seconds

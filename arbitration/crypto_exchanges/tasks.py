@@ -2,12 +2,11 @@ import logging
 from datetime import datetime, timezone
 
 from arbitration.celery import app
+from arbitration.settings import UPDATE_RATE
 from crypto_exchanges.crypto_exchanges_registration.binance import (
     BinanceCard2CryptoExchangesParser,
     BinanceCard2Wallet2CryptoExchangesCalculating, BinanceCryptoParser,
     BinanceListsFiatCryptoParser)
-
-from arbitration.settings import UPDATE_RATE
 
 logger = logging.getLogger(__name__)
 

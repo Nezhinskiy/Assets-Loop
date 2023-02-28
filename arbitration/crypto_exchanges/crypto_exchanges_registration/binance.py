@@ -3,16 +3,14 @@ from __future__ import annotations
 import os
 from abc import ABC
 from http import HTTPStatus
-from sys import getsizeof
 from time import sleep
-from typing import List, Dict
 
 import requests
 
-from core.calculations import InterExchangesCalculating, Card2Wallet2CryptoExchangesCalculating
-from core.parsers import (Card2CryptoExchangesParser,
-                          CryptoExchangesParser, ListsFiatCryptoParser,
-                          P2PParser)
+from core.calculations import (Card2Wallet2CryptoExchangesCalculating,
+                               InterExchangesCalculating)
+from core.parsers import (Card2CryptoExchangesParser, CryptoExchangesParser,
+                          ListsFiatCryptoParser, P2PParser)
 
 CRYPTO_EXCHANGES_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
@@ -20,11 +18,11 @@ BINANCE_ASSETS = ('ADA', 'BNB', 'ETH', 'BTC', 'BUSD', 'USDT', 'SHIB')  # 'DAI',
 BINANCE_ASSETS_FOR_FIAT = {
     'all': ('USDT', 'BTC', 'BUSD', 'ETH'),
     'RUB': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'SHIB', 'RUB'),
-    'USD': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH',),# 'DAI'),
-    'EUR': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH',),# 'DAI', 'SHIB'),
-    'GBP': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH',),# 'DAI'),
-    'CHF': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH',),# 'DAI'),
-    'CAD': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH',),# 'DAI'),
+    'USD': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH',),  # 'DAI'),
+    'EUR': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH',),  # 'DAI', 'SHIB'),
+    'GBP': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH',),  # 'DAI'),
+    'CHF': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH',),  # 'DAI'),
+    'CAD': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH',),  # 'DAI'),
     'AUD': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'SHIB', 'ADA'),
     'GEL': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH')
 }
@@ -74,7 +72,8 @@ SPOT_ZERO_FEES = {
 
 class BinanceP2PParser(P2PParser, ABC):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
-    endpoint: str = 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search'
+    endpoint: str = ('https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv'
+                     '/search')
     page: int = 1
     rows: int = 1
 
@@ -93,7 +92,7 @@ class BinanceP2PParser(P2PParser, ABC):
     def extract_price_from_json(json_data: dict) -> float | None:
         data = json_data.get('data')
         if len(data) == 0:
-            return
+            return None
         internal_data = data[0]
         adv = internal_data.get('adv')
         return float(adv.get('price'))
@@ -101,10 +100,10 @@ class BinanceP2PParser(P2PParser, ABC):
 
 class BinanceCryptoParser(CryptoExchangesParser):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
-    fiats: tuple = ASSETS
     endpoint: str = 'https://api.binance.com/api/v3/ticker/price?'
     exceptions: tuple = ('SHIBRUB',)
     name_from: int = 'symbol'
+    zero_fees = SPOT_ZERO_FEES
 
     def get_api_answer(self, params):
         """Делает запрос к эндпоинту API Tinfoff."""
@@ -113,9 +112,7 @@ class BinanceCryptoParser(CryptoExchangesParser):
                 with requests.session() as session:
                     response = session.get(self.endpoint, params=params)
             except Exception as error:
-                message = f'Ошибка при запросе к основному API: {error}'
-                print(message)
-                # raise Exception(message)
+                self.unsuccessful_response_handler(error)
             if response.status_code != HTTPStatus.OK:
                 params = {
                     self.name_from:
@@ -124,11 +121,10 @@ class BinanceCryptoParser(CryptoExchangesParser):
                 sleep(1)
                 with requests.session() as session:
                     response = session.get(self.endpoint, params=params)
+            self.successful_response_handler()
             return response.json(), params
         except Exception as error:
-            message = f'Ошибка при запросе к основному API: {error}'
-            print(message)
-            # raise Exception(message)
+            self.unsuccessful_response_handler(error)
             return False
 
     @staticmethod
@@ -142,36 +138,41 @@ class BinanceCryptoParser(CryptoExchangesParser):
             for params in assets_combinations if params not in self.exceptions
         ]
 
+    def calculates_spot_fee(self, from_asset, to_asset) -> int | float:
+        from_asset_fee_list = self.zero_fees.get(from_asset)
+        if from_asset_fee_list is not None:
+            if to_asset in from_asset_fee_list:
+                return 0
+        to_asset_fee_list = self.zero_fees.get(to_asset)
+        if to_asset_fee_list is not None:
+            if from_asset in to_asset_fee_list:
+                return 0
+        return 0.1
+
     def calculates_buy_and_sell_data(self, params) -> tuple[dict, dict] | None:
         answer = self.get_api_answer(params)
         if not answer:
-            return
+            return None
         json_data, valid_params = answer
         price = self.extract_price_from_json(json_data)
-        for from_fiat in BINANCE_ASSETS + BINANCE_CRYPTO_FIATS:
-            if from_fiat in valid_params['symbol'][0:4]:
-                for to_fiat in BINANCE_ASSETS + BINANCE_CRYPTO_FIATS:
-                    if to_fiat in valid_params['symbol'][-4:]:
-                        if (
-                                to_fiat in SPOT_ZERO_FEES.keys()
-                                and from_fiat in SPOT_ZERO_FEES.get(to_fiat)
-                                or from_fiat in SPOT_ZERO_FEES.keys()
-                                and to_fiat in SPOT_ZERO_FEES.get(from_fiat)
-                        ):
-                            spot_fee = 0
-                        else:
-                            spot_fee = 0.1
+        for from_asset in self.assets + self.crypto_fiats:
+            if from_asset in valid_params['symbol'][0:4]:
+                for to_asset in self.assets + self.crypto_fiats:
+                    if to_asset in valid_params['symbol'][-4:]:
+                        spot_fee = self.calculates_spot_fee(from_asset,
+                                                            to_asset)
                         buy_data = {
-                            'from_asset': from_fiat,
-                            'to_asset': to_fiat,
+                            'from_asset': from_asset,
+                            'to_asset': to_asset,
                             'price': price - price / 100 * spot_fee,
                             'spot_fee': spot_fee
                         }
                         sell_data = {
-                            'from_asset': to_fiat,
-                            'to_asset': from_fiat,
-                            'price': (1.0 / price -
-                                      (1.0 / price) / 100 * spot_fee),
+                            'from_asset': to_asset,
+                            'to_asset': from_asset,
+                            'price': (
+                                1.0 / price - (1.0 / price) / 100 * spot_fee
+                            ),
                             'spot_fee': spot_fee
                         }
                         return buy_data, sell_data

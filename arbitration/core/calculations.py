@@ -1,24 +1,21 @@
+import logging
 from abc import ABC
 from datetime import datetime, timedelta, timezone
-from itertools import permutations, product
-from typing import Tuple, Any
+from functools import reduce
+from itertools import product
+from typing import Any
 
-from banks.models import Banks, BanksExchangeRates, CurrencyMarkets
+from arbitration.settings import (ALLOWED_PERCENTAGE, BASE_ASSET,
+                                  DATA_OBSOLETE_IN_MINUTES,
+                                  INTER_EXCHANGES_BEGIN_OBSOLETE_MINUTES,
+                                  MINIMUM_PERCENTAGE)
+from banks.models import Banks, BanksExchangeRates
+from core.loggers import CalculatingLogger, ParsingLogger
 from crypto_exchanges.models import (CryptoExchanges, InterExchanges,
                                      InterExchangesUpdates,
                                      IntraCryptoExchanges,
                                      P2PCryptoExchangesRates,
-                                     RelatedMarginalityPercentages)
-import logging
-
-from arbitration.settings import BASE_ASSET, \
-    DATA_OBSOLETE_IN_MINUTES, ALLOWED_PERCENTAGE, INTER_EXCHANGES_BEGIN_OBSOLETE_MINUTES
-
-from crypto_exchanges.models import P2PCryptoExchangesRatesUpdates
-
-from core.loggers import ParsingLogger, CalculatingLogger
-
-from arbitration.settings import MINIMUM_PERCENTAGE
+                                     P2PCryptoExchangesRatesUpdates)
 
 
 class BaseCalculating(ABC):
@@ -124,25 +121,24 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
         )
         if target_interim_exchange.exists():
             return target_interim_exchange.get(), None
-        else:
-            target_interim_exchange = IntraCryptoExchanges.objects.filter(
+        target_interim_exchange = IntraCryptoExchanges.objects.filter(
+            crypto_exchange=self.crypto_exchange,
+            from_asset=input_crypto_exchange.asset,
+            to_asset=self.base_asset, update__updated__gte=self.update_time
+        )
+        target_second_interim_exchange = (
+            IntraCryptoExchanges.objects.filter(
                 crypto_exchange=self.crypto_exchange,
-                from_asset=input_crypto_exchange.asset,
-                to_asset=self.base_asset, update__updated__gte=self.update_time
+                from_asset=self.base_asset,
+                to_asset=output_crypto_exchange.asset,
+                update__updated__gte=self.update_time
             )
-            target_second_interim_exchange = (
-                IntraCryptoExchanges.objects.filter(
-                    crypto_exchange=self.crypto_exchange,
-                    from_asset=self.base_asset,
-                    to_asset=output_crypto_exchange.asset,
-                    update__updated__gte=self.update_time
-                )
-            )
-            if (target_interim_exchange.exists() and
-                    target_second_interim_exchange.exists()):
-                return (target_interim_exchange.get(),
-                        target_second_interim_exchange.get())
-            return None, None
+        )
+        if target_interim_exchange.exists(
+        ) and target_second_interim_exchange.exists():
+            return (target_interim_exchange.get(),
+                    target_second_interim_exchange.get())
+        return None, None
 
     def get_complex_interbank_exchange(self) -> None:
         self.check_if_international()
@@ -166,8 +162,9 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
                         self.input_crypto_exchanges,
                         self.output_crypto_exchanges
                 ):
-                    if (input_crypto_exchange.asset
-                            != output_crypto_exchange.asset):
+                    input_asset = input_crypto_exchange.asset
+                    output_asset = output_crypto_exchange.asset
+                    if input_asset != output_asset:
                         interim_exchange, interim_second_exchange = (
                             self.get_two_interim_exchanges(
                                 input_crypto_exchange, output_crypto_exchange
@@ -213,9 +210,10 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
                         self.input_crypto_exchanges,
                         self.output_crypto_exchanges
                 ):
-                    if (input_crypto_exchange.asset
-                            != output_crypto_exchange.asset):
-                        interim_exchange,  interim_second_exchange = (
+                    input_asset = input_crypto_exchange.asset
+                    output_asset = output_crypto_exchange.asset
+                    if input_asset != output_asset:
+                        interim_exchange, interim_second_exchange = (
                             self.get_two_interim_exchanges(
                                 input_crypto_exchange, output_crypto_exchange
                             )
@@ -258,15 +256,17 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
         bank_exchange_price = (1 if bank_exchange is None
                                else bank_exchange.price)
         marginality_percentage = (
-             input_crypto_exchange.price * interim_exchange_price
-             * second_interim_exchange_price
-             * output_crypto_exchange.price * bank_exchange_price - 1
+            reduce(lambda x, y: x * y, (
+                input_crypto_exchange.price, interim_exchange_price,
+                second_interim_exchange_price, output_crypto_exchange.price,
+                bank_exchange_price
+            )) - 1
         ) * 100
         return round(marginality_percentage, 2)
 
     def create_diagram(
             self, input_crypto_exchange, interim_exchange,
-            interim_second_exchange, output_bank,  output_crypto_exchange,
+            interim_second_exchange, output_bank, output_crypto_exchange,
             bank_exchange=None
     ) -> str:
         diagram = ''
@@ -283,8 +283,8 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
             if interim_second_exchange:
                 diagram += f'{interim_second_exchange.to_asset} ⇨ '
         diagram += f'{output_bank.name} {output_crypto_exchange.fiat}'
-        if (bank_exchange and output_bank == bank_exchange.bank
-                and self.bank != output_bank):
+        if_one_bank = self.bank != output_bank
+        if bank_exchange and output_bank == bank_exchange.bank and if_one_bank:
             if bank_exchange.currency_market:
                 diagram += f' ⇨ {bank_exchange.currency_market.name} '
             else:
@@ -310,8 +310,9 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
             inter_exchange = target_object.get()
             if inter_exchange.marginality_percentage > marginality_percentage:
                 inter_exchange.dynamics = 'fall'
-            elif (inter_exchange.marginality_percentage
-                  < marginality_percentage):
+            elif (
+                inter_exchange.marginality_percentage < marginality_percentage
+            ):
                 inter_exchange.dynamics = 'rise'
             else:
                 inter_exchange.dynamics = None
@@ -356,7 +357,7 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
                 self.get_complex_interbank_exchange()
             self.model.objects.bulk_update(
                 self.records_to_update,
-                ['marginality_percentage', 'dynamics', 'new',  'update']
+                ['marginality_percentage', 'dynamics', 'new', 'update']
             )
             # RelatedMarginalityPercentages.objects.bulk_create(
             #     self.records_to_create
@@ -381,8 +382,8 @@ class Card2Wallet2CryptoExchangesCalculating(BaseCalculating, ParsingLogger,
 
     def __init__(self, trade_type: str) -> None:
         super().__init__()
-        from crypto_exchanges.crypto_exchanges_config import \
-            CRYPTO_EXCHANGES_CONFIG
+        from crypto_exchanges.crypto_exchanges_config import (
+            CRYPTO_EXCHANGES_CONFIG)
         self.new_update = self.model_update.objects.create(
             crypto_exchange=self.crypto_exchange,
             payment_channel=self.payment_channel
@@ -443,11 +444,11 @@ class Card2Wallet2CryptoExchangesCalculating(BaseCalculating, ParsingLogger,
         )
         if p2p_exchange.exists():
             p2p_price = p2p_exchange.get().price
-            if (
-                    value_dict['trade_type'] == 'BUY' and price > p2p_price
-                    or value_dict['trade_type'] == 'SELL'
-                    and price < p2p_price
-            ):
+            if_bad_buy_price = (
+                value_dict['trade_type'] == 'BUY' and price > p2p_price)
+            if_bad_sell_price = (
+                value_dict['trade_type'] == 'SELL' and price < p2p_price)
+            if if_bad_buy_price or if_bad_sell_price:
                 return True
         return False
 
