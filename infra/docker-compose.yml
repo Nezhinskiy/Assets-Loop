@@ -26,8 +26,7 @@ services:
       - .env
 
   arbitration:
-    build:
-      context: ../arbitration
+    image: nezhinsky/arbitration:latest
     container_name: arbitration
     restart: always
     volumes:
@@ -51,8 +50,7 @@ services:
 
   celery-parsing:
     restart: always
-    build:
-      context: ../arbitration
+    image: nezhinsky/arbitration:latest
     container_name: celery-parsing
     entrypoint: celery
     command:  -A arbitration worker --loglevel=ERROR -Q parsing -c 7 -n parsing_worker
@@ -66,8 +64,7 @@ services:
 
   celery-calculating:
     restart: always
-    build:
-      context: ../arbitration
+    image: nezhinsky/arbitration:latest
     container_name: celery-calculating
     entrypoint: celery
     command:  -A arbitration worker --loglevel=ERROR -Q calculating -c 2 -n calculating_worker
@@ -81,8 +78,7 @@ services:
 
   celery-beat:
     restart: always
-    build:
-      context: ../arbitration
+    image: nezhinsky/arbitration:latest
     container_name: celery-beat
     entrypoint: celery
     command: -A arbitration beat --loglevel=ERROR
