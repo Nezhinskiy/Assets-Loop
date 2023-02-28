@@ -22,8 +22,9 @@ function bankExchange(row, bank) {
 
 function inputCryptoExchange(row) {
     return `со счёта ${row.input_bank.name} нужно купить активы на криптобирже 
-    ${row.crypto_exchange.name}. За ${row.input_crypto_exchange.fiat} следует 
-    купить ${row.input_crypto_exchange.asset} методом 
+    ${row.crypto_exchange.name}. За 
+    ${row.input_crypto_exchange.fiat} следует купить 
+    ${row.input_crypto_exchange.asset} методом 
     ${row.input_crypto_exchange.payment_channel} по курсу 
     ${row.input_crypto_exchange.price}.`;
 }
