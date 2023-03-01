@@ -29,7 +29,7 @@ class BaseLogger(ABC):
         self.get_count_updated_objects()
 
     @abstractmethod
-    def logger_end(self) -> None:
+    def logger_end(self, _) -> None:
         pass
 
     def logger_error(self, error) -> None:
@@ -46,13 +46,15 @@ class BaseLogger(ABC):
 
 
 class ParsingLogger(BaseLogger, ABC):
-    def logger_end(self) -> None:
+    def logger_end(self, bank_name=None) -> None:
         self.get_all_objects()
         message = f'Finish {self.__class__.__name__} at {self.duration}. '
+        if bank_name is not None:
+            message += f'Bank_name: {bank_name}. '
         if self.count_created_objects + self.count_updated_objects > 0:
             message += f'Updated: {self.count_updated_objects}, '
             message += f'Created: {self.count_created_objects}. '
-            self.logger.info(message)
+            self.logger.error(message)
         else:
             message += (f'Has not been Created and updated: '
                         f'{self.count_updated_objects}. ')
@@ -60,9 +62,10 @@ class ParsingLogger(BaseLogger, ABC):
 
 
 class CalculatingLogger(BaseLogger, ABC):
-    def logger_end(self) -> None:
+    def logger_end(self, bank_name: str) -> None:
         self.get_all_objects()
-        message = f'Finish {self.__class__.__name__} at {self.duration}. '
+        message = (f'Finish {self.__class__.__name__} {bank_name} at '
+                   f'{self.duration}. ')
         message += f'Updated: {self.count_updated_objects}, '
         message += f'Created: {self.count_created_objects}. '
-        self.logger.info(message)
+        self.logger.error(message)
