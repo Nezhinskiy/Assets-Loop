@@ -78,8 +78,7 @@ services:
 
   celery-beat:
     restart: always
-    build:
-      context: ../arbitration
+    image: nezhinsky/arbitration:latest
     container_name: celery-beat
     entrypoint: celery
     command: -A arbitration beat --loglevel=ERROR
