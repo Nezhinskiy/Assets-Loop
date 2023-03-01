@@ -72,7 +72,7 @@ BANKS_CONFIG = {
             P2PCryptoExchangesRates
         ),
         'transaction_methods': (
-            'SettlePay (Visa/MC)', 'Bank Card (Visa/MC)', 'Bank Card (Visa)'
+            'Bank Card (Visa/MC)', 'Bank Card (Visa)'
         ),
         'bank_invest_exchanges': []
     }

@@ -5,6 +5,8 @@ from functools import reduce
 from itertools import product
 from typing import Any
 
+from django.db.models import Q
+
 from arbitration.settings import (ALLOWED_PERCENTAGE, BASE_ASSET,
                                   DATA_OBSOLETE_IN_MINUTES,
                                   INTER_EXCHANGES_BEGIN_OBSOLETE_MINUTES,
@@ -41,6 +43,7 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
     international: bool
     base_asset: str = BASE_ASSET
     output_bank: Banks
+    output_transaction_methods: tuple
     input_crypto_exchanges: P2PCryptoExchangesRates
     output_crypto_exchanges: P2PCryptoExchangesRates
     data_obsolete_in_minutes: int = DATA_OBSOLETE_IN_MINUTES
@@ -55,6 +58,8 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
         )
         self.banks = self.banks_config.keys()
         self.input_bank_config = self.banks_config.get(self.bank_name)
+        self.input_transaction_methods = self.input_bank_config[
+            'transaction_methods']
         self.all_input_fiats = self.input_bank_config.get('currencies')
         self.update_time = datetime.now(timezone.utc) - timedelta(
             minutes=self.data_obsolete_in_minutes
@@ -77,6 +82,8 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
 
     def filter_input_crypto_exchanges(self, input_fiat: str) -> None:
         self.input_crypto_exchanges = P2PCryptoExchangesRates.objects.filter(
+            Q(transaction_method__in=self.input_transaction_methods) | Q(
+                transaction_method__isnull=True),
             crypto_exchange=self.crypto_exchange, bank=self.bank,
             trade_type='BUY', fiat=input_fiat, price__isnull=False,
             update__updated__gte=self.update_time
@@ -84,6 +91,8 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
 
     def filter_output_crypto_exchanges(self, output_fiat: str) -> None:
         self.output_crypto_exchanges = P2PCryptoExchangesRates.objects.filter(
+            Q(transaction_method__in=self.output_transaction_methods) | Q(
+                transaction_method__isnull=True),
             crypto_exchange=self.crypto_exchange, bank=self.output_bank,
             trade_type='SELL', fiat=output_fiat, price__isnull=False,
             update__updated__gte=self.update_time
@@ -145,6 +154,8 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
         for output_bank_name in self.banks:
             self.output_bank = Banks.objects.get(name=output_bank_name)
             output_bank_config = self.banks_config.get(output_bank_name)
+            self.output_transaction_methods = output_bank_config[
+                'transaction_methods']
             all_output_fiats = output_bank_config.get('currencies')
             for input_fiat, output_fiat in product(
                     self.all_input_fiats, all_output_fiats
@@ -200,6 +211,8 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
         for output_bank_name in self.banks:
             self.output_bank = Banks.objects.get(name=output_bank_name)
             output_bank_config = self.banks_config.get(output_bank_name)
+            self.output_transaction_methods = output_bank_config[
+                'transaction_methods']
             all_output_fiats = output_bank_config.get('currencies')
             for fiat in self.all_input_fiats:
                 if fiat not in all_output_fiats:

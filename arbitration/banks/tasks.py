@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 )
 def parse_internal_tinkoff_rates(self):
     TinkoffParser().main()
-    self.retry(countdown=200 * UPDATE_RATE[datetime.now(timezone.utc).hour])
+    self.retry(countdown=240 * UPDATE_RATE[datetime.now(timezone.utc).hour])
 
 
 @app.task(
@@ -33,7 +33,7 @@ def parse_internal_tinkoff_rates(self):
 )
 def parse_internal_raiffeisen_rates(self):
     RaiffeisenParser().main()
-    self.retry(countdown=200 * UPDATE_RATE[datetime.now(timezone.utc).hour])
+    self.retry(countdown=240 * UPDATE_RATE[datetime.now(timezone.utc).hour])
 
 
 @app.task(
@@ -42,7 +42,7 @@ def parse_internal_raiffeisen_rates(self):
 )
 def parse_internal_wise_rates(self):
     WiseParser().main()
-    self.retry(countdown=200 * UPDATE_RATE[datetime.now(timezone.utc).hour])
+    self.retry(countdown=240 * UPDATE_RATE[datetime.now(timezone.utc).hour])
 
 
 # Banks P2P rates

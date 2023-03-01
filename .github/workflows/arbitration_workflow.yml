@@ -1,4 +1,4 @@
-name: Django-app workflow
+name: Arbitration workflow
 
 on: [push]
 
@@ -40,3 +40,34 @@ jobs:
           context: arbitration
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_PROJECT }}:latest
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build_and_push_to_docker_hub
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - name: executing remote ssh commands to deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd infra/
+            docker-compose down
+            docker image rm ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_PROJECT }}
+            docker volume rm infra_static_value
+            docker-compose --verbose up -d --build
+            docker-compose run ${{ secrets.DOCKER_PROJECT }} python manage.py migrate
+            docker-compose run ${{ secrets.DOCKER_PROJECT }} python manage.py collectstatic --noinput
+
+  send_message:
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: send message
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: ${{ secrets.DOCKER_PROJECT }} deployment completed successfully

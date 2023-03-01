@@ -1,3 +1,13 @@
+function roundToTwo(num) {
+  if (Number.isInteger(num) || num.toFixed(1) === num) {
+    return num;
+  }
+  if (num.toFixed(2) !== num) {
+    return +num.toFixed(2);
+  }
+  return num;
+}
+
 function updateTime(updated) {
     let seconds = Math.ceil((new Date() - new Date(updated)) / 1000);
     return seconds > 999 ? 999 : seconds;
@@ -20,13 +30,52 @@ function bankExchange(row, bank) {
     }
 }
 
-function inputCryptoExchange(row) {
+function inputP2P(row) {
+    return `со счёта ${row.input_bank.name} нужно купить активы на криптобирже 
+    ${row.crypto_exchange.name}. За 
+    ${row.input_crypto_exchange.fiat} следует купить 
+    ${row.input_crypto_exchange.asset} методом P2P по курсу 
+    ${row.input_crypto_exchange.price}. P2P не облагается комиссией.`;
+}
+
+function inputCard2CryptoExchange(row) {
     return `со счёта ${row.input_bank.name} нужно купить активы на криптобирже 
     ${row.crypto_exchange.name}. За 
     ${row.input_crypto_exchange.fiat} следует купить 
     ${row.input_crypto_exchange.asset} методом 
-    ${row.input_crypto_exchange.payment_channel} по курсу 
-    ${row.input_crypto_exchange.price}.`;
+    Card2CryptoExchange через ${row.input_crypto_exchange.transaction_method}, 
+    по курсу ${row.input_crypto_exchange.price}. В стоимость включена комиссия 
+    биржи ${roundToTwo(row.input_crypto_exchange.transaction_fee)}%.`;
+}
+
+function inputCard2Wallet2CryptoExchange(row) {
+    return `со счёта ${row.input_bank.name} нужно купить активы на криптобирже 
+    ${row.crypto_exchange.name}. За 
+    ${row.input_crypto_exchange.fiat} следует купить 
+    ${row.input_crypto_exchange.asset} методом 
+    Card2Wallet2CryptoExchange по итоговому курсу с учётом всех комиссий - 
+    ${row.input_crypto_exchange.price}. Этот метод состоит из двух транзакций: 
+    1. Нужно перевести ${row.input_crypto_exchange.fiat} на свой 
+    ${row.crypto_exchange.name} кошелёк через 
+    ${row.input_crypto_exchange.transaction_method}. Комиссия составит 
+    ${roundToTwo(row.input_crypto_exchange.transaction_fee)}%. 
+    2. Далее, уже внутри биржи надо конвертировать через Спот 
+    ${row.input_crypto_exchange.fiat} в ${row.input_crypto_exchange.asset} 
+    по курсу ${row.input_crypto_exchange.intra_crypto_exchange.price} c учётом 
+    комиссии ${row.input_crypto_exchange.intra_crypto_exchange.spot_fee}%.`;
+}
+
+function inputCryptoExchange(row) {
+    if (row.input_crypto_exchange.payment_channel === 'P2P') {
+        return inputP2P(row);
+    }
+    if (row.input_crypto_exchange.payment_channel === 'Card2CryptoExchange') {
+        return inputCard2CryptoExchange(row);
+    }
+    if (row.input_crypto_exchange.payment_channel === 'Card2Wallet2CryptoExchange') {
+        return inputCard2Wallet2CryptoExchange(row);
+    }
+    return row.input_crypto_exchange.payment_channel
 }
 
 function interimCryptoExchange(row) {
@@ -34,27 +83,69 @@ function interimCryptoExchange(row) {
         return `Теперь внутри ${row.crypto_exchange.name} через Спот надо 
         сначала конвертировать ${row.interim_crypto_exchange.from_asset} в 
         ${row.interim_crypto_exchange.to_asset} по курсу 
-        ${row.interim_crypto_exchange.price} (комиссия 
+        ${row.interim_crypto_exchange.price} (комиссия биржи 
         ${row.interim_crypto_exchange.spot_fee}%), а потом 
         ${row.interim_crypto_exchange.to_asset} в 
         ${row.second_interim_crypto_exchange.to_asset} по курсу 
-        ${row.second_interim_crypto_exchange.price} (комиссия 
-        ${row.second_interim_crypto_exchange.spot_fee}%). Комиссии 
-        включены в цену.`;
+        ${row.second_interim_crypto_exchange.price} (комиссия биржи
+        ${row.second_interim_crypto_exchange.spot_fee}%). Все комиссии 
+        включены в стоимость.`;
     } else {
         return `Теперь внутри ${row.crypto_exchange.name} через Спот надо 
         конвертировать ${row.interim_crypto_exchange.from_asset} в 
         ${row.interim_crypto_exchange.to_asset} по курсу 
-        ${row.interim_crypto_exchange.price} (комиссия 
-        ${row.interim_crypto_exchange.spot_fee}%). Комиссия включена в цену.`;
+        ${row.interim_crypto_exchange.price}. Комиссия биржи 
+        ${row.interim_crypto_exchange.spot_fee}% включена в стоимость.`;
     }
 }
-function outputCryptoExchange(row) {
+
+function outputP2P(row) {
     return `нужно перевести активы с ${row.crypto_exchange.name} на счёт 
     ${row.output_bank.name} по методу 
     ${row.output_crypto_exchange.payment_channel}. Перевести 
     ${row.output_crypto_exchange.asset} в ${row.output_crypto_exchange.fiat} 
-    по курсу ${row.output_crypto_exchange.price}.`;
+    по курсу ${row.output_crypto_exchange.price}. P2P не облагается 
+    комиссией.`;
+}
+
+function outputCard2CryptoExchange(row) {
+    return `нужно перевести активы с ${row.crypto_exchange.name} на счёт 
+    ${row.output_bank.name} по методу CryptoExchange2Card через 
+    ${row.output_crypto_exchange.transaction_method}. Перевести 
+    ${row.output_crypto_exchange.asset} в ${row.output_crypto_exchange.fiat} 
+    по курсу ${row.output_crypto_exchange.price}.  В стоимость включена 
+    комиссия биржи 
+    ${roundToTwo(row.output_crypto_exchange.transaction_fee)}%.`;
+}
+
+function outputCard2Wallet2CryptoExchange(row) {
+    return `нужно перевести активы с ${row.crypto_exchange.name} на счёт 
+    ${row.output_bank.name} по методу CryptoExchange2Wallet2Card. Перевести 
+    ${row.output_crypto_exchange.asset} в ${row.output_crypto_exchange.fiat} 
+    по итоговому курсу ${row.output_crypto_exchange.price} с учётом всех 
+    комиссий. Этот метод состоит из двух транзакций: 1. Нужно внутри биржи 
+    через Спот конвертировать ${row.output_crypto_exchange.asset} в 
+    ${row.output_crypto_exchange.fiat} 
+    на свой ${row.crypto_exchange.name} кошелёк, по курсу 
+    ${row.output_crypto_exchange.intra_crypto_exchange.price} c учётом 
+    комиссии ${row.output_crypto_exchange.intra_crypto_exchange.spot_fee}%. 
+    2. Далее, нужно вывести с ${row.crypto_exchange.name} кошелька 
+    ${row.output_crypto_exchange.fiat} на свой ${row.output_bank.name} счёт 
+    через ${row.output_crypto_exchange.transaction_method}. Комиссия составит 
+    ${roundToTwo(row.output_crypto_exchange.transaction_fee)}%.`;
+}
+
+function outputCryptoExchange(row) {
+    if (row.output_crypto_exchange.payment_channel === 'P2P') {
+        return outputP2P(row);
+    }
+    if (row.output_crypto_exchange.payment_channel === 'Card2CryptoExchange') {
+        return outputCard2CryptoExchange(row);
+    }
+    if (row.output_crypto_exchange.payment_channel === 'Card2Wallet2CryptoExchange') {
+        return outputCard2Wallet2CryptoExchange(row);
+    }
+    return row.output_crypto_exchange.payment_channel
 }
 
 function modalWrite(row) {
@@ -172,6 +263,5 @@ $("#myModal").on('show.bs.modal', function (e) {
 });
 
 $( document ).ajaxComplete(function( event, request, settings ) {
-    $('[data-toggle="tooltip"]').not( '[data-original-title]'
-    ).tooltip();
+    $('[data-toggle="tooltip"]').not( '[data-original-title]' ).tooltip();
 });
