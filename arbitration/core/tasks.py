@@ -6,9 +6,12 @@ from celery import group
 from arbitration.celery import app
 from arbitration.settings import PARSING_WORKER_NAME
 from banks.banks_config import BANKS_CONFIG
-from banks.tasks import (get_qiwi_p2p_binance_exchanges,
+from banks.tasks import (get_bog_p2p_binance_exchanges,
+                         get_credo_p2p_binance_exchanges,
+                         get_qiwi_p2p_binance_exchanges,
                          get_raiffeisen_p2p_binance_exchanges,
                          get_sberbank_p2p_binance_exchanges,
+                         get_tbc_p2p_binance_exchanges,
                          get_tinkoff_p2p_binance_exchanges,
                          get_wise_p2p_binance_exchanges,
                          get_yoomoney_p2p_binance_exchanges,
@@ -90,6 +93,9 @@ def assets_loop():
         get_raiffeisen_p2p_binance_exchanges.s(),
         get_qiwi_p2p_binance_exchanges.s(),
         get_yoomoney_p2p_binance_exchanges.s(),
+        get_bog_p2p_binance_exchanges.s(),
+        get_tbc_p2p_binance_exchanges.s(),
+        get_credo_p2p_binance_exchanges.s(),
         get_wise_p2p_binance_exchanges.s(),
         get_binance_card_2_crypto_exchanges_buy.s(),
         get_binance_card_2_crypto_exchanges_sell.s(),

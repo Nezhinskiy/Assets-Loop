@@ -3,10 +3,13 @@ from datetime import datetime, timezone
 
 from arbitration.celery import app
 from arbitration.settings import UPDATE_RATE
+from banks.banks_registration.bank_of_georgia import BOGBinanceP2PParser
+from banks.banks_registration.credo import CredoBinanceP2PParser
 from banks.banks_registration.qiwi import QIWIBinanceP2PParser
 from banks.banks_registration.raiffeisen import (RaiffeisenBinanceP2PParser,
                                                  RaiffeisenParser)
 from banks.banks_registration.sberbank import SberbankBinanceP2PParser
+from banks.banks_registration.tbc import TBCBinanceP2PParser
 from banks.banks_registration.tinkoff import (TinkoffBinanceP2PParser,
                                               TinkoffParser)
 from banks.banks_registration.wise import WiseBinanceP2PParser, WiseParser
@@ -88,6 +91,33 @@ def get_qiwi_p2p_binance_exchanges(self):
 )
 def get_yoomoney_p2p_binance_exchanges(self):
     YoomoneyBinanceP2PParser().main()
+    self.retry(countdown=70 * UPDATE_RATE[datetime.now(timezone.utc).hour])
+
+
+@app.task(
+    bind=True, max_retries=None, queue='parsing', autoretry_for=(Exception,),
+    retry_backoff=True
+)
+def get_bog_p2p_binance_exchanges(self):
+    BOGBinanceP2PParser().main()
+    self.retry(countdown=70 * UPDATE_RATE[datetime.now(timezone.utc).hour])
+
+
+@app.task(
+    bind=True, max_retries=None, queue='parsing', autoretry_for=(Exception,),
+    retry_backoff=True
+)
+def get_tbc_p2p_binance_exchanges(self):
+    TBCBinanceP2PParser().main()
+    self.retry(countdown=70 * UPDATE_RATE[datetime.now(timezone.utc).hour])
+
+
+@app.task(
+    bind=True, max_retries=None, queue='parsing', autoretry_for=(Exception,),
+    retry_backoff=True
+)
+def get_credo_p2p_binance_exchanges(self):
+    CredoBinanceP2PParser().main()
     self.retry(countdown=70 * UPDATE_RATE[datetime.now(timezone.utc).hour])
 
 

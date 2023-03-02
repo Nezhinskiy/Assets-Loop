@@ -187,11 +187,15 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
                 input_crypto_exchange__transaction_method__isnull=True),
             Q(output_crypto_exchange__transaction_method__in=self.output_transaction_methods) | Q(
                 output_crypto_exchange__transaction_method__isnull=True),
-            input_bank=self.bank, output_bank__name__in=self.banks,
-            crypto_exchange=self.crypto_exchange, bank_exchange__isnull=False,
-            marginality_percentage__gte=(MINIMUM_PERCENTAGE - 1),
+            bank_exchange__isnull=False,
             input_crypto_exchange__price__isnull=False,
             output_crypto_exchange__price__isnull=False,
+            input_crypto_exchange__update__updated__gte=self.update_time,
+            output_crypto_exchange__update__updated__gte=self.update_time,
+            bank_exchange__update__updated__gte=self.update_time,
+            input_bank=self.bank, output_bank__name__in=self.banks,
+            crypto_exchange=self.crypto_exchange,
+            marginality_percentage__gte=(MINIMUM_PERCENTAGE - 1),
         )
         for complex_exchange in complex_exchanges:
             input_crypto_exchange = complex_exchange.input_crypto_exchange
@@ -293,11 +297,14 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
                 input_crypto_exchange__transaction_method__isnull=True),
             Q(output_crypto_exchange__transaction_method__in=self.output_transaction_methods) | Q(
                 output_crypto_exchange__transaction_method__isnull=True),
-            input_bank=self.bank, output_bank__name__in=self.banks,
-            crypto_exchange=self.crypto_exchange, bank_exchange__isnull=True,
-            marginality_percentage__gte=(MINIMUM_PERCENTAGE - 1),
+            bank_exchange__isnull=True,
             input_crypto_exchange__price__isnull=False,
             output_crypto_exchange__price__isnull=False,
+            input_crypto_exchange__update__updated__gte=self.update_time,
+            output_crypto_exchange__update__updated__gte=self.update_time,
+            input_bank=self.bank, output_bank__name__in=self.banks,
+            crypto_exchange=self.crypto_exchange,
+            marginality_percentage__gte=(MINIMUM_PERCENTAGE - 1),
         )
         for complex_exchange in complex_exchanges:
             input_crypto_exchange = complex_exchange.input_crypto_exchange

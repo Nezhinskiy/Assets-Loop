@@ -39,7 +39,7 @@ class BaseLogger(ABC):
             message += f'Updated: {self.count_updated_objects}, '
             message += f'Created: {self.count_created_objects}. '
         else:
-            message += (f'Has not been Created and updated: '
+            message += (f'Has not been created and updated: '
                         f'{self.count_updated_objects}. ')
         message += f'{error}'
         self.logger.error(message)

@@ -53,7 +53,7 @@ services:
     image: nezhinsky/arbitration:latest
     container_name: celery-parsing
     entrypoint: celery
-    command:  -A arbitration worker --loglevel=ERROR -Q parsing -c 6 -n parsing_worker
+    command:  -A arbitration worker --loglevel=ERROR -Q parsing -c 10 -n parsing_worker
     env_file:
       - .env
     links:

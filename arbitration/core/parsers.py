@@ -362,7 +362,7 @@ class P2PParser(CryptoParser, ABC):
 
     @staticmethod
     @abstractmethod
-    def extract_price_from_json(json_data: dict) -> float | None:
+    def extract_price_from_json(json_data: dict) -> float | None | bool:
         pass
 
     def get_api_answer(self, asset: str, trade_type: str, fiat: str) -> dict:

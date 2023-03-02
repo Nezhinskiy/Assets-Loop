@@ -1,6 +1,9 @@
+from banks.banks_registration.bank_of_georgia import BOG_CURRENCIES
+from banks.banks_registration.credo import CREDO_CURRENCIES
 from banks.banks_registration.qiwi import QIWI_CURRENCIES
 from banks.banks_registration.raiffeisen import RAIFFEISEN_CURRENCIES
 from banks.banks_registration.sberbank import SBERBANK_CURRENCIES
+from banks.banks_registration.tbc import TBC_CURRENCIES
 from banks.banks_registration.tinkoff import TINKOFF_CURRENCIES
 from banks.banks_registration.wise import WISE_CURRENCIES
 from banks.banks_registration.yoomoney import YOOMONEY_CURRENCIES
@@ -62,6 +65,45 @@ BANKS_CONFIG = {
         'transaction_methods': (),
         'bank_invest_exchanges': []
     },
+    'Bank of Georgia': {
+        'bank_parser': False,
+        'currencies': BOG_CURRENCIES,
+        'crypto_exchanges': ('Binance',),
+        'binance_name': 'BankofGeorgia',
+        'payment_channels': (
+            'Card2CryptoExchange', P2PCryptoExchangesRates
+        ),
+        'transaction_methods': (
+            'Bank Card (Visa/MC)', 'Bank Card (Visa)'
+        ),
+        'bank_invest_exchanges': []
+    },
+    'TBC': {
+        'bank_parser': False,
+        'currencies': TBC_CURRENCIES,
+        'crypto_exchanges': ('Binance',),
+        'binance_name': 'TBCbank',
+        'payment_channels': (
+            'Card2CryptoExchange', P2PCryptoExchangesRates
+        ),
+        'transaction_methods': (
+            'Bank Card (Visa/MC)', 'Bank Card (Visa)'
+        ),
+        'bank_invest_exchanges': []
+    },
+    'Credo': {
+        'bank_parser': False,
+        'currencies': CREDO_CURRENCIES,
+        'crypto_exchanges': ('Binance',),
+        'binance_name': 'CREDOBANK',
+        'payment_channels': (
+            'Card2CryptoExchange', P2PCryptoExchangesRates
+        ),
+        'transaction_methods': (
+            'Bank Card (Visa/MC)', 'Bank Card (Visa)'
+        ),
+        'bank_invest_exchanges': []
+    },
     'Wise': {
         'bank_parser': True,
         'currencies': WISE_CURRENCIES,
@@ -78,4 +120,4 @@ BANKS_CONFIG = {
     }
 }
 
-INTERNATIONAL_BANKS = ('Wise',)
+INTERNATIONAL_BANKS = ('Wise', 'Bank of Georgia', 'TBC', 'Credo')
