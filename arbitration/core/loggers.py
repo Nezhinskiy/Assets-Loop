@@ -13,28 +13,28 @@ class BaseLogger(ABC):
         self.start_time = datetime.now(timezone.utc)
         self.logger = logging.getLogger(self.__class__.__name__)
 
-    def logger_start(self) -> None:
+    def _logger_start(self) -> None:
         message = f'Start {self.__class__.__name__} at {self.start_time}.'
         self.logger.info(message)
 
     @abstractmethod
-    def get_count_created_objects(self) -> None:
+    def _get_count_created_objects(self) -> None:
         pass
 
     @abstractmethod
-    def get_count_updated_objects(self) -> None:
+    def _get_count_updated_objects(self) -> None:
         pass
 
-    def get_all_objects(self) -> None:
-        self.get_count_created_objects()
-        self.get_count_updated_objects()
+    def _get_all_objects(self) -> None:
+        self._get_count_created_objects()
+        self._get_count_updated_objects()
 
     @abstractmethod
-    def logger_end(self) -> None:
+    def _logger_end(self) -> None:
         pass
 
-    def logger_error(self, error) -> None:
-        self.get_all_objects()
+    def _logger_error(self, error) -> None:
+        self._get_all_objects()
         message = f'An error has occurred in {self.__class__.__name__}. '
         if self.bank_name is not None:
             message += f'Bank name: {self.bank_name}. '
@@ -49,8 +49,8 @@ class BaseLogger(ABC):
 
 
 class ParsingLogger(BaseLogger, ABC):
-    def logger_end(self) -> None:
-        self.get_all_objects()
+    def _logger_end(self) -> None:
+        self._get_all_objects()
         message = f'Finish {self.__class__.__name__} at {self.duration}. '
         if self.bank_name is not None:
             message += f'Bank name: {self.bank_name}. '
@@ -65,8 +65,8 @@ class ParsingLogger(BaseLogger, ABC):
 
 
 class CalculatingLogger(BaseLogger, ABC):
-    def logger_end(self) -> None:
-        self.get_all_objects()
+    def _logger_end(self) -> None:
+        self._get_all_objects()
         message = (f'Finish {self.__class__.__name__} at '
                    f'{self.duration}. ')
         if self.bank_name is not None:

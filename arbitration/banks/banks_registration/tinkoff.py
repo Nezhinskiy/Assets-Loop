@@ -20,15 +20,15 @@ class TinkoffParser(BankParser):
     name_from: str = 'from'
     name_to: str = 'to'
 
-    def create_params(self, fiats_combinations):
+    def _create_params(self, fiats_combinations):
         params = [
             dict([(self.name_from, params[0]), (self.name_to, params[-1])])
             for params in fiats_combinations
         ]
         return params
 
-    def extract_buy_and_sell_from_json(self, json_data: dict
-                                       ) -> tuple[float, float] or None:
+    def _extract_buy_and_sell_from_json(self, json_data: dict
+                                        ) -> tuple[float, float] or None:
         if not json_data:
             return None
         payload = json_data['payload']

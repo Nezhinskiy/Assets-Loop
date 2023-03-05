@@ -23,15 +23,15 @@ class WiseParser(BankParser):
     source_amount: int = 10000
     profile_country: str = 'RU'
 
-    def create_params(self, fiats_combinations):
+    def _create_params(self, fiats_combinations):
         params = [dict([('sourceAmount', self.source_amount),
-                        ('sourceCurrency', params[0]),
-                        ('targetCurrency', params[-1]),
+                        (self.name_from, params[0]),
+                        (self.name_to, params[-1]),
                         ('profileCountry', self.profile_country)])
                   for params in fiats_combinations]
         return params
 
-    def extract_price_from_json(self, json_data: list) -> float:
+    def _extract_price_from_json(self, json_data: list) -> float:
         if json_data and len(json_data) > 1:
             for exchange_data in json_data:
                 pay_in_method = exchange_data.get('payInMethod')

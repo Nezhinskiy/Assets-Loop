@@ -4,6 +4,7 @@ import os
 from abc import ABC
 from http import HTTPStatus
 from time import sleep
+from typing import List
 
 import requests
 
@@ -69,7 +70,7 @@ class BinanceP2PParser(P2PParser, ABC):
     page: int = 1
     rows: int = 1
 
-    def create_body(self, asset: str, fiat: str, trade_type: str) -> dict:
+    def _create_body(self, asset: str, fiat: str, trade_type: str) -> dict:
         return {
             "page": self.page,
             "rows": self.rows,
@@ -81,7 +82,7 @@ class BinanceP2PParser(P2PParser, ABC):
         }
 
     @staticmethod
-    def extract_price_from_json(json_data: dict) -> float | None:
+    def _extract_price_from_json(json_data: dict) -> float | None:
         data = json_data.get('data')
         if len(data) == 0:
             return None
@@ -97,14 +98,14 @@ class BinanceCryptoParser(CryptoExchangesParser):
     name_from: int = 'symbol'
     zero_fees = SPOT_ZERO_FEES
 
-    def get_api_answer(self, params):
+    def _get_api_answer(self, params):
         """Делает запрос к эндпоинту API Tinfoff."""
         try:
             try:
                 with requests.session() as session:
                     response = session.get(self.endpoint, params=params)
             except Exception as error:
-                self.unsuccessful_response_handler(error)
+                self._unsuccessful_response_handler(error)
             if response.status_code != HTTPStatus.OK:
                 params = {
                     self.name_from:
@@ -113,24 +114,24 @@ class BinanceCryptoParser(CryptoExchangesParser):
                 sleep(1)
                 with requests.session() as session:
                     response = session.get(self.endpoint, params=params)
-            self.successful_response_handler()
+            self._successful_response_handler()
             return response.json(), params
         except Exception as error:
-            self.unsuccessful_response_handler(error)
+            self._unsuccessful_response_handler(error)
             return False
 
     @staticmethod
-    def extract_price_from_json(json_data: dict) -> float:
+    def _extract_price_from_json(json_data: dict) -> float:
         return float(json_data['price'])
 
-    def create_params(self,
-                      assets_combinations: tuple) -> list[dict[int, str]]:
+    def _create_params(self, assets_combinations: tuple
+                       ) -> list[dict[int, str]]:
         return [
             dict([(self.name_from, ''.join([params[0], params[1]]))])
             for params in assets_combinations if params not in self.exceptions
         ]
 
-    def calculates_spot_fee(self, from_asset, to_asset) -> int | float:
+    def _calculates_spot_fee(self, from_asset, to_asset) -> int | float:
         from_asset_fee_list = self.zero_fees.get(from_asset)
         if from_asset_fee_list is not None:
             if to_asset in from_asset_fee_list:
@@ -141,18 +142,19 @@ class BinanceCryptoParser(CryptoExchangesParser):
                 return 0
         return 0.1
 
-    def calculates_buy_and_sell_data(self, params) -> tuple[dict, dict] | None:
-        answer = self.get_api_answer(params)
+    def _calculates_buy_and_sell_data(self, params
+                                      ) -> tuple[dict, dict] | None:
+        answer = self._get_api_answer(params)
         if not answer:
             return None
         json_data, valid_params = answer
-        price = self.extract_price_from_json(json_data)
+        price = self._extract_price_from_json(json_data)
         for from_asset in self.assets + self.crypto_fiats:
             if from_asset in valid_params['symbol'][0:4]:
                 for to_asset in self.assets + self.crypto_fiats:
                     if to_asset in valid_params['symbol'][-4:]:
-                        spot_fee = self.calculates_spot_fee(from_asset,
-                                                            to_asset)
+                        spot_fee = self._calculates_spot_fee(from_asset,
+                                                             to_asset)
                         buy_data = {
                             'from_asset': from_asset,
                             'to_asset': to_asset,
@@ -175,11 +177,94 @@ class BinanceCard2CryptoExchangesParser(Card2CryptoExchangesParser):
     endpoint_sell: str = API_BINANCE_CARD_2_CRYPTO_SELL
     endpoint_buy: str = API_BINANCE_CARD_2_CRYPTO_BUY
 
+    @staticmethod
+    def _create_body_sell(fiat: str, asset: str, amount: int) -> dict:
+        return {
+            "baseCurrency": fiat,
+            "cryptoCurrency": asset,
+            "payType": "Ask",
+            "paymentChannel": "card",
+            "rail": "card",
+            "requestedAmount": amount,
+            "requestedCurrency": fiat
+        }
+
+    @staticmethod
+    def _create_body_buy(fiat: str, asset: str, amount: int) -> dict:
+        return {
+            "baseCurrency": fiat,
+            "cryptoCurrency": asset,
+            "payType": "Ask",
+            "paymentChannel": "card",
+            "rail": "card",
+            "requestedAmount": amount,
+            "requestedCurrency": fiat
+        }
+
+    @staticmethod
+    def _create_params_buy(fiat: str, asset: str) -> dict:
+        return {
+            'channelCode': 'card',
+            'fiatCode': fiat,
+            'cryptoAsset': asset
+        }
+
+    def _extract_values_from_json(self, json_data: dict, amount: int
+                                  ) -> tuple | None:
+        if self.trade_type == 'SELL':
+            data = json_data['data'].get('rows')
+            pre_price = data.get('quotePrice')
+            if not pre_price:
+                return None
+            commission = data.get('totalFee') / amount
+            price = pre_price / (1 + commission)
+            commission *= 100
+        else:  # BUY
+            data = json_data['data']
+            pre_price = data['price']
+            if not pre_price:
+                return None
+            pre_price = float(pre_price)
+            commission = 0.02
+            price = 1 / (pre_price * (1 + commission))
+            commission *= 100
+        return price, pre_price, commission
+
 
 class BinanceListsFiatCryptoParser(ListsFiatCryptoParser):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
     endpoint_sell: str = API_BINANCE_LIST_FIAT_SELL
     endpoint_buy: str = API_BINANCE_LIST_FIAT_BUY
+
+    @staticmethod
+    def _create_body_sell(asset: str) -> dict:
+        return {
+            "channels": ["card"],
+            "crypto": asset,
+            "transactionType": "SELL"
+        }
+
+    @staticmethod
+    def _create_body_buy(fiat: str) -> dict:
+        return {
+            "channels": ["card"],
+            "fiat": fiat,
+            "transactionType": "BUY"
+        }
+
+    def _extract_buy_or_sell_list_from_json(self, json_data: dict,
+                                            trade_type: str) -> List[list]:
+        general_list = json_data.get('data')
+        valid_asset = self.assets if trade_type == 'BUY' else self.all_fiats
+        if general_list == '':
+            return []
+        valid_list = []
+        for asset_data in general_list:
+            asset = asset_data.get('assetCode')
+            if asset_data.get('quotation') != '' and asset in valid_asset:
+                max_limit = int(float(asset_data['maxLimit']) * 0.9)
+                valid_list.append([asset, max_limit])
+        return valid_list
 
 
 class BinanceCard2Wallet2CryptoExchangesCalculating(

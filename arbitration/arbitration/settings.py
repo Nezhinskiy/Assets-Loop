@@ -21,7 +21,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', get_random_secret_key())
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-LOCAL = os.getenv('LOCAL', 'False') == 'True'
+LOCAL = os.getenv('LOCAL', 'True') == 'True'
 
 ALLOWED_HOSTS = ['*'] if LOCAL else os.getenv('ALLOWED_HOSTS').split()
 
@@ -79,7 +79,7 @@ WSGI_APPLICATION = 'arbitration.wsgi.application'
 
 # Database
 
-DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
+DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "True") == "True"
 
 if DEVELOPMENT_MODE:
     DATABASES = {
@@ -199,27 +199,27 @@ BASE_ASSET = 'USDT'
 DATA_OBSOLETE_IN_MINUTES = 10
 INTER_EXCHANGES_OBSOLETE_IN_MINUTES = 15
 INTER_EXCHANGES_BEGIN_OBSOLETE_MINUTES = 2
-ALLOWED_PERCENTAGE = int(os.getenv('ALLOWED_PERCENTAGE'))
+ALLOWED_PERCENTAGE = int(os.getenv('ALLOWED_PERCENTAGE', '0'))
 MINIMUM_PERCENTAGE = -10
-UPDATE_RATE = tuple(map(int, os.getenv('UPDATE_RATE').replace(',', '').split()))
+UPDATE_RATE = tuple(map(int, os.getenv('UPDATE_RATE', '0').replace(',', '').split()))
 
 # Endpoints
-API_P2P_BINANCE = os.getenv('API_P2P_BINANCE')
-API_BINANCE_CARD_2_CRYPTO_SELL = os.getenv('API_BINANCE_CARD_2_CRYPTO_SELL')
-API_BINANCE_CARD_2_CRYPTO_BUY = os.getenv('API_BINANCE_CARD_2_CRYPTO_BUY')
-API_BINANCE_LIST_FIAT_SELL = os.getenv('API_BINANCE_LIST_FIAT_SELL')
-API_BINANCE_LIST_FIAT_BUY = os.getenv('API_BINANCE_LIST_FIAT_BUY')
-API_BINANCE_CRYPTO = os.getenv('API_BINANCE_CRYPTO')
-API_WISE = os.getenv('API_WISE')
-API_RAIFFEISEN = os.getenv('API_RAIFFEISEN')
-API_TINKOFF = os.getenv('API_TINKOFF')
-API_TINKOFF_INVEST = os.getenv('API_TINKOFF_INVEST')
+API_P2P_BINANCE = os.getenv('API_P2P_BINANCE', '')
+API_BINANCE_CARD_2_CRYPTO_SELL = os.getenv('API_BINANCE_CARD_2_CRYPTO_SELL', '')
+API_BINANCE_CARD_2_CRYPTO_BUY = os.getenv('API_BINANCE_CARD_2_CRYPTO_BUY', '')
+API_BINANCE_LIST_FIAT_SELL = os.getenv('API_BINANCE_LIST_FIAT_SELL', '')
+API_BINANCE_LIST_FIAT_BUY = os.getenv('API_BINANCE_LIST_FIAT_BUY', '')
+API_BINANCE_CRYPTO = os.getenv('API_BINANCE_CRYPTO', '')
+API_WISE = os.getenv('API_WISE', '')
+API_RAIFFEISEN = os.getenv('API_RAIFFEISEN', '')
+API_TINKOFF = os.getenv('API_TINKOFF', '')
+API_TINKOFF_INVEST = os.getenv('API_TINKOFF_INVEST', '')
 
 # URLs
-INFO_URL = os.getenv('INFO_URL')
-START_URL = os.getenv('START_URL')
-STOP_URL = os.getenv('STOP_URL')
-REGISTRATION_URL = os.getenv('REGISTRATION_URL')
+INFO_URL = os.getenv('INFO_URL', '')
+START_URL = os.getenv('START_URL', '')
+STOP_URL = os.getenv('STOP_URL', '')
+REGISTRATION_URL = os.getenv('REGISTRATION_URL', '')
 
 
 # Celery settings

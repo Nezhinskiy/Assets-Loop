@@ -7,7 +7,6 @@ from banks.banks_registration.tbc import TBC_CURRENCIES
 from banks.banks_registration.tinkoff import TINKOFF_CURRENCIES
 from banks.banks_registration.wise import WISE_CURRENCIES
 from banks.banks_registration.yoomoney import YOOMONEY_CURRENCIES
-from crypto_exchanges.models import P2PCryptoExchangesRates
 
 BANKS_CONFIG = {
     'Tinkoff': {
@@ -15,9 +14,7 @@ BANKS_CONFIG = {
         'currencies': TINKOFF_CURRENCIES,
         'crypto_exchanges': ('Binance',),
         'binance_name': 'TinkoffNew',
-        'payment_channels': (
-            P2PCryptoExchangesRates,
-        ),
+        'payment_channels': ('P2P',),
         'transaction_methods': (),
         'bank_invest_exchanges': ['Tinkoff invest']
     },
@@ -26,9 +23,7 @@ BANKS_CONFIG = {
         'currencies': SBERBANK_CURRENCIES,
         'crypto_exchanges': ('Binance',),
         'binance_name': 'RosBankNew',
-        'payment_channels': (
-            P2PCryptoExchangesRates,
-        ),
+        'payment_channels': ('P2P',),
         'transaction_methods': (),
         'bank_invest_exchanges': []
     },
@@ -37,33 +32,27 @@ BANKS_CONFIG = {
         'currencies': RAIFFEISEN_CURRENCIES,
         'crypto_exchanges': ('Binance',),
         'binance_name': 'RaiffeisenBank',
-        'payment_channels': (
-            P2PCryptoExchangesRates,
-        ),
+        'payment_channels': ('P2P',),
         'transaction_methods': (),
-        'bank_invest_exchanges': []
+        'bank_invest_exchanges': ()
     },
     'QIWI': {
         'bank_parser': False,
         'currencies': QIWI_CURRENCIES,
         'crypto_exchanges': ('Binance',),
         'binance_name': 'QIWI',
-        'payment_channels': (
-            P2PCryptoExchangesRates,
-        ),
+        'payment_channels': ('P2P',),
         'transaction_methods': (),
-        'bank_invest_exchanges': []
+        'bank_invest_exchanges': ()
     },
     'Yoomoney': {
         'bank_parser': False,
         'currencies': YOOMONEY_CURRENCIES,
         'crypto_exchanges': ('Binance',),
         'binance_name': 'YandexMoneyNew',
-        'payment_channels': (
-            P2PCryptoExchangesRates,
-        ),
+        'payment_channels': ('P2P',),
         'transaction_methods': (),
-        'bank_invest_exchanges': []
+        'bank_invest_exchanges': ()
     },
     'Bank of Georgia': {
         'bank_parser': False,
@@ -71,12 +60,12 @@ BANKS_CONFIG = {
         'crypto_exchanges': ('Binance',),
         'binance_name': 'BankofGeorgia',
         'payment_channels': (
-            'Card2CryptoExchange', P2PCryptoExchangesRates
+            'Card2CryptoExchange', 'P2P'
         ),
         'transaction_methods': (
             'Bank Card (Visa/MC)', 'Bank Card (Visa)'
         ),
-        'bank_invest_exchanges': []
+        'bank_invest_exchanges': ()
     },
     'TBC': {
         'bank_parser': False,
@@ -84,12 +73,12 @@ BANKS_CONFIG = {
         'crypto_exchanges': ('Binance',),
         'binance_name': 'TBCbank',
         'payment_channels': (
-            'Card2CryptoExchange', P2PCryptoExchangesRates
+            'Card2CryptoExchange', 'P2P'
         ),
         'transaction_methods': (
             'Bank Card (Visa/MC)', 'Bank Card (Visa)'
         ),
-        'bank_invest_exchanges': []
+        'bank_invest_exchanges': ()
     },
     'Credo': {
         'bank_parser': False,
@@ -97,12 +86,12 @@ BANKS_CONFIG = {
         'crypto_exchanges': ('Binance',),
         'binance_name': 'CREDOBANK',
         'payment_channels': (
-            'Card2CryptoExchange', P2PCryptoExchangesRates
+            'Card2CryptoExchange', 'P2P'
         ),
         'transaction_methods': (
             'Bank Card (Visa/MC)', 'Bank Card (Visa)'
         ),
-        'bank_invest_exchanges': []
+        'bank_invest_exchanges': ()
     },
     'Wise': {
         'bank_parser': True,
@@ -110,13 +99,12 @@ BANKS_CONFIG = {
         'crypto_exchanges': ('Binance',),
         'binance_name': 'Wise',
         'payment_channels': (
-            'Card2CryptoExchange', 'Card2Wallet2CryptoExchange',
-            P2PCryptoExchangesRates
+            'Card2CryptoExchange', 'Card2Wallet2CryptoExchange', 'P2P'
         ),
         'transaction_methods': (
             'Bank Card (Visa/MC)', 'Bank Card (Visa)'
         ),
-        'bank_invest_exchanges': []
+        'bank_invest_exchanges': ()
     }
 }
 

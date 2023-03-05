@@ -18,8 +18,8 @@ class RaiffeisenParser(BankParser):
     endpoint: str = API_RAIFFEISEN
     all_values: bool = True
 
-    def extract_all_values_from_json(self, json_data: dict
-                                     ) -> Optional[List[Dict[str, Any]]]:
+    def _extract_all_values_from_json(self, json_data: dict
+                                      ) -> Optional[List[Dict[str, Any]]]:
         if not json_data:
             return None
         value_lst = []
@@ -47,13 +47,13 @@ class RaiffeisenParser(BankParser):
             )
         return value_lst
 
-    def get_all_api_answers(self) -> None:
-        values = self.choice_buy_and_sell_or_price()
+    def _get_all_api_answers(self) -> None:
+        values = self._choice_buy_and_sell_or_price()
         if not values:
             return
         for value_dict in values:
             price = value_dict.pop('price')
-            self.add_to_bulk_update_or_create(value_dict, price)
+            self._add_to_bulk_update_or_create(value_dict, price)
 
 
 class RaiffeisenBinanceP2PParser(BinanceP2PParser):

@@ -12,10 +12,10 @@ class Tor:
     TOR_HOSTNAME: str = "tor_proxy"
 
     def __init__(self):
-        self.container_ip: str = self.get_tor_ip()
-        self.session: requests.sessions.Session = self.get_tor_session()
+        self.container_ip: str = self.__get_tor_ip()
+        self.session: requests.sessions.Session = self.__get_tor_session()
 
-    def get_tor_session(self) -> requests.sessions.Session:
+    def __get_tor_session(self) -> requests.sessions.Session:
         """
         Set up a proxy for http and https on the running Tor host: port 9050
         and initialize the request session.
@@ -26,7 +26,7 @@ class Tor:
             session.headers = {'User-Agent': UserAgent().chrome}
             return session
 
-    def get_tor_ip(self) -> str:
+    def __get_tor_ip(self) -> str:
         cmd = f'ping -c 1 {self.TOR_HOSTNAME}'
         output = subprocess.check_output(cmd, shell=True).decode().strip()
         return re.findall(r'\(.*?\)', output)[0][1:-1]
@@ -36,4 +36,4 @@ class Tor:
             controller.authenticate()
             controller.signal(Signal.NEWNYM)
             sleep(controller.get_newnym_wait())
-            self.session = self.get_tor_session()
+            self.session = self.__get_tor_session()
