@@ -504,7 +504,7 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
             self.new_update.updated = time_now
             self.new_update.duration = self.duration
             self.new_update.save()
-            self.logger_end(self.bank_name)
+            self.logger_end()
         except Exception as error:
             self.logger_error(error)
             raise Exception

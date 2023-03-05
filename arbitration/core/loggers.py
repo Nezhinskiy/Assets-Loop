@@ -7,6 +7,7 @@ class BaseLogger(ABC):
     duration: timedelta
     count_created_objects: int
     count_updated_objects: int
+    bank_name = None
 
     def __init__(self) -> None:
         self.start_time = datetime.now(timezone.utc)
@@ -29,12 +30,14 @@ class BaseLogger(ABC):
         self.get_count_updated_objects()
 
     @abstractmethod
-    def logger_end(self, _) -> None:
+    def logger_end(self) -> None:
         pass
 
     def logger_error(self, error) -> None:
         self.get_all_objects()
         message = f'An error has occurred in {self.__class__.__name__}. '
+        if self.bank_name is not None:
+            message += f'Bank name: {self.bank_name}. '
         if self.count_created_objects + self.count_updated_objects > 0:
             message += f'Updated: {self.count_updated_objects}, '
             message += f'Created: {self.count_created_objects}. '
@@ -46,11 +49,11 @@ class BaseLogger(ABC):
 
 
 class ParsingLogger(BaseLogger, ABC):
-    def logger_end(self, bank_name=None) -> None:
+    def logger_end(self) -> None:
         self.get_all_objects()
         message = f'Finish {self.__class__.__name__} at {self.duration}. '
-        if bank_name is not None:
-            message += f'Bank_name: {bank_name}. '
+        if self.bank_name is not None:
+            message += f'Bank name: {self.bank_name}. '
         if self.count_created_objects + self.count_updated_objects > 0:
             message += f'Updated: {self.count_updated_objects}, '
             message += f'Created: {self.count_created_objects}. '
@@ -62,10 +65,12 @@ class ParsingLogger(BaseLogger, ABC):
 
 
 class CalculatingLogger(BaseLogger, ABC):
-    def logger_end(self, bank_name: str) -> None:
+    def logger_end(self) -> None:
         self.get_all_objects()
-        message = (f'Finish {self.__class__.__name__} {bank_name} at '
+        message = (f'Finish {self.__class__.__name__} at '
                    f'{self.duration}. ')
+        if self.bank_name is not None:
+            message += f'Bank name: {self.bank_name}. '
         message += f'Updated: {self.count_updated_objects}, '
         message += f'Created: {self.count_created_objects}. '
         self.logger.error(message)

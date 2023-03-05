@@ -66,7 +66,7 @@ class BaseParser(ParsingLogger, ABC):
             self.duration = datetime.now(timezone.utc) - self.start_time
             self.new_update.duration = self.duration
             self.new_update.save()
-            self.logger_end(self.bank_name)
+            self.logger_end()
         except Exception as error:
             self.logger_error(error)
             raise Exception
