@@ -1,6 +1,7 @@
 import os
 from typing import Any, Dict, List, Optional
 
+from arbitration.settings import API_RAIFFEISEN
 from core.parsers import BankParser
 from crypto_exchanges.crypto_exchanges_registration.binance import (
     BinanceP2PParser)
@@ -14,8 +15,7 @@ RAIFFEISEN_CURRENCIES = (
 
 class RaiffeisenParser(BankParser):
     bank_name: str = BANK_NAME
-    endpoint: str = ('https://www.raiffeisen.ru/oapi/currency_rate/get'
-                     '/?source=RCONNECT&currencies=USD,EUR,GBP')
+    endpoint: str = API_RAIFFEISEN
     all_values: bool = True
 
     def extract_all_values_from_json(self, json_data: dict

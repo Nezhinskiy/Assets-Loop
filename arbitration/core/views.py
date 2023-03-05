@@ -1,9 +1,9 @@
-import logging
 from datetime import datetime, timedelta, timezone
 
 from django.shortcuts import redirect
 from django.views.generic import ListView
 from django_filters.views import FilterView
+from rest_framework import throttling
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 
@@ -13,8 +13,6 @@ from core.models import InfoLoop
 from core.serializers import InterExchangesSerializer
 from core.tasks import all_reg, assets_loop, assets_loop_stop
 from crypto_exchanges.models import InterExchanges
-
-logger = logging.getLogger(__name__)
 
 
 def registration(request):
@@ -61,6 +59,7 @@ class InterExchangesAPIView(ListAPIView, FilterView):
     model = InterExchanges
     serializer_class = InterExchangesSerializer
     filterset_class = ExchangesFilter
+    throttle_classes = (throttling.AnonRateThrottle,)
 
     def get_queryset(self):
         qs = self.model.objects.prefetch_related(
@@ -105,6 +104,8 @@ class InterExchangesAPIView(ListAPIView, FilterView):
         try:
             length = int(request.query_params.get('length'))
         except ValueError:
+            length = 10
+        if length not in [10, 25, 50, 100]:
             length = 10
         end = length + start
         serializer = self.get_serializer(filtered_queryset[start:end],

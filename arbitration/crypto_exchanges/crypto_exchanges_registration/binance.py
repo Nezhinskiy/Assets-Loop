@@ -7,6 +7,11 @@ from time import sleep
 
 import requests
 
+from arbitration.settings import (API_BINANCE_CARD_2_CRYPTO_BUY,
+                                  API_BINANCE_CARD_2_CRYPTO_SELL,
+                                  API_BINANCE_CRYPTO,
+                                  API_BINANCE_LIST_FIAT_BUY,
+                                  API_BINANCE_LIST_FIAT_SELL, API_P2P_BINANCE)
 from core.calculations import (Card2Wallet2CryptoExchangesCalculating,
                                InterExchangesCalculating)
 from core.parsers import (Card2CryptoExchangesParser, CryptoExchangesParser,
@@ -47,18 +52,6 @@ WITHDRAW_FIATS = {
     'GBP': (('Bank Card (Visa)', 1.8),),
     'TRY': (('Turkish Bank Transfer', 0),),
 }
-
-ASSETS = (
-    ('ETH', 'ETH'),
-    ('BTC', 'BTC'),
-    ('BUSD', 'BUSD'),
-    ('USDT', 'USDT'),
-)
-
-TRADE_TYPES = (
-    ('BUY', 'buy'),
-    ('SELL', 'sell')
-)
 CRYPTO_FIATS = (
     'AUD', 'BRL', 'EUR', 'GBP', 'RUB', 'TRY', 'UAH'
 )
@@ -72,8 +65,7 @@ SPOT_ZERO_FEES = {
 
 class BinanceP2PParser(P2PParser, ABC):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
-    endpoint: str = ('https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv'
-                     '/search')
+    endpoint: str = API_P2P_BINANCE
     page: int = 1
     rows: int = 1
 
@@ -100,7 +92,7 @@ class BinanceP2PParser(P2PParser, ABC):
 
 class BinanceCryptoParser(CryptoExchangesParser):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
-    endpoint: str = 'https://api.binance.com/api/v3/ticker/price?'
+    endpoint: str = API_BINANCE_CRYPTO
     exceptions: tuple = ('SHIBRUB',)
     name_from: int = 'symbol'
     zero_fees = SPOT_ZERO_FEES
@@ -180,18 +172,14 @@ class BinanceCryptoParser(CryptoExchangesParser):
 
 class BinanceCard2CryptoExchangesParser(Card2CryptoExchangesParser):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
-    endpoint_sell: str = ('https://www.binance.com/bapi/fiat/v1/public/ocbs'
-                          '/get-quote')
-    endpoint_buy: str = ('https://www.binance.com/bapi/fiat/v2/public/ocbs'
-                         '/fiat-channel-gateway/get-quotation?')
+    endpoint_sell: str = API_BINANCE_CARD_2_CRYPTO_SELL
+    endpoint_buy: str = API_BINANCE_CARD_2_CRYPTO_BUY
 
 
 class BinanceListsFiatCryptoParser(ListsFiatCryptoParser):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
-    endpoint_sell: str = ('https://www.binance.com/bapi/fiat/v2/friendly/ocbs'
-                          '/sell/list-fiat')
-    endpoint_buy: str = ('https://www.binance.com/bapi/fiat/v2/friendly/ocbs'
-                         '/buy/list-crypto')
+    endpoint_sell: str = API_BINANCE_LIST_FIAT_SELL
+    endpoint_buy: str = API_BINANCE_LIST_FIAT_BUY
 
 
 class BinanceCard2Wallet2CryptoExchangesCalculating(

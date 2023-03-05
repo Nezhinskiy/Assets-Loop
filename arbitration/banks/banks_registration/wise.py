@@ -1,5 +1,6 @@
 import os
 
+from arbitration.settings import API_WISE
 from core.parsers import BankParser
 from crypto_exchanges.crypto_exchanges_registration.binance import (
     BinanceP2PParser)
@@ -11,12 +12,10 @@ WISE_CURRENCIES = (
 )  # 'CZK', 'RON', 'NZD', 'AED', 'CLP', 'INR', 'SGD', 'HUF', 'PLN', 'CAD',
 # 'CHF', 'AUD', 'CNY', 'JPY'
 
-WISE_CURRENCIES_WITH_REQUISITES = ('USD', 'EUR', )
-
 
 class WiseParser(BankParser):
     bank_name: str = BANK_NAME
-    endpoint: str = 'https://wise.com/gateway/v3/price?'
+    endpoint: str = API_WISE
     name_from: str = 'sourceCurrency'
     name_to: str = 'targetCurrency'
     buy_and_sell: bool = False
@@ -35,11 +34,9 @@ class WiseParser(BankParser):
     def extract_price_from_json(self, json_data: list) -> float:
         if json_data and len(json_data) > 1:
             for exchange_data in json_data:
-                if (
-                        exchange_data.get('payInMethod'
-                                          ) == exchange_data.get('payOutMethod'
-                                                                 ) == 'BALANCE'
-                ):
+                pay_in_method = exchange_data.get('payInMethod')
+                pay_out_method = exchange_data.get('payOutMethod')
+                if pay_in_method == pay_out_method == 'BALANCE':
                     price_before_commission = exchange_data.get('midRate')
                     commission = (
                         exchange_data.get('total') / self.source_amount * 100

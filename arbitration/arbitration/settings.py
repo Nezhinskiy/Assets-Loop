@@ -16,15 +16,14 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', get_random_secret_key())
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "True") == "True"
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['*']
-#     os.getenv(
-#     "DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost"
-# ).split(",")
+LOCAL = os.getenv('LOCAL', 'False') == 'True'
+
+ALLOWED_HOSTS = ['*'] if LOCAL else os.getenv('ALLOWED_HOSTS').split()
 
 # Application definition
 
@@ -54,7 +53,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'core.middleware.middleware.RestrictIPMiddlewareForAPIData',
 ]
 
 ROOT_URLCONF = 'arbitration.urls'
@@ -79,8 +77,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'arbitration.wsgi.application'
 
-MULTITHREADING_MODE = os.getenv("MULTITHREADING_MODE", "True") == "True"
-
 # Database
 
 DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
@@ -104,7 +100,6 @@ elif len(sys.argv) > 0 and sys.argv[1] != 'collectstatic':
         },
     }
 
-
 # Password validation
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -125,6 +120,18 @@ AUTH_PASSWORD_VALIDATORS = [
 # Disable Django's logging setup
 
 LOGGING_CONFIG = None
+
+# DRF config
+
+REST_FRAMEWORK = {
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '1300/hour',
+    },
+}
 
 # Logging config
 
@@ -182,10 +189,6 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-# STATIC_ROOT = 'staticfiles'
-# STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-
-# Default primary key field type
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -196,11 +199,28 @@ BASE_ASSET = 'USDT'
 DATA_OBSOLETE_IN_MINUTES = 10
 INTER_EXCHANGES_OBSOLETE_IN_MINUTES = 15
 INTER_EXCHANGES_BEGIN_OBSOLETE_MINUTES = 2
-ALLOWED_PERCENTAGE = int(os.getenv('ALLOWED_PERCENTAGE', 8))
+ALLOWED_PERCENTAGE = int(os.getenv('ALLOWED_PERCENTAGE'))
 MINIMUM_PERCENTAGE = -10
-UPDATE_RATE = (
-    10, 10, 10, 5, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 10, 10
-)
+UPDATE_RATE = tuple(map(int, os.getenv('UPDATE_RATE').replace(',', '').split()))
+
+# Endpoints
+API_P2P_BINANCE = os.getenv('API_P2P_BINANCE')
+API_BINANCE_CARD_2_CRYPTO_SELL = os.getenv('API_BINANCE_CARD_2_CRYPTO_SELL')
+API_BINANCE_CARD_2_CRYPTO_BUY = os.getenv('API_BINANCE_CARD_2_CRYPTO_BUY')
+API_BINANCE_LIST_FIAT_SELL = os.getenv('API_BINANCE_LIST_FIAT_SELL')
+API_BINANCE_LIST_FIAT_BUY = os.getenv('API_BINANCE_LIST_FIAT_BUY')
+API_BINANCE_CRYPTO = os.getenv('API_BINANCE_CRYPTO')
+API_WISE = os.getenv('API_WISE')
+API_RAIFFEISEN = os.getenv('API_RAIFFEISEN')
+API_TINKOFF = os.getenv('API_TINKOFF')
+API_TINKOFF_INVEST = os.getenv('API_TINKOFF_INVEST')
+
+# URLs
+INFO_URL = os.getenv('INFO_URL')
+START_URL = os.getenv('START_URL')
+STOP_URL = os.getenv('STOP_URL')
+REGISTRATION_URL = os.getenv('REGISTRATION_URL')
+
 
 # Celery settings
 

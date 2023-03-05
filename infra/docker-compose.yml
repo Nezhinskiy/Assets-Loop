@@ -10,11 +10,15 @@ services:
       - "9050:9050"
       - "9051:9051"
       - "8118:8118"
+    networks:
+      - arbitration_web
 
   redis:
     restart: always
     image: redis:latest
     container_name: redis
+    networks:
+      - arbitration_web
 
   db:
     image: postgres:15.2-alpine
@@ -24,9 +28,12 @@ services:
       - db_arbitration:/var/lib/postgresql/data
     env_file:
       - .env
+    networks:
+      - arbitration_web
 
   arbitration:
-    image: nezhinsky/arbitration:latest
+    build:
+      context: ../arbitration
     container_name: arbitration
     restart: always
     volumes:
@@ -35,6 +42,8 @@ services:
       - db
     env_file:
       - .env
+    networks:
+      - arbitration_web
 
   nginx:
     image: nginx:1.23.3-alpine
@@ -52,6 +61,8 @@ services:
       - .env
     depends_on:
       - arbitration
+    networks:
+      - arbitration_web
 
   certbot:
     image: certbot/certbot
@@ -66,16 +77,21 @@ services:
       - .env
     depends_on:
       - nginx
+    networks:
+      - arbitration_web
 
 
   celery-parsing:
     restart: always
-    image: nezhinsky/arbitration:latest
+    build:
+      context: ../arbitration
     container_name: celery-parsing
     entrypoint: celery
     command:  -A arbitration worker --loglevel=ERROR -Q parsing -c 8 -n parsing_worker
     env_file:
       - .env
+    networks:
+      - arbitration_web
     links:
       - redis
     depends_on:
@@ -84,12 +100,15 @@ services:
 
   celery-calculating:
     restart: always
-    image: nezhinsky/arbitration:latest
+    build:
+      context: ../arbitration
     container_name: celery-calculating
     entrypoint: celery
     command:  -A arbitration worker --loglevel=ERROR -Q calculating -c 2 -n calculating_worker
     env_file:
       - .env
+    networks:
+      - arbitration_web
     links:
       - redis
     depends_on:
@@ -98,12 +117,15 @@ services:
 
   celery-beat:
     restart: always
-    image: nezhinsky/arbitration:latest
+    build:
+      context: ../arbitration
     container_name: celery-beat
     entrypoint: celery
     command: -A arbitration beat --loglevel=ERROR
     env_file:
       - .env
+    networks:
+      - arbitration_web
     links:
       - celery-parsing
       - celery-calculating
@@ -114,6 +136,10 @@ services:
       - redis
       - tor_proxy
       - nginx
+
+networks:
+  arbitration_web:
+    driver: bridge
 
 volumes:
   db_arbitration:

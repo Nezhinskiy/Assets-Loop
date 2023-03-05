@@ -1,5 +1,6 @@
 import os
 
+from arbitration.settings import API_TINKOFF
 from core.parsers import BankParser
 from crypto_exchanges.crypto_exchanges_registration.binance import (
     BinanceP2PParser)
@@ -14,7 +15,7 @@ TINKOFF_CURRENCIES = (
 
 class TinkoffParser(BankParser):
     bank_name: str = BANK_NAME
-    endpoint: str = 'https://api.tinkoff.ru/v1/currency_rates?'
+    endpoint: str = API_TINKOFF
     buy_and_sell: bool = True
     name_from: str = 'from'
     name_to: str = 'to'

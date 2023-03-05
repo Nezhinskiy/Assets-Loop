@@ -3,6 +3,7 @@ from datetime import datetime, time
 
 import pytz
 
+from arbitration.settings import API_TINKOFF_INVEST
 from core.parsers import BankInvestParser
 
 CURRENCY_MARKET_NAME = (
@@ -11,8 +12,7 @@ CURRENCY_MARKET_NAME = (
 
 class TinkoffCurrencyMarketParser(BankInvestParser):
     currency_markets_name = CURRENCY_MARKET_NAME
-    endpoint = ('https://www.tinkoff.ru/api/invest-gw/'
-                'social/post/feed/v1/post/instrument/')
+    endpoint = API_TINKOFF_INVEST
     link_ends = (
         'USDRUB', 'EURRUB'
     )
