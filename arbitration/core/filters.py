@@ -25,7 +25,7 @@ ALL_FIAT_CHOICES = tuple(
 BANK_EXCHANGE_CHOICES = (
     (0, 'Да'),
     (1, 'Нет'),
-    ('banks', 'Только внутри банков'),
+    ('banks', 'Только через банковский обмен'),
     ('Tinkoff invest', 'Только через валютные биржи')
 )
 
@@ -48,10 +48,26 @@ class ExchangesFilter(django_filters.FilterSet):
         method='asset_filter',
         widget=Select2MultipleWidget, label='Криптоактивы'
     )
-    payment_channel = django_filters.MultipleChoiceFilter(
+    input_payment_channel = django_filters.MultipleChoiceFilter(
         choices=PAYMENT_CHANNEL_CHOICES,
-        method='payment_channel_filter',
-        widget=Select2MultipleWidget, label='Платёжные методы',
+        method='input_payment_channel_filter',
+        widget=Select2MultipleWidget, label='Платёжные методы в начале',
+        help_text=(
+            '•P2P (peer-to-peer) — прямая торговля пользователей '
+            'друг с другом на бирже. Комиссия не взымается. '
+            '•Card2CryptoExchange — ввод / вывод криптоактивов '
+            'напрямую через биржу. Предусмотрена комиссия. '
+            '•Card2Wallet2CryptoExchange — ввод на биржу сначала '
+            'фиатных денег, с последующим обменом на СПОТовой бирже '
+            'в криптоактивы или наоборот вывод с предворительным '
+            'обменом криптоактивов в фиатные деньги. '
+            'Предусмотрена комиссия.'
+        )
+    )
+    output_payment_channel = django_filters.MultipleChoiceFilter(
+        choices=PAYMENT_CHANNEL_CHOICES,
+        method='output_payment_channel_filter',
+        widget=Select2MultipleWidget, label='Платёжные методы в конце',
         help_text=(
             '•P2P (peer-to-peer) — прямая торговля пользователей '
             'друг с другом на бирже. Комиссия не взымается. '
@@ -79,9 +95,10 @@ class ExchangesFilter(django_filters.FilterSet):
     )
     bank_exchange = django_filters.ChoiceFilter(
         choices=BANK_EXCHANGE_CHOICES, method='bank_exchange_filter',
-        label='Внутрибанковская конвертация', empty_label='', help_text=(
+        label='Конвертация внутри банка', empty_label='', help_text=(
             '•Да - только связки с внутрибанковской конвертацией. '
             '•Нет - только связки без внутрибанковской конвертации. '
+            '*Внутрибанковская конвертация доступна не у всех банков. '
             '*Через валютные биржи можно обменивать только по рабочим дням '
             'с 7:00 до 19:00 по Мск, в остальное время этот фильтр недоступен'
         )
@@ -95,9 +112,14 @@ class ExchangesFilter(django_filters.FilterSet):
         )
 
     @staticmethod
-    def payment_channel_filter(queryset, _, values):
+    def input_payment_channel_filter(queryset, _, values):
         return queryset.filter(
-            input_crypto_exchange__payment_channel__in=values,
+            input_crypto_exchange__payment_channel__in=values
+        )
+
+    @staticmethod
+    def output_payment_channel_filter(queryset, _, values):
+        return queryset.filter(
             output_crypto_exchange__payment_channel__in=values
         )
 
@@ -128,5 +150,6 @@ class ExchangesFilter(django_filters.FilterSet):
         model = InterExchanges
         fields = [
             'gte', 'lte', 'input_bank', 'output_bank', 'fiats',
-            'bank_exchange', 'crypto_exchange', 'assets', 'payment_channel'
+            'bank_exchange', 'crypto_exchange', 'assets',
+            'input_payment_channel', 'output_payment_channel'
         ]
