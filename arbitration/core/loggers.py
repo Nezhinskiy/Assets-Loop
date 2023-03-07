@@ -15,21 +15,6 @@ class BaseLogger(ABC):
         count_updated_objects (int): The count of updated objects during the
         logger's operation.
         bank_name (str): The name of the bank related to the logger, if any.
-
-    Methods:
-        __init__(): Initializes the logger with the current datetime in UTC
-        timezone and a logger object.
-        _logger_start(): Logs a message with the start time of the logger.
-        _get_count_created_objects(): Abstract method for getting the count of
-        created objects.
-        _get_count_updated_objects(): Abstract method for getting the count of
-        updated objects.
-        _get_all_objects(): Calls _get_count_created_objects() and
-        _get_count_updated_objects().
-        _logger_end(): Abstract method for logging a message with the end time
-        of the logger.
-        _logger_error(error: str): Logs an error message with the count of
-        created and updated objects and the error.
     """
     duration: timedelta
     count_created_objects: int
