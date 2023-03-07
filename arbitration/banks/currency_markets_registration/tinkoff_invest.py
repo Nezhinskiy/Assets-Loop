@@ -2,6 +2,7 @@ import os
 from datetime import datetime, time
 
 import pytz
+from _decimal import Decimal
 
 from arbitration.settings import API_TINKOFF_INVEST
 from core.parsers import BankInvestParser
@@ -29,7 +30,7 @@ class TinkoffCurrencyMarketParser(BankInvestParser):
 
     @staticmethod
     def _extract_buy_and_sell_from_json(json_data: dict, link_end: str
-                                        ) -> tuple:
+                                        ) -> tuple[Decimal, Decimal]:
         items = json_data['payload']['items']
         for item in items:
             content = item['content']
@@ -39,13 +40,13 @@ class TinkoffCurrencyMarketParser(BankInvestParser):
                     continue
                 ticker = instrument.get('ticker')
                 if ticker == link_end:
-                    relative_yield = instrument['relativeYield']
-                    pre_price = instrument['price']
+                    relative_yield = Decimal(instrument['relativeYield'])
+                    pre_price = Decimal(instrument['price'])
                     price = pre_price + pre_price / 100 * relative_yield
                     if link_end[0:3] == 'KZT':
                         price /= 100
                     elif link_end[0:3] == 'AMD':
                         price /= 100
-                    buy_price = price - price * 0.003
-                    sell_price = (1 / price) - (1 / price) * 0.003
+                    buy_price = price - price * Decimal('0.003')
+                    sell_price = (1 / price) - (1 / price) * Decimal('0.003')
                     return buy_price, sell_price

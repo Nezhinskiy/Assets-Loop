@@ -38,9 +38,8 @@ class WiseParser(BankParser):
                 pay_out_method = exchange_data.get('payOutMethod')
                 if pay_in_method == pay_out_method == 'BALANCE':
                     price_before_commission = exchange_data.get('midRate')
-                    commission = (
-                        exchange_data.get('total') / self.source_amount * 100
-                    )
+                    fee = exchange_data.get('total')
+                    commission = fee / self.source_amount * 100
                     price = price_before_commission * 100 / (100 + commission)
                     return price
 

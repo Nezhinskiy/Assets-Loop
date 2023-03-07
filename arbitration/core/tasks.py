@@ -23,7 +23,9 @@ from core.registration import all_registration
 from crypto_exchanges.crypto_exchanges_registration.binance import (
     ComplexBinanceInterExchangesCalculating,
     ComplexBinanceInternationalInterExchangesCalculating,
-    SimplBinanceInterExchangesCalculating)
+    SimplBinanceInterExchangesCalculating,
+    SimplBinanceInternationalInterExchangesCalculating)
+from crypto_exchanges.models import InterExchangesUpdates
 from crypto_exchanges.tasks import (get_all_binance_crypto_exchanges,
                                     get_binance_card_2_crypto_exchanges_buy,
                                     get_binance_card_2_crypto_exchanges_sell,
@@ -69,6 +71,7 @@ def delete_tasks_wait_for_idle(self):
 def assets_loop_stop():
     # delete_tasks_wait_for_idle.s().apply()
     try:
+        InterExchangesUpdates.objects.filter(ended=False).delete()
         target_loop = InfoLoop.objects.first()
         target_loop.value = False
         datetime_now = datetime.now(timezone.utc)
@@ -82,7 +85,6 @@ def assets_loop_stop():
 
 @app.task(queue='parsing')
 def assets_loop():
-    # get_start_binance_fiat_crypto_list.s().apply()
     group(
         get_all_binance_crypto_exchanges.s(),
         parse_internal_tinkoff_rates.s(),
@@ -104,42 +106,70 @@ def assets_loop():
 
 # Inter exchanges calculating
 @app.task(queue='calculating')
-def simpl_binance_inter_exchanges_calculating(bank_name):
-    SimplBinanceInterExchangesCalculating(bank_name).main()
+def simpl_binance_inter_exchanges_calculating(bank_name, full_update):
+    SimplBinanceInterExchangesCalculating(bank_name, full_update).main()
 
 
 @app.task
-def get_simpl_binance_inter_exchanges_calculating():
+def get_simpl_binance_inter_exchanges_calculating(full_update):
     group(
-        simpl_binance_inter_exchanges_calculating.s(bank_name)
+        simpl_binance_inter_exchanges_calculating.s(
+            bank_name, full_update
+        )
         for bank_name, config in BANKS_CONFIG.items()
         if 'Binance' in config['crypto_exchanges']
     ).delay()
 
 
 @app.task(queue='calculating')
-def complex_binance_inter_exchanges_calculating(bank_name):
-    ComplexBinanceInterExchangesCalculating(bank_name).main()
+def simpl_binance_international_inter_exchanges_calculating(
+        bank_name, full_update
+):
+    SimplBinanceInternationalInterExchangesCalculating(
+        bank_name, full_update
+    ).main()
 
 
 @app.task
-def get_complex_binance_inter_exchanges_calculating():
+def get_simpl_binance_international_inter_exchanges_calculating(full_update):
     group(
-        complex_binance_inter_exchanges_calculating.s(bank_name)
+        simpl_binance_international_inter_exchanges_calculating.s(
+            bank_name, full_update
+        )
+        for bank_name, config in BANKS_CONFIG.items()
+        if 'Binance' in config['crypto_exchanges']
+    ).delay()
+
+
+@app.task(queue='calculating')
+def complex_binance_inter_exchanges_calculating(bank_name, full_update):
+    ComplexBinanceInterExchangesCalculating(bank_name, full_update).main()
+
+
+@app.task
+def get_complex_binance_inter_exchanges_calculating(full_update):
+    group(
+        complex_binance_inter_exchanges_calculating.s(
+            bank_name, full_update
+        )
         for bank_name, config in BANKS_CONFIG.items()
         if config['bank_parser']
     ).delay()
 
 
 @app.task(queue='calculating')
-def complex_binance_international_inter_exchanges_calculating(bank_name):
-    ComplexBinanceInternationalInterExchangesCalculating(bank_name).main()
+def complex_binance_international_inter_exchanges_calculating(bank_name,
+                                                              full_update):
+    ComplexBinanceInternationalInterExchangesCalculating(bank_name,
+                                                         full_update).main()
 
 
 @app.task
-def get_complex_binance_international_inter_exchanges_calculating():
+def get_complex_binance_international_inter_exchanges_calculating(full_update):
     group(
-        complex_binance_international_inter_exchanges_calculating.s(bank_name)
+        complex_binance_international_inter_exchanges_calculating.s(
+            bank_name, full_update
+        )
         for bank_name, config in BANKS_CONFIG.items()
         if config['bank_parser']
     ).delay()

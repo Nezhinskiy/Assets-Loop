@@ -65,6 +65,12 @@ class ParsingLogger(BaseLogger, ABC):
 
 
 class CalculatingLogger(BaseLogger, ABC):
+    def _logger_queue_overflowing(self):
+        message = (f'The task was skipped due to the accumulation of '
+                   f'identical tasks in the queue. '
+                   f'{self.__class__.__name__}')
+        self.logger.error(message)
+
     def _logger_end(self) -> None:
         self._get_all_objects()
         message = (f'Finish {self.__class__.__name__} at '

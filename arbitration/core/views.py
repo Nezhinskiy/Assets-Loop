@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.views.generic import ListView
 from django_filters.views import FilterView
 from rest_framework import throttling

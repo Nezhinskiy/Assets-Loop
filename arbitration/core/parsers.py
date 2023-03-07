@@ -11,11 +11,11 @@ from banks.models import (Banks, BanksExchangeRates, BanksExchangeRatesUpdates,
                           CurrencyMarkets)
 from core.loggers import ParsingLogger
 from core.tor import Tor
-from crypto_exchanges.models import (CryptoExchanges, IntraCryptoExchanges,
-                                     IntraCryptoExchangesUpdates,
-                                     ListsFiatCrypto, ListsFiatCryptoUpdates,
-                                     P2PCryptoExchangesRates,
-                                     P2PCryptoExchangesRatesUpdates)
+from crypto_exchanges.models import (CryptoExchanges, CryptoExchangesRates,
+                                     CryptoExchangesRatesUpdates,
+                                     IntraCryptoExchangesRates,
+                                     IntraCryptoExchangesRatesUpdates,
+                                     ListsFiatCrypto, ListsFiatCryptoUpdates)
 
 
 class BaseParser(ParsingLogger, ABC):
@@ -274,6 +274,8 @@ class BankParser(ParsingViaTor, ABC):
                 continue
             for value_dict in values:
                 price = value_dict.pop('price')
+                if price is None:
+                    continue
                 self._add_to_bulk_update_or_create(value_dict, price)
 
 
@@ -326,7 +328,6 @@ class BankInvestParser(ParsingViaTor, ABC):
                 bank_names.append(name)
         for bank_name in bank_names:
             bank = Banks.objects.get(name=bank_name)
-            price = value_dict['price']
             target_object = self.model.objects.filter(
                 bank=bank,
                 currency_market=self.currency_market,
@@ -335,7 +336,7 @@ class BankInvestParser(ParsingViaTor, ABC):
             )
             if target_object.exists():
                 updated_object = target_object.get()
-                updated_object.price = price
+                updated_object.price = value_dict['price']
                 updated_object.update = self.new_update
                 self.records_to_update.append(updated_object)
             else:
@@ -344,7 +345,7 @@ class BankInvestParser(ParsingViaTor, ABC):
                     currency_market=self.currency_market,
                     from_fiat=value_dict['from_fiat'],
                     to_fiat=value_dict['to_fiat'],
-                    price=price,
+                    price=value_dict['price'],
                     update=self.new_update
                 )
                 self.records_to_create.append(created_object)
@@ -361,8 +362,8 @@ class BankInvestParser(ParsingViaTor, ABC):
 
 
 class P2PParser(CryptoParser, ABC):
-    model = P2PCryptoExchangesRates
-    model_update = P2PCryptoExchangesRatesUpdates
+    model = CryptoExchangesRates
+    model_update = CryptoExchangesRatesUpdates
     updated_fields = ['price', 'update']
     crypto_exchange_name: str
     bank_name: str
@@ -386,7 +387,8 @@ class P2PParser(CryptoParser, ABC):
             payment_channel=self.payment_channel).count() == 0
         self.if_new_hour = datetime.now(
             timezone.utc
-        ).time().hour != self.model_update.objects.last().updated.time().hour
+        ).time().minute < self.model_update.objects.last().updated.time(
+        ).minute
         self.full_update = self.if_no_objects or self.if_new_hour
 
     @abstractmethod
@@ -452,8 +454,8 @@ class P2PParser(CryptoParser, ABC):
 
 
 class CryptoExchangesParser(BaseParser, ABC):
-    model = IntraCryptoExchanges
-    model_update = IntraCryptoExchangesUpdates
+    model = IntraCryptoExchangesRates
+    model_update = IntraCryptoExchangesRatesUpdates
     updated_fields = ['price', 'update']
     crypto_exchange_name: str
     name_from: str
@@ -574,7 +576,7 @@ class ListsFiatCryptoParser(CryptoParser, ABC):
 
     def _get_api_answer(self, asset=None, fiat=None) -> dict:
         if asset:
-            body = self.create_body_sell(asset)
+            body = self._create_body_sell(asset)
             endpoint = self.endpoint_sell
         else:  # if fiat
             body = self._create_body_buy(fiat)
@@ -609,8 +611,8 @@ class ListsFiatCryptoParser(CryptoParser, ABC):
             response_sell = self._get_api_answer(asset=asset)
             if response_sell is False:
                 continue
-            sell_list = self.extract_buy_or_sell_list_from_json(response_sell,
-                                                                'SELL')
+            sell_list = self._extract_buy_or_sell_list_from_json(response_sell,
+                                                                 'SELL')
             sell_dict[asset] = sell_list
 
         buy_dict = {}
@@ -626,13 +628,13 @@ class ListsFiatCryptoParser(CryptoParser, ABC):
                     buy_dict[asset_info[0]] = fiat_list
                 buy_dict[asset_info[0]].append([fiat, asset_info[1]])
 
-        self.add_to_update_or_create(sell_dict, trade_type='SELL')
-        self.add_to_update_or_create(buy_dict, trade_type='BUY')
+        self._add_to_update_or_create(sell_dict, trade_type='SELL')
+        self._add_to_update_or_create(buy_dict, trade_type='BUY')
 
 
 class Card2CryptoExchangesParser(CryptoParser, ABC):
-    model = P2PCryptoExchangesRates
-    model_update = P2PCryptoExchangesRatesUpdates
+    model = CryptoExchangesRates
+    model_update = CryptoExchangesRatesUpdates
     payment_channel = 'Card2CryptoExchange'
     transaction_method = 'Bank Card (Visa/MC)'
     updated_fields = ['price', 'pre_price', 'transaction_fee', 'update']
@@ -650,7 +652,8 @@ class Card2CryptoExchangesParser(CryptoParser, ABC):
             payment_channel=self.payment_channel).count() == 0
         self.if_new_hour = datetime.now(
             timezone.utc
-        ).time().hour != self.model_update.objects.last().updated.time().hour
+        ).time().minute < self.model_update.objects.last().updated.time(
+        ).minute
         self.full_update = self.if_no_objects or self.if_new_hour
 
     @staticmethod
@@ -746,6 +749,7 @@ class Card2CryptoExchangesParser(CryptoParser, ABC):
                 fiat, amount = fiat_info
                 if fiat == 'RUB' and self.trade_type == 'BUY':
                     continue
+                # self.logger.error(f'{self.trade_type} start')
                 if not self.full_update:
                     target_rates = self.model.objects.filter(
                         crypto_exchange=self.crypto_exchange, asset=asset,
@@ -754,13 +758,17 @@ class Card2CryptoExchangesParser(CryptoParser, ABC):
                     )
                     if not target_rates.exists():
                         continue
+                # self.logger.error('start2')
+                # self.logger.error(f'{self.trade_type} befor response')
                 response = self._get_api_answer(asset, fiat, amount)
                 if response is None:
                     continue
+                # self.logger.error(f'{self.trade_type} after response')
                 values = self._extract_values_from_json(response, amount)
                 if values is None:
                     continue
                 price, pre_price, commission = values
+                # self.logger.error(f'{self.trade_type} _add_to_bulk_update_or_create')
                 self._add_to_bulk_update_or_create(
                     asset, fiat, price, pre_price, commission
                 )

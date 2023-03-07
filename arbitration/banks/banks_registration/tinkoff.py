@@ -36,11 +36,11 @@ class TinkoffParser(BankParser):
         buy = sell = float()
         for category in rates:
             if category['category'] == 'DepositPayments':
-                buy: float = category.get('buy')
-                sell: float = category.get('sell')
+                buy = category.get('buy')
+                sell = category.get('sell')
             if category['category'] == 'CUTransfersPremium':
-                buy_premium: float = category.get('buy')
-                sell_premium: float = category.get('sell')
+                buy_premium = category.get('buy')
+                sell_premium = category.get('sell')
                 if buy_premium and sell_premium:
                     return buy_premium, sell_premium
         return buy, sell

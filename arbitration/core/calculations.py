@@ -13,15 +13,15 @@ from arbitration.settings import (ALLOWED_PERCENTAGE, BASE_ASSET,
                                   MINIMUM_PERCENTAGE)
 from banks.models import Banks, BanksExchangeRates
 from core.loggers import CalculatingLogger, ParsingLogger
-from crypto_exchanges.models import (CryptoExchanges, InterExchanges,
-                                     InterExchangesUpdates,
-                                     IntraCryptoExchanges,
-                                     P2PCryptoExchangesRates,
-                                     P2PCryptoExchangesRatesUpdates)
+from crypto_exchanges.models import (CryptoExchanges, CryptoExchangesRates,
+                                     CryptoExchangesRatesUpdates,
+                                     InterExchanges, InterExchangesUpdates,
+                                     IntraCryptoExchangesRates)
 
 
 class BaseCalculating(ABC):
     crypto_exchange_name: str
+    data_obsolete_in_minutes: int = DATA_OBSOLETE_IN_MINUTES
 
     def __init__(self):
         from banks.banks_config import BANKS_CONFIG, INTERNATIONAL_BANKS
@@ -34,6 +34,9 @@ class BaseCalculating(ABC):
         )
         self.banks_config = BANKS_CONFIG
         self.international_banks = INTERNATIONAL_BANKS
+        self.update_time = datetime.now(timezone.utc) - timedelta(
+            minutes=self.data_obsolete_in_minutes
+        )
 
 
 class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
@@ -41,30 +44,34 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
     model_update = InterExchangesUpdates
     simpl: bool
     international: bool
-    full_update: bool
+    exit: bool = False
+    no_crypto_exchange_bug_handler: bool = True
     base_asset: str = BASE_ASSET
     output_bank: Banks
     output_transaction_methods: tuple
-    input_crypto_exchanges: P2PCryptoExchangesRates
-    output_crypto_exchanges: P2PCryptoExchangesRates
-    data_obsolete_in_minutes: int = DATA_OBSOLETE_IN_MINUTES
+    input_crypto_exchanges: CryptoExchangesRates
+    output_crypto_exchanges: CryptoExchangesRates
     allowed_percentage: int = ALLOWED_PERCENTAGE
 
-    def __init__(self, bank_name: str) -> None:
+    def __init__(self, bank_name: str, full_update: bool) -> None:
         super().__init__()
         self.bank_name = bank_name
         self.bank = Banks.objects.get(name=self.bank_name)
-        self.new_update = self.model_update.objects.create(
-            crypto_exchange=self.crypto_exchange, bank=self.bank
-        )
         self.banks = self.banks_config.keys()
+        self.__check_is_international()
+        self.full_update = full_update
+        # self.first_start = self.__check_is_first_start()
+        # if not self.first_start:
+        self.__check_is_no_queue()
+        self.new_update = self.model_update.objects.create(
+            bank=self.bank, crypto_exchange=self.crypto_exchange,
+            international=self.international, simpl=self.simpl,
+            full_update=self.full_update, ended=False
+        )
         self.input_bank_config = self.banks_config.get(self.bank_name)
         self.input_transaction_methods = self.input_bank_config[
             'transaction_methods']
         self.all_input_fiats = self.input_bank_config.get('currencies')
-        self.update_time = datetime.now(timezone.utc) - timedelta(
-            minutes=self.data_obsolete_in_minutes
-        )
         self.created_objects = 0
 
     def _get_count_created_objects(self) -> None:
@@ -72,6 +79,19 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
 
     def _get_count_updated_objects(self) -> None:
         self.count_updated_objects = len(self.records_to_update)
+
+    def __check_is_no_queue(self) -> None:
+        pending_update = self.model_update.objects.filter(
+            bank=self.bank, crypto_exchange=self.crypto_exchange,
+            international=self.international, simpl=self.simpl,
+            ended=False
+        )
+        if self.full_update:
+            if pending_update.filter(full_update=self.full_update).exists():
+                self.exit = True
+        else:
+            if pending_update.exists():
+                self.exit = True
 
     def __check_is_international(self) -> None:
         if self.international:
@@ -81,28 +101,9 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
             for international_bank in self.international_banks:
                 self.banks.remove(international_bank)
 
-    def __check_is_full_update(self):
-        if self.simpl:
-            if_no_objects = self.model.objects.filter(
-                input_bank=self.bank, bank_exchange__isnull=True
-            ).count() == 0
-        else:
-            if_no_objects = self.model.objects.filter(
-                input_bank=self.bank, output_bank__name__in=self.banks,
-                bank_exchange__isnull=False
-            ).count() == 0
-        if_new_hour = datetime.now(
-            timezone.utc
-        ).time().hour != self.model_update.objects.last().updated.time().hour
-        if_new_half_hour = datetime.now(
-            timezone.utc
-        ).time().minute > 30 > self.model_update.objects.last().updated.time(
-        ).minute
-        self.full_update = if_no_objects or if_new_hour or if_new_half_hour
-
-    def filter_input_crypto_exchanges(self, input_fiat: str) -> None:
+    def _filter_input_crypto_exchanges(self, input_fiat: str) -> None:
         self.input_crypto_exchanges = (
-            P2PCryptoExchangesRates.objects.select_related('update').filter(
+            CryptoExchangesRates.objects.select_related('update').filter(
                 Q(transaction_method__in=self.input_transaction_methods) | Q(
                     transaction_method__isnull=True),
                 crypto_exchange=self.crypto_exchange, bank=self.bank,
@@ -111,9 +112,9 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
             )
         )
 
-    def filter_output_crypto_exchanges(self, output_fiat: str) -> None:
+    def _filter_output_crypto_exchanges(self, output_fiat: str) -> None:
         self.output_crypto_exchanges = (
-            P2PCryptoExchangesRates.objects.select_related('update').filter(
+            CryptoExchangesRates.objects.select_related('update').filter(
                 Q(transaction_method__in=self.output_transaction_methods) | Q(
                     transaction_method__isnull=True),
                 crypto_exchange=self.crypto_exchange, bank=self.output_bank,
@@ -122,11 +123,13 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
             )
         )
 
-    def _crypto_exchange_bug_handler(
+    def __crypto_exchange_bug_handler(
             self, marginality_percentage, input_crypto_exchange,
             interim_exchange, interim_second_exchange,
             output_crypto_exchange, bank_exchange=None
     ) -> bool:
+        if self.no_crypto_exchange_bug_handler:
+            return False
         if marginality_percentage > self.allowed_percentage:
             diagram = self._create_diagram(
                 input_crypto_exchange, interim_exchange,
@@ -144,26 +147,31 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
         return False
 
     def _get_two_interim_exchanges(
-            self, input_crypto_exchange: P2PCryptoExchangesRates,
-            output_crypto_exchange: P2PCryptoExchangesRates
+            self, input_crypto_exchange: CryptoExchangesRates,
+            output_crypto_exchange: CryptoExchangesRates
     ) -> tuple[Any, Any]:
-        target_interim_exchange = self.model.objects.select_related(
-            'update').filter(
-            crypto_exchange=self.crypto_exchange,
-            from_asset=input_crypto_exchange.asset,
-            to_asset=output_crypto_exchange.asset,
-            update__updated__gte=self.update_time
+        target_interim_exchange = (
+            IntraCryptoExchangesRates.objects.select_related(
+                'update').filter(
+                crypto_exchange=self.crypto_exchange,
+                from_asset=input_crypto_exchange.asset,
+                to_asset=output_crypto_exchange.asset,
+                update__updated__gte=self.update_time
+            )
         )
         if target_interim_exchange.exists():
             return target_interim_exchange.get(), None
-        target_interim_exchange = self.model.objects.select_related(
-            'update').filter(
-            crypto_exchange=self.crypto_exchange,
-            from_asset=input_crypto_exchange.asset,
-            to_asset=self.base_asset, update__updated__gte=self.update_time
+        target_interim_exchange = (
+            IntraCryptoExchangesRates.objects.select_related(
+                'update').filter(
+                crypto_exchange=self.crypto_exchange,
+                from_asset=input_crypto_exchange.asset,
+                to_asset=self.base_asset,
+                update__updated__gte=self.update_time
+            )
         )
         target_second_interim_exchange = (
-            self.model.objects.select_related('update').filter(
+            IntraCryptoExchangesRates.objects.select_related('update').filter(
                 crypto_exchange=self.crypto_exchange,
                 from_asset=self.base_asset,
                 to_asset=output_crypto_exchange.asset,
@@ -197,6 +205,10 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
             crypto_exchange=self.crypto_exchange,
             marginality_percentage__gte=(MINIMUM_PERCENTAGE - 1),
         )
+        if complex_exchanges.count() == 0:
+            self.full_update = True
+            self.main()
+            return
         for complex_exchange in complex_exchanges:
             input_crypto_exchange = complex_exchange.input_crypto_exchange
             interim_exchange = complex_exchange.interim_crypto_exchange
@@ -213,7 +225,7 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
             )
             if marginality_percentage < MINIMUM_PERCENTAGE:
                 continue
-            if self._crypto_exchange_bug_handler(
+            if self.__crypto_exchange_bug_handler(
                     marginality_percentage, input_crypto_exchange,
                     interim_exchange, interim_second_exchange,
                     output_crypto_exchange, bank_exchange
@@ -226,8 +238,6 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
             )
 
     def _get_complex_inter_exchanges(self) -> None:
-        self.__check_is_international()
-        self.__check_is_full_update()
         for output_bank_name in self.banks:
             self.output_bank = Banks.objects.get(name=output_bank_name)
             output_bank_config = self.banks_config.get(output_bank_name)
@@ -274,7 +284,7 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
                         )
                         if marginality_percentage < MINIMUM_PERCENTAGE:
                             continue
-                        if self._crypto_exchange_bug_handler(
+                        if self.__crypto_exchange_bug_handler(
                                 marginality_percentage,
                                 input_crypto_exchange, interim_exchange,
                                 interim_second_exchange,
@@ -306,6 +316,10 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
             crypto_exchange=self.crypto_exchange,
             marginality_percentage__gte=(MINIMUM_PERCENTAGE - 1),
         )
+        if complex_exchanges.count() == 0:
+            self.full_update = True
+            self.main()
+            return
         for complex_exchange in complex_exchanges:
             input_crypto_exchange = complex_exchange.input_crypto_exchange
             interim_exchange = complex_exchange.interim_crypto_exchange
@@ -320,7 +334,7 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
             )
             if marginality_percentage < MINIMUM_PERCENTAGE:
                 continue
-            if self._crypto_exchange_bug_handler(
+            if self.__crypto_exchange_bug_handler(
                     marginality_percentage, input_crypto_exchange,
                     interim_exchange, interim_second_exchange,
                     output_crypto_exchange
@@ -333,7 +347,6 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
             )
 
     def _get_simpl_inter_exchanges(self) -> None:
-        self.__check_is_full_update()
         for output_bank_name in self.banks:
             self.output_bank = Banks.objects.get(name=output_bank_name)
             output_bank_config = self.banks_config.get(output_bank_name)
@@ -373,7 +386,7 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
                     )
                     if marginality_percentage < MINIMUM_PERCENTAGE:
                         continue
-                    if self._crypto_exchange_bug_handler(
+                    if self.__crypto_exchange_bug_handler(
                             marginality_percentage, input_crypto_exchange,
                             interim_exchange, interim_second_exchange,
                             output_crypto_exchange
@@ -385,9 +398,14 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
                         marginality_percentage
                     )
 
-    @staticmethod
+    def __marginality_percentage_handler(self, *args: Any) -> None:
+        for arg in args:
+            if arg is None:
+                message = f'Intangible fucking error: {arg} is NoneType.'
+                self.logger.error(message)
+
     def _calculate_marginality_percentage(
-            input_crypto_exchange, interim_exchange,
+            self, input_crypto_exchange, interim_exchange,
             interim_second_exchange, output_crypto_exchange,
             bank_exchange=None
     ) -> float:
@@ -397,6 +415,11 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
                                          else interim_second_exchange.price)
         bank_exchange_price = (1 if bank_exchange is None
                                else bank_exchange.price)
+        self.__marginality_percentage_handler(
+            input_crypto_exchange.price, interim_exchange_price,
+            second_interim_exchange_price, output_crypto_exchange.price,
+            bank_exchange_price
+        )
         marginality_percentage = (
             reduce(lambda x, y: x * y, (
                 input_crypto_exchange.price, interim_exchange_price,
@@ -490,6 +513,10 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
 
     def main(self) -> None:
         try:
+            if self.exit:
+                self.new_update.delete()
+                self._logger_queue_overflowing()
+                return
             self._logger_start()
             if self.simpl:
                 self._get_simpl_inter_exchanges()
@@ -503,6 +530,7 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
             self.duration = time_now - self.start_time
             self.new_update.updated = time_now
             self.new_update.duration = self.duration
+            self.new_update.ended = True
             self.new_update.save()
             self._logger_end()
         except Exception as error:
@@ -512,8 +540,8 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
 
 class Card2Wallet2CryptoExchangesCalculating(BaseCalculating, ParsingLogger,
                                              ABC):
-    model = P2PCryptoExchangesRates
-    model_update = P2PCryptoExchangesRatesUpdates
+    model = CryptoExchangesRates
+    model_update = CryptoExchangesRatesUpdates
     payment_channel = 'Card2Wallet2CryptoExchange'
     data_obsolete_in_minutes: int = DATA_OBSOLETE_IN_MINUTES
 
@@ -546,18 +574,31 @@ class Card2Wallet2CryptoExchangesCalculating(BaseCalculating, ParsingLogger,
 
     def _calculates_price_and_intra_crypto_exchange(
             self, fiat: str, asset: str, transaction_fee: float
-    ) -> tuple:
+    ) -> tuple or None:
         fiat_price = 1 - transaction_fee / 100
         if self.trade_type == 'BUY':
-            intra_crypto_exchange = IntraCryptoExchanges.objects.get(
-                from_asset=fiat, to_asset=asset)
-            crypto_price = intra_crypto_exchange.price
+            target_intra_crypto_exchange = (
+                IntraCryptoExchangesRates.objects.select_related(
+                    'update').filter(
+                    crypto_exchange=self.crypto_exchange,
+                    from_asset=fiat, to_asset=asset,
+                    update__updated__gte=self.update_time
+                )
+            )
         else:  # SELL
-            intra_crypto_exchange = IntraCryptoExchanges.objects.get(
-                from_asset=asset, to_asset=fiat)
+            target_intra_crypto_exchange = (
+                IntraCryptoExchangesRates.objects.select_related(
+                    'update').filter(
+                    crypto_exchange=self.crypto_exchange,
+                    from_asset=asset, to_asset=fiat,
+                    update__updated__gte=self.update_time
+                )
+            )
+        if target_intra_crypto_exchange.exists():
+            intra_crypto_exchange = target_intra_crypto_exchange.get()
             crypto_price = intra_crypto_exchange.price
-        price = fiat_price * crypto_price
-        return price, intra_crypto_exchange
+            price = fiat_price * crypto_price
+            return price, intra_crypto_exchange
 
     def _generate_all_datas(self, fiat: str, asset: str,
                             transaction_method: str,
@@ -572,7 +613,7 @@ class Card2Wallet2CryptoExchangesCalculating(BaseCalculating, ParsingLogger,
 
     def __check_p2p_exchange_is_better(self, value_dict: dict, price: float,
                                        bank: Banks) -> bool:
-        p2p_exchange = self.model.objects.filter(
+        p2p_exchange = self.model.objects.select_related('update').filter(
             crypto_exchange=self.crypto_exchange, bank=bank,
             asset=value_dict['asset'], trade_type=value_dict['trade_type'],
             fiat=value_dict['fiat'], payment_channel='P2P',
@@ -590,7 +631,7 @@ class Card2Wallet2CryptoExchangesCalculating(BaseCalculating, ParsingLogger,
 
     def _add_to_bulk_update_or_create(
             self, value_dict: dict, price: float,
-            intra_crypto_exchange: IntraCryptoExchanges
+            intra_crypto_exchange: IntraCryptoExchangesRates
     ) -> None:
         bank_names = []
         for name, value in self.banks_config.items():
@@ -641,11 +682,14 @@ class Card2Wallet2CryptoExchangesCalculating(BaseCalculating, ParsingLogger,
                 value_dict = self._generate_all_datas(
                     fiat, asset, transaction_method, transaction_fee
                 )
-                price, intra_crypto_exchange = (
+                price_and_exchange = (
                     self._calculates_price_and_intra_crypto_exchange(
                         fiat, asset, transaction_fee
                     )
                 )
+                if price_and_exchange is None:
+                    continue
+                price, intra_crypto_exchange = price_and_exchange
                 self._add_to_bulk_update_or_create(
                     value_dict, price, intra_crypto_exchange
                 )

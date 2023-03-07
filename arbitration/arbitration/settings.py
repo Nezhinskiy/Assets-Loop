@@ -40,9 +40,9 @@ INSTALLED_APPS = [
     'bootstrap4',
     'django_select2',
     'widget_tweaks',
-    'crypto_exchanges.apps.CryptoExchangesConfig',
-    'banks.apps.BanksConfig',
-    'core.apps.CoreConfig',
+    'crypto_exchanges',
+    'banks',
+    'core',
 ]
 
 MIDDLEWARE = [
@@ -200,8 +200,16 @@ DATA_OBSOLETE_IN_MINUTES = 10
 INTER_EXCHANGES_OBSOLETE_IN_MINUTES = 15
 INTER_EXCHANGES_BEGIN_OBSOLETE_MINUTES = 2
 ALLOWED_PERCENTAGE = int(os.getenv('ALLOWED_PERCENTAGE', '0'))
-MINIMUM_PERCENTAGE = -10
+MINIMUM_PERCENTAGE = -5
 UPDATE_RATE = tuple(map(int, os.getenv('UPDATE_RATE', '0').replace(',', '').split()))
+
+# Models
+FIAT_LENGTH = 3
+ASSET_LENGTH = 4
+TRADE_TYPE_LENGTH = 4
+NAME_LENGTH = 20
+CHANNEL_LENGTH = 30
+DIAGRAM_LENGTH = 100
 
 # Endpoints
 API_P2P_BINANCE = os.getenv('API_P2P_BINANCE', '')
@@ -235,7 +243,7 @@ CELERY_RESULT_BACKEND = "redis://redis:6379"
 CELERY_BEAT_SCHEDULE = {
     'get_binance_fiat_crypto_list': {
         'task': 'crypto_exchanges.tasks.get_binance_fiat_crypto_list',
-        'schedule': timedelta(hours=12),
+        'schedule': crontab(hour='*/12'),
         'options': {'queue': 'parsing'}
     },
     'parse_currency_market_tinkoff_rates': {
@@ -256,17 +264,50 @@ CELERY_BEAT_SCHEDULE = {
     'get_simpl_binance_inter_exchanges_calculating': {
         'task': 'core.tasks.get_simpl_binance_inter_exchanges_calculating',
         'schedule': timedelta(seconds=random.randint(20, 25)),
-        'options': {'queue': 'calculating'}
+        'options': {'queue': 'calculating'},
+        'args': (False,),
+    },
+    'get_simpl_binance_international_inter_exchanges_calculating': {
+        'task': 'core.tasks.get_simpl_binance_international_inter_exchanges_calculating',
+        'schedule': timedelta(seconds=random.randint(20, 25)),
+        'options': {'queue': 'calculating'},
+        'args': (False,),
     },
     'get_complex_binance_inter_exchanges_calculating': {
         'task': 'core.tasks.get_complex_binance_inter_exchanges_calculating',
         'schedule': timedelta(seconds=random.randint(30, 35)),
-        'options': {'queue': 'calculating'}
+        'options': {'queue': 'calculating'},
+        'args': (False,),
     },
     'get_complex_binance_international_inter_exchanges_calculating': {
         'task': 'core.tasks.get_complex_binance_international_inter_exchanges_calculating',
         'schedule': timedelta(seconds=random.randint(30, 35)),
-        'options': {'queue': 'calculating'}
+        'options': {'queue': 'calculating'},
+        'args': (False,),
+    },
+    'get_simpl_full_update_binance_inter_exchanges_calculating': {
+        'task': 'core.tasks.get_simpl_binance_inter_exchanges_calculating',
+        'schedule': timedelta(minutes=5),
+        'options': {'queue': 'calculating'},
+        'args': (True,),
+    },
+    'get_simpl_full_update_binance_international_inter_exchanges_calculating': {
+        'task': 'core.tasks.get_simpl_binance_international_inter_exchanges_calculating',
+        'schedule': timedelta(minutes=5),
+        'options': {'queue': 'calculating'},
+        'args': (True,),
+    },
+    'get_complex_full_update_binance_inter_exchanges_calculating': {
+        'task': 'core.tasks.get_complex_binance_inter_exchanges_calculating',
+        'schedule': timedelta(minutes=5),
+        'options': {'queue': 'calculating'},
+        'args': (True,),
+    },
+    'get_complex_full_update_binance_international_inter_exchanges_calculating': {
+        'task': 'core.tasks.get_complex_binance_international_inter_exchanges_calculating',
+        'schedule': timedelta(minutes=5),
+        'options': {'queue': 'calculating'},
+        'args': (True,),
     },
 }
 

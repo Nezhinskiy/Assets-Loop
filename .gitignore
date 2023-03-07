@@ -150,3 +150,8 @@ media/
 
 #db
 *.sqlite3
+
+# certbot
+/infra/certbot/conf/
+/infra/certbot/www/
+/infra/arbitration/

@@ -94,7 +94,7 @@ class BinanceP2PParser(P2PParser, ABC):
 class BinanceCryptoParser(CryptoExchangesParser):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
     endpoint: str = API_BINANCE_CRYPTO
-    exceptions: tuple = ('SHIBRUB',)
+    exceptions: tuple = ('SHIBRUB', 'RUBSHIB', 'SHIBGBP', 'GBPSHIB')
     name_from: int = 'symbol'
     zero_fees = SPOT_ZERO_FEES
 
@@ -128,7 +128,8 @@ class BinanceCryptoParser(CryptoExchangesParser):
                        ) -> list[dict[int, str]]:
         return [
             dict([(self.name_from, ''.join([params[0], params[1]]))])
-            for params in assets_combinations if params not in self.exceptions
+            for params in assets_combinations
+            if ''.join([params[0], params[1]]) not in self.exceptions
         ]
 
     def _calculates_spot_fee(self, from_asset, to_asset) -> int | float:
@@ -276,6 +277,15 @@ class BinanceCard2Wallet2CryptoExchangesCalculating(
 class SimplBinanceInterExchangesCalculating(InterExchangesCalculating, ABC):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
     simpl: bool = True
+    international: bool = False
+
+
+class SimplBinanceInternationalInterExchangesCalculating(
+    InterExchangesCalculating, ABC
+):
+    crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
+    simpl: bool = True
+    international: bool = True
 
 
 class ComplexBinanceInterExchangesCalculating(InterExchangesCalculating, ABC):

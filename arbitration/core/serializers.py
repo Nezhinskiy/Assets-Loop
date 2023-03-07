@@ -3,10 +3,9 @@ import decimal
 from rest_framework import serializers
 
 from banks.models import Banks, BanksExchangeRates, CurrencyMarkets
-from crypto_exchanges.models import (CryptoExchanges, InterExchanges,
-                                     InterExchangesUpdates,
-                                     IntraCryptoExchanges,
-                                     P2PCryptoExchangesRates)
+from crypto_exchanges.models import (CryptoExchanges, CryptoExchangesRates,
+                                     InterExchanges, InterExchangesUpdates,
+                                     IntraCryptoExchangesRates)
 
 ROUND_TO = 10
 
@@ -51,20 +50,20 @@ class BanksSerializer(serializers.ModelSerializer):
         fields = ('name',)
 
 
-class IntraCryptoExchangesSerializer(serializers.ModelSerializer):
+class IntraCryptoExchangesRatesSerializer(serializers.ModelSerializer):
     price = RoundingDecimalField(max_digits=ROUND_TO, decimal_places=None)
 
     class Meta:
-        model = IntraCryptoExchanges
+        model = IntraCryptoExchangesRates
         exclude = ['id', 'update', 'crypto_exchange']
 
 
-class P2PCryptoExchangesRatesSerializer(serializers.ModelSerializer):
-    intra_crypto_exchange = IntraCryptoExchangesSerializer(read_only=True)
+class CryptoExchangesRatesSerializer(serializers.ModelSerializer):
+    intra_crypto_exchange = IntraCryptoExchangesRatesSerializer(read_only=True)
     price = RoundingDecimalField(max_digits=ROUND_TO, decimal_places=None)
 
     class Meta:
-        model = P2PCryptoExchangesRates
+        model = CryptoExchangesRates
         exclude = [
             'id', 'update', 'trade_type', 'crypto_exchange', 'bank'
         ]
@@ -96,10 +95,11 @@ class InterExchangesSerializer(serializers.ModelSerializer):
     crypto_exchange = CryptoExchangesSerializer(read_only=True)
     input_bank = BanksSerializer(read_only=True)
     output_bank = BanksSerializer(read_only=True)
-    input_crypto_exchange = P2PCryptoExchangesRatesSerializer(read_only=True)
-    output_crypto_exchange = P2PCryptoExchangesRatesSerializer(read_only=True)
-    interim_crypto_exchange = IntraCryptoExchangesSerializer(read_only=True)
-    second_interim_crypto_exchange = IntraCryptoExchangesSerializer(
+    input_crypto_exchange = CryptoExchangesRatesSerializer(read_only=True)
+    output_crypto_exchange = CryptoExchangesRatesSerializer(read_only=True)
+    interim_crypto_exchange = IntraCryptoExchangesRatesSerializer(
+        read_only=True)
+    second_interim_crypto_exchange = IntraCryptoExchangesRatesSerializer(
         read_only=True)
     bank_exchange = BanksExchangeRatesSerializer(read_only=True)
     marginality_percentage = RoundingDecimalField(max_digits=4,
