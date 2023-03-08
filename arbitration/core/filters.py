@@ -31,6 +31,10 @@ BANK_EXCHANGE_CHOICES = (
 
 
 class ExchangesFilter(django_filters.FilterSet):
+    """
+    This class is responsible for filtering a list of cryptocurrency exchanges
+    based on various criteria.
+    """
     gte = django_filters.NumberFilter(
         field_name='marginality_percentage', lookup_expr='gte',
         label='от', help_text='От'
