@@ -194,40 +194,40 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Custom setting
 
-PARSING_WORKER_NAME = 'celery@parsing_worker'
-BASE_ASSET = 'USDT'
-DATA_OBSOLETE_IN_MINUTES = 10
-INTER_EXCHANGES_OBSOLETE_IN_MINUTES = 15
-INTER_EXCHANGES_BEGIN_OBSOLETE_MINUTES = 2
-ALLOWED_PERCENTAGE = int(os.getenv('ALLOWED_PERCENTAGE', '0'))
-MINIMUM_PERCENTAGE = -5
-UPDATE_RATE = tuple(map(int, os.getenv('UPDATE_RATE', '0').replace(',', '').split()))
+PARSING_WORKER_NAME: str = 'celery@parsing_worker'
+BASE_ASSET: str = 'USDT'  # Preferred cryptocurrency for internal exchanges on a crypto exchanges.
+DATA_OBSOLETE_IN_MINUTES: int = 10  # The time in minutes since the last update, after which the data is considered out of date and does not participate in calculations.
+INTER_EXCHANGES_OBSOLETE_IN_MINUTES: int = 15  # The time in minutes since the last update, after which the interexchange exchange is considered obsolete and is not displayed on the page.
+INTER_EXCHANGES_BEGIN_OBSOLETE_MINUTES: int = 2  # The time in minutes since the last update, after which the inter-exchange exchange becomes obsolete and is displayed on the page in gray.
+ALLOWED_PERCENTAGE: int = int(os.getenv('ALLOWED_PERCENTAGE', '0'))  # The maximum margin percentage above which data is considered invalid. (Due to an error in the crypto exchange data)
+MINIMUM_PERCENTAGE: int = -5
+UPDATE_RATE: tuple[int] = tuple(map(int, os.getenv('UPDATE_RATE', '0').replace(',', '').split()))  # Update frequency schedule.
 
 # Models
-FIAT_LENGTH = 3
-ASSET_LENGTH = 4
-TRADE_TYPE_LENGTH = 4
-NAME_LENGTH = 20
-CHANNEL_LENGTH = 30
-DIAGRAM_LENGTH = 100
+FIAT_LENGTH: int = 3
+ASSET_LENGTH: int = 4
+TRADE_TYPE_LENGTH: int = 4
+NAME_LENGTH: int = 20
+CHANNEL_LENGTH: int = 30
+DIAGRAM_LENGTH: int = 100
 
 # Endpoints
-API_P2P_BINANCE = os.getenv('API_P2P_BINANCE', '')
-API_BINANCE_CARD_2_CRYPTO_SELL = os.getenv('API_BINANCE_CARD_2_CRYPTO_SELL', '')
-API_BINANCE_CARD_2_CRYPTO_BUY = os.getenv('API_BINANCE_CARD_2_CRYPTO_BUY', '')
-API_BINANCE_LIST_FIAT_SELL = os.getenv('API_BINANCE_LIST_FIAT_SELL', '')
-API_BINANCE_LIST_FIAT_BUY = os.getenv('API_BINANCE_LIST_FIAT_BUY', '')
-API_BINANCE_CRYPTO = os.getenv('API_BINANCE_CRYPTO', '')
-API_WISE = os.getenv('API_WISE', '')
-API_RAIFFEISEN = os.getenv('API_RAIFFEISEN', '')
-API_TINKOFF = os.getenv('API_TINKOFF', '')
-API_TINKOFF_INVEST = os.getenv('API_TINKOFF_INVEST', '')
+API_P2P_BINANCE: str = os.getenv('API_P2P_BINANCE', '')
+API_BINANCE_CARD_2_CRYPTO_SELL: str = os.getenv('API_BINANCE_CARD_2_CRYPTO_SELL', '')
+API_BINANCE_CARD_2_CRYPTO_BUY: str = os.getenv('API_BINANCE_CARD_2_CRYPTO_BUY', '')
+API_BINANCE_LIST_FIAT_SELL: str = os.getenv('API_BINANCE_LIST_FIAT_SELL', '')
+API_BINANCE_LIST_FIAT_BUY: str = os.getenv('API_BINANCE_LIST_FIAT_BUY', '')
+API_BINANCE_CRYPTO: str = os.getenv('API_BINANCE_CRYPTO', '')
+API_WISE: str = os.getenv('API_WISE', '')
+API_RAIFFEISEN: str = os.getenv('API_RAIFFEISEN', '')
+API_TINKOFF: str = os.getenv('API_TINKOFF', '')
+API_TINKOFF_INVEST: str = os.getenv('API_TINKOFF_INVEST', '')
 
 # URLs
-INFO_URL = os.getenv('INFO_URL', '')
-START_URL = os.getenv('START_URL', '')
-STOP_URL = os.getenv('STOP_URL', '')
-REGISTRATION_URL = os.getenv('REGISTRATION_URL', '')
+INFO_URL: str = os.getenv('INFO_URL', '')
+START_URL: str = os.getenv('START_URL', '')
+STOP_URL: str = os.getenv('STOP_URL', '')
+REGISTRATION_URL: str = os.getenv('REGISTRATION_URL', '')
 
 
 # Celery settings
@@ -287,29 +287,30 @@ CELERY_BEAT_SCHEDULE = {
     },
     'get_simpl_full_update_binance_inter_exchanges_calculating': {
         'task': 'core.tasks.get_simpl_binance_inter_exchanges_calculating',
-        'schedule': timedelta(minutes=5),
+        'schedule': timedelta(minutes=random.randint(15, 20)),
         'options': {'queue': 'calculating'},
         'args': (True,),
     },
     'get_simpl_full_update_binance_international_inter_exchanges_calculating': {
         'task': 'core.tasks.get_simpl_binance_international_inter_exchanges_calculating',
-        'schedule': timedelta(minutes=5),
+        'schedule': timedelta(minutes=random.randint(15, 20)),
         'options': {'queue': 'calculating'},
         'args': (True,),
     },
     'get_complex_full_update_binance_inter_exchanges_calculating': {
         'task': 'core.tasks.get_complex_binance_inter_exchanges_calculating',
-        'schedule': timedelta(minutes=5),
+        'schedule': timedelta(minutes=random.randint(20, 25)),
         'options': {'queue': 'calculating'},
         'args': (True,),
     },
     'get_complex_full_update_binance_international_inter_exchanges_calculating': {
         'task': 'core.tasks.get_complex_binance_international_inter_exchanges_calculating',
-        'schedule': timedelta(minutes=5),
+        'schedule': timedelta(minutes=random.randint(20, 25)),
         'options': {'queue': 'calculating'},
         'args': (True,),
     },
 }
+# Tell select2 which cache configuration to use:
 
 CACHES = {
     'default': {
@@ -326,5 +327,4 @@ CACHES = {
     }
 }
 
-# Tell select2 which cache configuration to use:
 SELECT2_CACHE_BACKEND = 'select2'
