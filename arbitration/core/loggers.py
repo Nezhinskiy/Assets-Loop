@@ -64,7 +64,7 @@ class BaseLogger(ABC):
         """
         pass
 
-    def _logger_error(self, error: str) -> None:
+    def _logger_error(self, error: Exception) -> None:
         """
         Logs an error message with the count of created and updated objects and
         the error.
