@@ -3,7 +3,7 @@ from abc import ABC
 from datetime import datetime, timedelta, timezone
 from functools import reduce
 from itertools import product
-from typing import Any
+from typing import Any, List, Tuple
 
 from django.db.models import Q
 
@@ -20,6 +20,17 @@ from crypto_exchanges.models import (CryptoExchanges, CryptoExchangesRates,
 
 
 class BaseCalculating(ABC):
+    """
+    It is an abstract base class from which other calculation classes will be
+    inherited.
+
+    Attributes:
+        crypto_exchange_name (str): Representing the name of the crypto
+            exchange.
+        data_obsolete_in_minutes (int): The time in minutes since the last
+            update, after which the data is considered out of date and does not
+            participate in calculations.
+    """
     crypto_exchange_name: str
     data_obsolete_in_minutes: int = DATA_OBSOLETE_IN_MINUTES
 
@@ -40,15 +51,53 @@ class BaseCalculating(ABC):
 
 
 class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
+    """
+    This class is key in the project. It iterates through all possible
+    transactions with the class settings. Transactions between banks, currency
+    exchanges, and crypto exchanges are taken into account, including all
+    available fiat currencies and cryptocurrencies, as well as various payment
+    methods for deposit and withdrawal to crypto exchanges. Then it calculates
+    the margin percentage and adds the best transaction chains to the database.
+
+    Attributes:
+        model: A Django model representing the exchange rates to be parsed.
+        model_update: A Django model representing the updates to be made to
+            the exchange rates.
+        simpl (bool): Determines whether the calculations will be simple or
+            complex.
+        international (bool): Specifies the list of output banks, only
+            international or only local.
+        exit (bool): By default, false, if true, then the operation of the
+            object will be prematurely terminated.
+        no_crypto_exchange_bug_handler (bool): If True, there will be no check
+            in __crypto_exchange_bug_handler.
+        updated_fields (list): A list of fields to be updated in the model
+            when new exchange rates are fetched.
+        base_asset (str): Preferred cryptocurrency for internal exchanges on a
+            crypto exchanges.
+        output_bank (Banks): A Django model of all banks.
+        output_transaction_methods (tuple): Transaction methods supported by
+            output banks.
+        input_crypto_exchanges: A Django model of fiat inputs to crypto
+            exchanges.
+        output_crypto_exchanges: A Django model of fiat output to crypto
+            exchanges.
+        allowed_percentage (int): The maximum margin percentage above which
+            data is considered invalid. Due to an error in the crypto exchange
+            data.
+    """
     model = InterExchanges
     model_update = InterExchangesUpdates
     simpl: bool
     international: bool
     exit: bool = False
     no_crypto_exchange_bug_handler: bool = True
+    updated_fields: List[str] = [
+        'marginality_percentage', 'dynamics', 'new', 'update'
+    ]
     base_asset: str = BASE_ASSET
     output_bank: Banks
-    output_transaction_methods: tuple
+    output_transaction_methods: Tuple[str]
     input_crypto_exchanges: CryptoExchangesRates
     output_crypto_exchanges: CryptoExchangesRates
     allowed_percentage: int = ALLOWED_PERCENTAGE
@@ -60,8 +109,6 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
         self.banks = self.banks_config.keys()
         self.__check_is_international()
         self.full_update = full_update
-        # self.first_start = self.__check_is_first_start()
-        # if not self.first_start:
         self.__check_is_no_queue()
         self.new_update = self.model_update.objects.create(
             bank=self.bank, crypto_exchange=self.crypto_exchange,
@@ -75,12 +122,23 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
         self.created_objects = 0
 
     def _get_count_created_objects(self) -> None:
+        """
+        Sets the count of created objects to the count of records to create.
+        """
         self.count_created_objects = self.created_objects
 
     def _get_count_updated_objects(self) -> None:
+        """
+        Sets the count of updated objects to the count of records to update.
+        """
         self.count_updated_objects = len(self.records_to_update)
 
     def __check_is_no_queue(self) -> None:
+        """
+        Checks if the same task is running at the same time. If yes, it makes
+        the exit variable equal to true so that the work of the duplicated task
+        ends ahead of schedule.
+        """
         pending_update = self.model_update.objects.filter(
             bank=self.bank, crypto_exchange=self.crypto_exchange,
             international=self.international, simpl=self.simpl,
@@ -94,6 +152,10 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
                 self.exit = True
 
     def __check_is_international(self) -> None:
+        """
+        A private method that sets the banks attribute based on whether the
+        transaction is international or not.
+        """
         if self.international:
             self.banks = self.international_banks
         else:
@@ -102,6 +164,9 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
                 self.banks.remove(international_bank)
 
     def _filter_input_crypto_exchanges(self, input_fiat: str) -> None:
+        """
+        A method that filters input crypto exchanges based on the given fiat.
+        """
         self.input_crypto_exchanges = (
             CryptoExchangesRates.objects.select_related('update').filter(
                 Q(transaction_method__in=self.input_transaction_methods) | Q(
@@ -113,6 +178,9 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
         )
 
     def _filter_output_crypto_exchanges(self, output_fiat: str) -> None:
+        """
+        A method that filters output crypto exchanges based on the given fiat.
+        """
         self.output_crypto_exchanges = (
             CryptoExchangesRates.objects.select_related('update').filter(
                 Q(transaction_method__in=self.output_transaction_methods) | Q(
@@ -128,6 +196,10 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
             interim_exchange, interim_second_exchange,
             output_crypto_exchange, bank_exchange=None
     ) -> bool:
+        """
+        A private method that handles crypto exchange errors if the margin
+        percentage is greater than allowed_percentage.
+        """
         if self.no_crypto_exchange_bug_handler:
             return False
         if marginality_percentage > self.allowed_percentage:
@@ -150,6 +222,10 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
             self, input_crypto_exchange: CryptoExchangesRates,
             output_crypto_exchange: CryptoExchangesRates
     ) -> tuple[Any, Any]:
+        """
+        A method that gets two or one interim exchanges based on input and
+        output crypto exchanges.
+        """
         target_interim_exchange = (
             IntraCryptoExchangesRates.objects.select_related(
                 'update').filter(
@@ -185,15 +261,24 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
         return None, None
 
     def _update_complex_inter_exchanges(self) -> None:
+        """
+        This method is responsible for updating inter-exchange rates for a
+        given bank and crypto-exchange, with an exchange within the bank. It
+        filters inbound and outbound crypto exchanges based on certain
+        criteria, updates bank exchange rates for inbound and outbound fiat,
+        and then calculates the margin percentage for each exchange.
+        """
         complex_exchanges = self.model.objects.prefetch_related(
             'input_bank', 'output_bank', 'bank_exchange',
             'input_crypto_exchange', 'output_crypto_exchange',
             'interim_crypto_exchange', 'second_interim_crypto_exchange',
             'update'
         ).filter(
-            Q(input_crypto_exchange__transaction_method__in=self.input_transaction_methods) | Q(
+            Q(input_crypto_exchange__transaction_method__in=(
+                self.input_transaction_methods)) | Q(
                 input_crypto_exchange__transaction_method__isnull=True),
-            Q(output_crypto_exchange__transaction_method__in=self.output_transaction_methods) | Q(
+            Q(output_crypto_exchange__transaction_method__in=(
+                self.output_transaction_methods)) | Q(
                 output_crypto_exchange__transaction_method__isnull=True),
             bank_exchange__isnull=False,
             input_crypto_exchange__price__isnull=False,
@@ -238,6 +323,14 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
             )
 
     def _get_complex_inter_exchanges(self) -> None:
+        """
+        This method performs fungible exchange calculations for different
+        banks, iterating over banks and currencies to find profitable fungible
+        exchanges between inbound and outbound crypto exchanges. With an
+        exchange inside the bank. It filters out any unprofitable
+        cryptocurrency exchanges and generates profits into a bulk list to
+        upgrade or create.
+        """
         for output_bank_name in self.banks:
             self.output_bank = Banks.objects.get(name=output_bank_name)
             output_bank_config = self.banks_config.get(output_bank_name)
@@ -298,14 +391,23 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
                         )
 
     def _update_simpl_inter_exchanges(self) -> None:
+        """
+        This method is responsible for updating inter-exchange rates for a
+        given bank and crypto-exchange, without an exchange within the bank.
+        It filters inbound and outbound crypto exchanges based on certain
+        criteria, updates bank exchange rates for inbound and outbound fiat,
+        and then calculates the margin percentage for each exchange.
+        """
         complex_exchanges = self.model.objects.prefetch_related(
             'input_bank', 'output_bank', 'input_crypto_exchange',
             'output_crypto_exchange', 'interim_crypto_exchange',
             'second_interim_crypto_exchange', 'update'
         ).filter(
-            Q(input_crypto_exchange__transaction_method__in=self.input_transaction_methods) | Q(
+            Q(input_crypto_exchange__transaction_method__in=(
+                self.input_transaction_methods)) | Q(
                 input_crypto_exchange__transaction_method__isnull=True),
-            Q(output_crypto_exchange__transaction_method__in=self.output_transaction_methods) | Q(
+            Q(output_crypto_exchange__transaction_method__in=(
+                self.output_transaction_methods)) | Q(
                 output_crypto_exchange__transaction_method__isnull=True),
             bank_exchange__isnull=True,
             input_crypto_exchange__price__isnull=False,
@@ -347,6 +449,13 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
             )
 
     def _get_simpl_inter_exchanges(self) -> None:
+        """
+        This method performs fungible exchange calculations for different
+        banks, iterating over banks and currencies to find profitable fungible
+        exchanges between inbound and outbound crypto exchanges. No exchange
+        within the bank. It filters out any unprofitable cryptocurrency
+        exchanges and generates profits into a bulk list to upgrade or create.
+        """
         for output_bank_name in self.banks:
             self.output_bank = Banks.objects.get(name=output_bank_name)
             output_bank_config = self.banks_config.get(output_bank_name)
@@ -399,6 +508,10 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
                     )
 
     def __marginality_percentage_handler(self, *args: Any) -> None:
+        """
+        This method tries to catch a fucking error, which dick understand where
+        it comes from once 1000+ iterations.
+        """
         for arg in args:
             if arg is None:
                 message = f'Intangible fucking error: {arg} is NoneType.'
@@ -409,6 +522,11 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
             interim_second_exchange, output_crypto_exchange,
             bank_exchange=None
     ) -> float:
+        """
+        This method calculates the marginality percentage for a given set of
+        input, interim, and output crypto exchanges, as well as bank exchanges,
+        if provided.
+        """
         interim_exchange_price = (1 if interim_exchange is None
                                   else interim_exchange.price)
         second_interim_exchange_price = (1 if interim_second_exchange is None
@@ -434,6 +552,10 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
             interim_second_exchange, output_bank, output_crypto_exchange,
             bank_exchange=None
     ) -> str:
+        """
+        This method creates a diagram of the exchange process, showing the
+        different exchanges that occur in the process.
+        """
         diagram = ''
         if bank_exchange and self.bank == bank_exchange.bank:
             if bank_exchange.currency_market:
@@ -462,6 +584,10 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
             interim_second_exchange, output_crypto_exchange,
             marginality_percentage, bank_exchange=None, complex_exchange=None
     ) -> None:
+        """
+        This method adds a set of profitable crypto exchanges to a bulk list
+        for update or creation.
+        """
         if self.full_update:
             target_object = self.model.objects.filter(
                 crypto_exchange=self.crypto_exchange, input_bank=self.bank,
@@ -512,6 +638,15 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
         self.records_to_update.append(inter_exchange)
 
     def main(self) -> None:
+        """
+        This method is the main method of the class and is responsible for
+        running the entire process. It calls the _get_complex_inter_exchanges
+        method or _get_complex_inter_exchanges method to generate the data,
+        then bulk creates or updates the records in the model. After that, it
+        calculates the duration of the process and saves it to the database. If
+        an error occurs during the process, it logs the error and raises an
+        exception.
+        """
         try:
             if self.exit:
                 self.new_update.delete()
@@ -523,8 +658,7 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
             else:
                 self._get_complex_inter_exchanges()
             self.model.objects.bulk_update(
-                self.records_to_update,
-                ['marginality_percentage', 'dynamics', 'new', 'update']
+                self.records_to_update, self.updated_fields
             )
             time_now = datetime.now(timezone.utc)
             self.duration = time_now - self.start_time
@@ -543,6 +677,7 @@ class Card2Wallet2CryptoExchangesCalculating(BaseCalculating, ParsingLogger,
     model = CryptoExchangesRates
     model_update = CryptoExchangesRatesUpdates
     payment_channel = 'Card2Wallet2CryptoExchange'
+    updated_fields: List[str] = ['price', 'update', 'transaction_fee']
     data_obsolete_in_minutes: int = DATA_OBSOLETE_IN_MINUTES
 
     def __init__(self, trade_type: str) -> None:
@@ -567,14 +702,26 @@ class Card2Wallet2CryptoExchangesCalculating(BaseCalculating, ParsingLogger,
         )
 
     def _get_count_created_objects(self) -> None:
+        """
+        Sets the count of created objects to the count of records to create.
+        """
         self.count_created_objects = len(self.records_to_create)
 
     def _get_count_updated_objects(self) -> None:
+        """
+        Sets the count of updated objects to the count of records to update.
+        """
         self.count_updated_objects = len(self.records_to_update)
 
     def _calculates_price_and_intra_crypto_exchange(
             self, fiat: str, asset: str, transaction_fee: float
     ) -> tuple or None:
+        """
+        Calculates the price and intra-crypto exchange rates for the given
+        fiat, asset, and transaction fee. Returns a tuple with the price and
+        intra-crypto exchange rate or None if the rates could not be
+        calculated.
+        """
         fiat_price = 1 - transaction_fee / 100
         if self.trade_type == 'BUY':
             target_intra_crypto_exchange = (
@@ -603,6 +750,9 @@ class Card2Wallet2CryptoExchangesCalculating(BaseCalculating, ParsingLogger,
     def _generate_all_datas(self, fiat: str, asset: str,
                             transaction_method: str,
                             transaction_fee: float) -> dict:
+        """
+        Generates a dictionary with data for a crypto exchange transaction.
+        """
         return {
             'asset': asset,
             'fiat': fiat,
@@ -613,6 +763,10 @@ class Card2Wallet2CryptoExchangesCalculating(BaseCalculating, ParsingLogger,
 
     def __check_p2p_exchange_is_better(self, value_dict: dict, price: float,
                                        bank: Banks) -> bool:
+        """
+        Checks if a P2P exchange offers a better price than the current
+        exchange.
+        """
         p2p_exchange = self.model.objects.select_related('update').filter(
             crypto_exchange=self.crypto_exchange, bank=bank,
             asset=value_dict['asset'], trade_type=value_dict['trade_type'],
@@ -633,6 +787,10 @@ class Card2Wallet2CryptoExchangesCalculating(BaseCalculating, ParsingLogger,
             self, value_dict: dict, price: float,
             intra_crypto_exchange: IntraCryptoExchangesRates
     ) -> None:
+        """
+        Adds a new record to the records_to_create or records_to_update list
+        depending on whether a record with the given data already exists.
+        """
         bank_names = []
         for name, value in self.banks_config.items():
             if self.payment_channel in value['payment_channels']:
@@ -671,6 +829,14 @@ class Card2Wallet2CryptoExchangesCalculating(BaseCalculating, ParsingLogger,
                 self.records_to_create.append(created_object)
 
     def _get_all_datas(self) -> None:
+        """
+        This method iterates over the deposit or withdrawal fiats and the
+        available assets and generates all the necessary data for each
+        combination. It skips the invalid combinations of fiat and asset, and
+        then calls other methods to generate the price and intra-crypto
+        exchange values. Finally, it adds the data to a bulk update or create
+        list.
+        """
         fiats = (self.deposit_fiats if self.trade_type == 'BUY'
                  else self.withdraw_fiats)
         for fiat, methods in fiats.items():
@@ -695,12 +861,20 @@ class Card2Wallet2CryptoExchangesCalculating(BaseCalculating, ParsingLogger,
                 )
 
     def main(self):
+        """
+        This method is the main method of the class and is responsible for
+        running the entire process. It calls the _get_all_datas method to
+        generate the data, then bulk creates or updates the records in the
+        model. After that, it calculates the duration of the process and saves
+        it to the database. If an error occurs during the process, it logs the
+        error and raises an exception.
+        """
         try:
             self._logger_start()
             self._get_all_datas()
             self.model.objects.bulk_create(self.records_to_create)
             self.model.objects.bulk_update(
-                self.records_to_update, ['price', 'update', 'transaction_fee']
+                self.records_to_update, self.updated_fields
             )
             time_now = datetime.now(timezone.utc)
             self.duration = time_now - self.start_time
