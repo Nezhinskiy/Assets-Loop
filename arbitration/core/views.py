@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
 from django.views.generic import ListView
 from django_filters.views import FilterView
 from rest_framework import throttling
@@ -50,12 +50,25 @@ class InfoLoopList(ListView):
 
 
 class InterExchangesListNew(FilterView):
+    """
+    View displays a list of InterExchanges objects using a FilterView and a
+    template called main.html. It also filters the list based on user search
+    queries using a filterset called ExchangesFilter.
+    """
     model = InterExchanges
     template_name = 'crypto_exchanges/main.html'
     filterset_class = ExchangesFilter
 
 
 class InterExchangesAPIView(ListAPIView, FilterView):
+    """
+    View returns a list of serialized InterExchanges objects in JSON format,
+    which can be used to display exchange information in a web application.
+    It also filters the list based on user search queries using the same
+    ExchangesFilter. It uses a ListAPIView, and provides pagination and
+    ordering capabilities for the data using a custom list method. It also
+    implements rate limiting using the throttle_classes attribute.
+    """
     model = InterExchanges
     serializer_class = InterExchangesSerializer
     filterset_class = ExchangesFilter
