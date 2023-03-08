@@ -261,7 +261,3 @@ $("#myModal").on('show.bs.modal', function (e) {
     $("#modalTitle").html('Инструкция к связке:<p><h5><b>'+diagram+'</h5></p>');
     $(this).find(".modal-body").html("<h5>"+content+"</h5>");
 });
-
-$( document ).ajaxComplete(function( event, request, settings ) {
-    $('[data-toggle="tooltip"]').not( '[data-original-title]' ).tooltip();
-});
