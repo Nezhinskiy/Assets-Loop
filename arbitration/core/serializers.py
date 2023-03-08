@@ -11,6 +11,9 @@ ROUND_TO = 10
 
 
 class RoundingDecimalField(serializers.DecimalField):
+    """
+    Custom redefinition of the display of decimal numbers.
+    """
     def validate_precision(self, value):
         return value
 
@@ -39,18 +42,29 @@ class RoundingDecimalField(serializers.DecimalField):
 
 
 class CryptoExchangesSerializer(serializers.ModelSerializer):
+    """
+    A serializer for the CryptoExchanges model, which represents a
+    cryptocurrency exchange.
+    """
     class Meta:
         model = CryptoExchanges
         fields = ('name',)
 
 
 class BanksSerializer(serializers.ModelSerializer):
+    """
+    A serializer for the Banks model, which represents a bank.
+    """
     class Meta:
         model = Banks
         fields = ('name',)
 
 
 class IntraCryptoExchangesRatesSerializer(serializers.ModelSerializer):
+    """
+    A serializer for the IntraCryptoExchangesRates model, which represents
+    exchange rates between two cryptocurrencies on a single exchange.
+    """
     price = RoundingDecimalField(max_digits=ROUND_TO, decimal_places=None)
 
     class Meta:
@@ -59,6 +73,11 @@ class IntraCryptoExchangesRatesSerializer(serializers.ModelSerializer):
 
 
 class CryptoExchangesRatesSerializer(serializers.ModelSerializer):
+    """
+    A serializer for the CryptoExchangesRates model, which represents exchange
+    rates between a cryptocurrency on a single exchange and a fiat currency on
+    banks.
+    """
     intra_crypto_exchange = IntraCryptoExchangesRatesSerializer(read_only=True)
     price = RoundingDecimalField(max_digits=ROUND_TO, decimal_places=None)
 
@@ -70,12 +89,20 @@ class CryptoExchangesRatesSerializer(serializers.ModelSerializer):
 
 
 class CurrencyMarketsSerializer(serializers.ModelSerializer):
+    """
+    A serializer for the CurrencyMarkets model, which represents a market for
+    exchanging currencies.
+    """
     class Meta:
         model = CurrencyMarkets
         fields = ('name',)
 
 
 class BanksExchangeRatesSerializer(serializers.ModelSerializer):
+    """
+    A serializer for the BanksExchangeRates model, which represents exchange
+    rates between two fiat currencies at a bank.
+    """
     bank = BanksSerializer(read_only=True)
     currency_market = CurrencyMarketsSerializer(read_only=True)
     price = RoundingDecimalField(max_digits=ROUND_TO, decimal_places=None)
@@ -86,12 +113,22 @@ class BanksExchangeRatesSerializer(serializers.ModelSerializer):
 
 
 class UpdateSerializer(serializers.ModelSerializer):
+    """
+    A serializer for the InterExchangesUpdates model, which represents
+    updates to the exchange rates between two fiat currencies on a bank or
+    between a cryptocurrency and a fiat currency on an exchange.
+    """
     class Meta:
         model = InterExchangesUpdates
         fields = ('updated',)
 
 
 class InterExchangesSerializer(serializers.ModelSerializer):
+    """
+    A serializer for the InterExchanges model, which represents an exchange of
+    currency or cryptocurrency between two banks and between a bank and an
+    exchange.
+    """
     crypto_exchange = CryptoExchangesSerializer(read_only=True)
     input_bank = BanksSerializer(read_only=True)
     output_bank = BanksSerializer(read_only=True)
