@@ -1,14 +1,38 @@
-# Assets Loop - Arbitration Web Application Project
+# Assets-Loop - Arbitration Web Application Project
 
-![example workflow](https://github.com/Nezhinskiy/binance_api/actions/workflows/arbitration_workflow.yml/badge.svg)
+![example workflow](https://github.com/Nezhinskiy/Assets-Loop/actions/workflows/arbitration_workflow.yml/badge.svg)
 
-[![github actions ci badge]][github actions ci]
-[license-mit-badge]: https://img.shields.io/badge/License-MIT%202.0-blue.svg?style=flat-square
-
-[Go to site](https://assetsloop.com/)
+https://assetsloop.com
 
 ## Description:
 Assets Loop - is a free web application to help you trade between cryptocurrencies and fiat currencies. Corrected by source code written in Python + JavaScript. It is designed to search for all possible chains of transactions between banks, currency exchanges and crypto-exchanges and display them on the main page of the site ranked by margin percentage. Parsing of exchange rates for a variety of open and closed APIs is carried out continuously and multi-threaded through the Tor network, which guarantees the constant relevance of exchange rates.
+
+### Supported Crypto Exchanges:
+- [X] [Binance](https://www.binance.com/)
+
+#### Binance-supported input/output methods between crypto assets and fiat currencies:
+- [X] [P2P](https://p2p.binance.com/)
+- [X] [Card2CryptoExchange](https://www.binance.com/ru/buy-sell-crypto/)
+- [X] [Card2Wallet2CryptoExchange](https://www.binance.com/ru/fiat/deposit/)
+
+### Supported Banks:
+- [X] [Wise](https://wise.com/)
+- [X] [Bank of Georgia](https://bankofgeorgia.ge/)
+- [X] [TBC Bank](https://www.tbcbank.ge/)
+- [X] [Credo Bank](https://credobank.ge/)
+- [X] [Tinkoff](https://www.tinkoff.ru/)
+- [X] [Sberbank](http://www.sberbank.ru/)
+- [X] [Raiffeisen Bank](https://www.raiffeisen.ru/)
+- [X] [Yoomoney](https://yoomoney.ru/)
+- [X] [QIWI](https://qiwi.com/)
+
+#### Banks supporting currency conversion within the bank:
+- [X] [Wise](https://wise.com/)
+- [X] [Tinkoff](https://www.tinkoff.ru/)
+- [X] [Raiffeisen Bank](https://www.raiffeisen.ru/)
+
+### Supported currency exchanges:
+- [X] [Tinkoff Invest](https://www.tinkoff.ru/invest/)
 
 ## Technologies:
 This is a web application project using Docker Compose for containerization. The project includes several services such as a Tor proxy to bypass parsing locks, Redis, PostgreSQL database, Nginx web server, Certbot for SSL certification, and Celery workflows for parsing, parsing and computing data. These services are connected to the user's network.
@@ -25,6 +49,11 @@ This is a web application project using Docker Compose for containerization. The
 - Bootstrap
 - Continuous Integration, Continuous Deployment
 - Digital Ocean
+
+## Disclaimer
+This software is for educational purposes only. Do not risk money which
+you are afraid to lose. USE THE SOFTWARE AT YOUR OWN RISK. THE AUTHORS
+AND ALL AFFILIATES ASSUME NO RESPONSIBILITY FOR YOUR TRADING RESULTS.
 
 ## License
 - MIT license
