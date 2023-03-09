@@ -91,7 +91,7 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
     simpl: bool
     international: bool
     exit: bool = False
-    no_crypto_exchange_bug_handler: bool = True
+    no_crypto_exchange_bug_handler: bool = False
     updated_fields: List[str] = [
         'marginality_percentage', 'dynamics', 'new', 'update'
     ]
@@ -190,6 +190,86 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
                 update__updated__gte=self.update_time
             )
         )
+
+    def __check_invalid_fiat_chain(
+            self, input_crypto_exchange, output_crypto_exchange,
+            bank_exchange=None
+    ) -> bool:
+        """
+        This method checks if there are errors in the fiat currency transaction
+        chain, if so, returns True and creates a log entry about it.
+        """
+        if bank_exchange is None:
+            if input_crypto_exchange.fiat != output_crypto_exchange.fiat:
+                self.logger.error('Invalid fiat chain without bank exchange.')
+                return True
+        else:
+            if bank_exchange.from_fiat != output_crypto_exchange.fiat or (
+                    bank_exchange.to_fiat != input_crypto_exchange.fiat
+            ):
+                self.logger.error('Invalid fiat chain with bank exchange.')
+                return True
+        return False
+
+    def __check_invalid_asset_chain(
+            self, input_crypto_exchange, interim_exchange,
+            interim_second_exchange, output_crypto_exchange
+    ) -> bool:
+        """
+        This method checks if there are errors in the crypto asset transaction
+        chain, if so, returns True and creates a log entry about it.
+        """
+        if interim_exchange is None and interim_second_exchange is None:
+            if input_crypto_exchange.asset != output_crypto_exchange.asset:
+                self.logger.error('Invalid asset chain without interim '
+                                  'exchange.')
+                return True
+        elif interim_second_exchange is None:
+            message = 'Invalid asset chain with one interim exchange. '
+            if input_crypto_exchange.asset != interim_exchange.from_asset:
+                message += (
+                    f'input_crypto_exchange.asset: '
+                    f'{input_crypto_exchange.asset}, interim_exchange.'
+                    f'from_asset: {interim_exchange.from_asset}'
+                )
+                self.logger.error(message)
+                return True
+            if output_crypto_exchange.asset != interim_exchange.to_asset:
+                message += (
+                    f'output_crypto_exchange.asset: '
+                    f'{output_crypto_exchange.asset}, interim_exchange.'
+                    f'to_asset: {interim_exchange.to_asset}'
+                )
+                self.logger.error(message)
+                return True
+        else:
+            message = 'Invalid asset chain with two interim exchanges. '
+            if input_crypto_exchange.asset != interim_exchange.from_asset:
+                message += (
+                    f'input_crypto_exchange.asset: '
+                    f'{input_crypto_exchange.asset}, interim_exchange.'
+                    f'from_asset: {interim_exchange.from_asset}'
+                )
+                self.logger.error(message)
+                return True
+            if interim_exchange.to_asset != interim_second_exchange.from_asset:
+                message += (
+                    f'interim_exchange.to_asset: {interim_exchange.to_asset}, '
+                    f'interim_second_exchange.from_asset: '
+                    f'{interim_second_exchange.from_asset}'
+                )
+                self.logger.error(message)
+                return True
+            if output_crypto_exchange.asset != (
+                    interim_second_exchange.to_asset):
+                message += (
+                    f'output_crypto_exchange.asset: '
+                    f'{output_crypto_exchange.asset}, interim_second_exchange.'
+                    f'to_asset: {interim_second_exchange.to_asset}'
+                )
+                self.logger.error(message)
+                return True
+        return False
 
     def __crypto_exchange_bug_handler(
             self, marginality_percentage, input_crypto_exchange,
@@ -375,6 +455,16 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
                                 output_crypto_exchange, bank_exchange
                             )
                         )
+                        if self.__check_invalid_fiat_chain(
+                                input_crypto_exchange, output_crypto_exchange,
+                                bank_exchange
+                        ):
+                            continue
+                        if self.__check_invalid_asset_chain(
+                                input_crypto_exchange, interim_exchange,
+                                interim_second_exchange, output_crypto_exchange
+                        ):
+                            continue
                         if marginality_percentage < MINIMUM_PERCENTAGE:
                             continue
                         if self.__crypto_exchange_bug_handler(
@@ -493,6 +583,15 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
                             interim_second_exchange, output_crypto_exchange
                         )
                     )
+                    if self.__check_invalid_fiat_chain(
+                            input_crypto_exchange, output_crypto_exchange
+                    ):
+                        continue
+                    if self.__check_invalid_asset_chain(
+                            input_crypto_exchange, interim_exchange,
+                            interim_second_exchange, output_crypto_exchange
+                    ):
+                        continue
                     if marginality_percentage < MINIMUM_PERCENTAGE:
                         continue
                     if self.__crypto_exchange_bug_handler(
