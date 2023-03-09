@@ -1089,7 +1089,7 @@ class Card2CryptoExchangesParser(CryptoParser, ABC):
                     if not target_rates.exists():
                         continue
                 response = self._get_api_answer(asset, fiat, amount)
-                if response is None:
+                if response is False:
                     continue
                 values = self._extract_values_from_json(response, amount)
                 if values is None:
