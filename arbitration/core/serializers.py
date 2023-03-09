@@ -1,5 +1,3 @@
-import decimal
-
 from rest_framework import serializers
 
 from banks.models import Banks, BanksExchangeRates, CurrencyMarkets
@@ -14,6 +12,10 @@ class RoundingDecimalField(serializers.DecimalField):
     """
     Custom redefinition of the display of decimal numbers.
     """
+    def __init__(self, max_digits, decimal_places, percent=False, **kwargs):
+        super().__init__(max_digits, decimal_places, **kwargs)
+        self.percent = percent
+
     def validate_precision(self, value):
         return value
 
@@ -21,25 +23,22 @@ class RoundingDecimalField(serializers.DecimalField):
         """
         Quantize the decimal value to the configured precision.
         """
-        length = len(str(int(value)))
-        if self.decimal_places is None:
-            if len(str(value)) - 1 < self.max_digits:
-                return value
-            if length > 1:
-                self.max_digits -= 3
-            round_length = (self.max_digits - length
-                            if self.max_digits > length else 1)
-            return round(value, round_length)
-        if length > ROUND_TO:
-            return round(value, 1)
-        context = decimal.getcontext().copy()
-        if self.max_digits is not None:
-            context.prec = self.max_digits
-        return value.quantize(
-            decimal.Decimal('.1') ** self.decimal_places,
-            rounding=self.rounding,
-            context=context
-        )
+        integers, real_decimal_places = map(
+            len, str(value).split('.'))
+        if self.percent is False:
+            max_decimal_places = self.max_digits - integers
+            if real_decimal_places > max_decimal_places:
+                self.decimal_places = max_decimal_places
+            else:
+                self.decimal_places = real_decimal_places
+            new_values = round(value, self.decimal_places)
+            real_decimal_places = len(str(new_values).split('.')[1])
+            self.decimal_places = real_decimal_places
+
+        if integers > self.max_digits:
+            self.decimal_places = 1
+            self.max_digits = integers + self.decimal_places
+        return round(value, self.decimal_places)
 
 
 class CryptoExchangesSerializer(serializers.ModelSerializer):
@@ -140,8 +139,9 @@ class InterExchangesSerializer(serializers.ModelSerializer):
     second_interim_crypto_exchange = IntraCryptoExchangesRatesSerializer(
         read_only=True)
     bank_exchange = BanksExchangeRatesSerializer(read_only=True)
-    marginality_percentage = RoundingDecimalField(max_digits=4,
-                                                  decimal_places=2)
+    marginality_percentage = RoundingDecimalField(
+        max_digits=4, decimal_places=2, percent=True
+    )
     update = UpdateSerializer(read_only=True)
 
     class Meta:
