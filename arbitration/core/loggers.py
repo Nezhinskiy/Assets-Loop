@@ -57,13 +57,6 @@ class BaseLogger(ABC):
         self._get_count_created_objects()
         self._get_count_updated_objects()
 
-    @abstractmethod
-    def _logger_end(self) -> None:
-        """
-        Abstract method for logging a message with the end time of the logger.
-        """
-        pass
-
     def _logger_error(self, error: Exception) -> None:
         """
         Logs an error message with the count of created and updated objects and
@@ -82,27 +75,30 @@ class BaseLogger(ABC):
         message += f'{error}'
         self.logger.error(message)
 
-
-class ParsingLogger(BaseLogger, ABC):
-    """
-    Logger for parsing operations.
-    """
     def _logger_end(self) -> None:
         """
-        Logs the end of the parsing logger.
+        Logs the end of the logger.
         """
         self._get_all_objects()
-        message = f'Finish {self.__class__.__name__} at {self.duration}. '
+        message = (f'Finish {self.__class__.__name__} at '
+                   f'{self.duration}. ')
         if self.bank_name is not None:
             message += f'Bank name: {self.bank_name}. '
         if self.count_created_objects + self.count_updated_objects > 0:
             message += f'Updated: {self.count_updated_objects}, '
             message += f'Created: {self.count_created_objects}. '
-            self.logger.info(message)
+            self.logger.error(message)
         else:
             message += (f'Has not been Created and updated: '
                         f'{self.count_updated_objects}. ')
-            self.logger.info(message)
+            self.logger.error(message)
+
+
+class ParsingLogger(BaseLogger, ABC):
+    """
+    Logger for parsing operations.
+    """
+    pass
 
 
 class CalculatingLogger(BaseLogger, ABC):
@@ -117,16 +113,3 @@ class CalculatingLogger(BaseLogger, ABC):
                    f'identical tasks in the queue. '
                    f'{self.__class__.__name__}, Bank name: {self.bank_name}.')
         self.logger.error(message)
-
-    def _logger_end(self) -> None:
-        """
-        Logs the end of the calculating logger.
-        """
-        self._get_all_objects()
-        message = (f'Finish {self.__class__.__name__} at '
-                   f'{self.duration}. ')
-        if self.bank_name is not None:
-            message += f'Bank name: {self.bank_name}. '
-        message += f'Updated: {self.count_updated_objects}, '
-        message += f'Created: {self.count_created_objects}. '
-        self.logger.info(message)
