@@ -21,16 +21,17 @@ class RoundingDecimalField(serializers.DecimalField):
         """
         Quantize the decimal value to the configured precision.
         """
+        length = len(str(int(value)))
         if self.decimal_places is None:
             if len(str(value)) - 1 < self.max_digits:
                 return value
-            length = len(str(int(value)))
             if length > 1:
                 self.max_digits -= 3
             round_length = (self.max_digits - length
                             if self.max_digits > length else 1)
             return round(value, round_length)
-
+        if length > ROUND_TO:
+            return round(value, 1)
         context = decimal.getcontext().copy()
         if self.max_digits is not None:
             context.prec = self.max_digits
