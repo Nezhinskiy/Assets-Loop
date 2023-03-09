@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from itertools import combinations, permutations, product
 from sys import getsizeof
@@ -957,6 +957,9 @@ class Card2CryptoExchangesParser(CryptoParser, ABC):
         ).time().minute < self.model_update.objects.last().updated.time(
         ).minute
         self.full_update = self.if_no_objects or self.if_new_hour
+        self.update_time = datetime.now(timezone.utc) - timedelta(
+            minutes=self.data_obsolete_in_minutes
+        )
 
     @staticmethod
     def _create_body_sell(fiat: str, asset: str, amount: int) -> dict:
