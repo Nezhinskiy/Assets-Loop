@@ -98,11 +98,11 @@ class ParsingLogger(BaseLogger, ABC):
         if self.count_created_objects + self.count_updated_objects > 0:
             message += f'Updated: {self.count_updated_objects}, '
             message += f'Created: {self.count_created_objects}. '
-            self.logger.error(message)
+            self.logger.info(message)
         else:
             message += (f'Has not been Created and updated: '
                         f'{self.count_updated_objects}. ')
-            self.logger.error(message)
+            self.logger.info(message)
 
 
 class CalculatingLogger(BaseLogger, ABC):
@@ -115,7 +115,7 @@ class CalculatingLogger(BaseLogger, ABC):
         """
         message = (f'The task was skipped due to the accumulation of '
                    f'identical tasks in the queue. '
-                   f'{self.__class__.__name__}')
+                   f'{self.__class__.__name__}, Bank name: {self.bank_name}.')
         self.logger.error(message)
 
     def _logger_end(self) -> None:
@@ -129,4 +129,4 @@ class CalculatingLogger(BaseLogger, ABC):
             message += f'Bank name: {self.bank_name}. '
         message += f'Updated: {self.count_updated_objects}, '
         message += f'Created: {self.count_created_objects}. '
-        self.logger.error(message)
+        self.logger.info(message)
