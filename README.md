@@ -5,8 +5,7 @@
 https://assetsloop.com
 
 ## Description:
-Assets Loop - is a free web application to help you trade between cryptocurrencies and fiat currencies. Corrected by source code written in Python + JavaScript. It is designed to search for all possible chains of transactions between banks, currency exchanges and crypto-exchanges and display them on the main page of the site ranked by margin percentage. Parsing of exchange rates for a variety of open and closed APIs is carried out continuously and multi-threaded through the Tor network, which guarantees the constant relevance of exchange rates.
-
+Assets Loop is a free open-source web application (built with Python + JavaScript) designed to assist in trading across cryptocurrency exchanges, forex markets, and banks using an arbitrage strategy. It is intended to search for all possible transaction chains and display them on the website's homepage. Currency exchange rates are continuously and concurrently parsed through a network of open and closed APIs using Tor, ensuring the rates are always up-to-date.
 ### Supported Crypto Exchanges:
 - [X] [Binance](https://www.binance.com/)
 
@@ -45,9 +44,9 @@ This is a web application project using Docker Compose for containerization. The
 - PostgreSQL
 - NGINX, Certbot, Gunicorn
 - JavaScript, jQuery
-- DataTables
-- Bootstrap
-- Continuous Integration, Continuous Deployment
+- DataTables, Ajax
+- Bootstrap, Select2, Twix
+- CI/CD, Git Actions
 - Digital Ocean
 
 ## Disclaimer

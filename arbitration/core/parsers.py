@@ -318,7 +318,8 @@ class BankParser(ParsingViaTor, ABC):
         """
         pass
 
-    def _calculates_buy_and_sell_data(self, params: dict) -> tuple[dict, dict]:
+    def _calculates_buy_and_sell_data(self, params: dict
+                                      ) -> tuple[dict, dict] | None:
         """
         Calculates the buy and sell data for a given set of
         parameters. It gets the API response using the _get_api_answer_get
@@ -327,26 +328,22 @@ class BankParser(ParsingViaTor, ABC):
         dictionaries containing the calculated buy and sell data.
         """
         response_json = self._get_api_answer_get(params)
+        if response_json is False:
+            return
         buy_and_sell = self._extract_buy_and_sell_from_json(response_json)
-        try:
-            buy_data = {
-                'from_fiat': params[self.name_from],
-                'to_fiat': params[self.name_to],
-                'price': buy_and_sell[0]
-            }
-            sell_data = {
-                'from_fiat': params[self.name_to],
-                'to_fiat': params[self.name_from],
-                'price': 1 / buy_and_sell[1]
-            }
-            return buy_data, sell_data
-        except Exception as error:
-            message = (f'Error with calculates buy and sell data in '
-                       f'{self.__class__.__name__}. Data: {params}, '
-                       f'{buy_and_sell}. Error: {error}')
-            self.logger.error(message)
+        buy_data = {
+            'from_fiat': params[self.name_from],
+            'to_fiat': params[self.name_to],
+            'price': buy_and_sell[0]
+        }
+        sell_data = {
+            'from_fiat': params[self.name_to],
+            'to_fiat': params[self.name_from],
+            'price': 1 / buy_and_sell[1]
+        }
+        return buy_data, sell_data
 
-    def _calculates_price_data(self, params: dict) -> list[dict]:
+    def _calculates_price_data(self, params: dict) -> list[dict] | None:
         """
         Calculates the price data for a given set of parameters.
         It gets the API response using the _get_api_answer_get method, extracts
@@ -354,19 +351,15 @@ class BankParser(ParsingViaTor, ABC):
         list of dictionaries containing the calculated price data.
         """
         response_json = self._get_api_answer_get(params)
+        if response_json is False:
+            return
         price = self._extract_price_from_json(response_json)
-        try:
-            price_data = {
-                'from_fiat': params[self.name_from],
-                'to_fiat': params[self.name_to],
-                'price': price
-            }
-            return [price_data]
-        except Exception as error:
-            message = (f'Error with calculates price data in '
-                       f'{self.__class__.__name__}. Data: {params}. '
-                       f'Error: {error}')
-            self.logger.error(message)
+        price_data = {
+            'from_fiat': params[self.name_from],
+            'to_fiat': params[self.name_to],
+            'price': price
+        }
+        return [price_data]
 
     def _calculates_all_values_data(self) -> list[dict[str, Any]] | None:
         """
@@ -377,10 +370,13 @@ class BankParser(ParsingViaTor, ABC):
         available.
         """
         response_json = self._get_api_answer_get()
+        if response_json is False:
+            return
         return self._extract_all_values_from_json(response_json)
 
-    def _choice_buy_and_sell_or_price(self, params=None
-                                      ) -> tuple[dict, dict] | list[dict]:
+    def _choice_buy_and_sell_or_price(
+            self, params=None
+    ) -> tuple[dict, dict] | list[dict] | None:
         """
         Chooses whether to calculate buy and sell data, price data, or all
         values data, depending on the buy_and_sell and all_values attributes.
@@ -843,7 +839,7 @@ class ListsFiatCryptoParser(CryptoParser, ABC):
         """
         pass
 
-    def _get_api_answer(self, asset=None, fiat=None) -> dict:
+    def _get_api_answer(self, asset=None, fiat=None) -> dict | None:
         """
         A method that makes a request to the API to fetch either the sell or
         buy rates, depending on the input parameters.
@@ -993,7 +989,8 @@ class Card2CryptoExchangesParser(CryptoParser, ABC):
         """
         pass
 
-    def _get_api_answer(self, asset: str, fiat: str, amount: int) -> dict:
+    def _get_api_answer(self, asset: str, fiat: str, amount: int
+                        ) -> dict | bool:
         """
         Returns the API response for a given asset, fiat and amount.
         """
