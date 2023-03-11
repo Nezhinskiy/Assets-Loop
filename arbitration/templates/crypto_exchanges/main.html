@@ -15,8 +15,11 @@
       </div>
       <div class="col-sm-8">
         <h1>
-          Все актуальные арбитражные связки:
+          Актуальные арбитражные связки:
         </h1>
+        <p>
+          * C 09.03.23 Binance закрыла для российских карт возможность покупки и продажи долларов и евро через свой P2P-сервис. Сервисы Card2Crypto и Card2Wallet2Crypto уже давно не поддерживают российские карты.
+        </p>
         <table id="dynamicDatatable" data-url="{% url "core:inter_exchanges_data" %}" data-filter="{{ request.get_full_path|last_url_path:0 | safe }}" class="table">
           <thead class="table-dark">
             <tr>

@@ -34,6 +34,7 @@ class BaseParser(ParsingLogger, ABC):
     endpoint: str
     updated_fields: List[str]
     bank_name = None
+    tor_parser: bool = False
     CURRENCY_PAIR: int = 2
 
     def __init__(self) -> None:
@@ -124,12 +125,14 @@ class ParsingViaTor(BaseParser, ABC):
         tor (Tor): Tor object for making requests
         count_try (int): Current count of tries
     """
-    LIMIT_TRY = 3
+    tor_parser: bool = True
+    LIMIT_TRY: int = 3
 
     def __init__(self) -> None:
         super().__init__()
         self.tor = Tor()
         self.count_try = 0
+        self.connections_duration = 0
 
     def _get_api_answer_post(self, body: dict, headers: dict, endpoint=None
                              ) -> dict | bool:
@@ -195,6 +198,7 @@ class ParsingViaTor(BaseParser, ABC):
                    f'{self.__class__.__name__}, count try: {self.count_try}')
         self.logger.error(message)
         self.tor.renew_connection()
+        self.connections_duration += self.tor.connection_time
         self.count_try += 1
 
 
@@ -329,7 +333,7 @@ class BankParser(ParsingViaTor, ABC):
         """
         response_json = self._get_api_answer_get(params)
         if response_json is False:
-            return
+            return None
         buy_and_sell = self._extract_buy_and_sell_from_json(response_json)
         buy_data = {
             'from_fiat': params[self.name_from],
@@ -352,7 +356,7 @@ class BankParser(ParsingViaTor, ABC):
         """
         response_json = self._get_api_answer_get(params)
         if response_json is False:
-            return
+            return None
         price = self._extract_price_from_json(response_json)
         price_data = {
             'from_fiat': params[self.name_from],
@@ -371,7 +375,7 @@ class BankParser(ParsingViaTor, ABC):
         """
         response_json = self._get_api_answer_get()
         if response_json is False:
-            return
+            return None
         return self._extract_all_values_from_json(response_json)
 
     def _choice_buy_and_sell_or_price(
@@ -580,6 +584,14 @@ class P2PParser(CryptoParser, ABC):
         ).minute
         self.full_update = self.if_no_objects or self.if_new_hour
 
+    @ abstractmethod
+    def _check_supports_fiat(self, fiat: str) -> bool:
+        """
+        This method will check if a given bank supports a particular currency
+        on a particular crypto exchange.
+        """
+        pass
+
     @abstractmethod
     def _create_body(self, asset: str, trade_type: str, fiat: str) -> dict:
         """
@@ -631,6 +643,8 @@ class P2PParser(CryptoParser, ABC):
 
     def _get_all_api_answers(self) -> None:
         for fiat in self.fiats:
+            if not self._check_supports_fiat(fiat):
+                continue
             assets = self.crypto_exchanges_configs['assets_for_fiats'].get(fiat
                                                                            )
             if not assets:

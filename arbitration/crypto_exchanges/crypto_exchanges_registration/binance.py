@@ -4,7 +4,7 @@ import os
 from abc import ABC
 from http import HTTPStatus
 from time import sleep
-from typing import List
+from typing import List, Tuple
 
 import requests
 
@@ -69,6 +69,13 @@ class BinanceP2PParser(P2PParser, ABC):
     endpoint: str = API_P2P_BINANCE
     page: int = 1
     rows: int = 1
+    exception_fiats: Tuple[str] = ('USD', 'EUR')
+
+    def _check_supports_fiat(self, fiat: str) -> bool:
+        from banks.banks_config import RUS_BANKS
+        if self.bank_name in RUS_BANKS and fiat in self.exception_fiats:
+            return False
+        return True
 
     def _create_body(self, asset: str, fiat: str, trade_type: str) -> dict:
         return {
@@ -274,28 +281,28 @@ class BinanceCard2Wallet2CryptoExchangesCalculating(
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
 
 
-class SimplBinanceInterExchangesCalculating(InterExchangesCalculating, ABC):
+class SimplBinanceInterExchangesCalculating(InterExchangesCalculating):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
     simpl: bool = True
     international: bool = False
 
 
 class SimplBinanceInternationalInterExchangesCalculating(
-    InterExchangesCalculating, ABC
+    InterExchangesCalculating
 ):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
     simpl: bool = True
     international: bool = True
 
 
-class ComplexBinanceInterExchangesCalculating(InterExchangesCalculating, ABC):
+class ComplexBinanceInterExchangesCalculating(InterExchangesCalculating):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
     simpl: bool = False
     international: bool = False
 
 
 class ComplexBinanceInternationalInterExchangesCalculating(
-    InterExchangesCalculating, ABC
+    InterExchangesCalculating
 ):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
     simpl: bool = False
