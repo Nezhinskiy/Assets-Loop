@@ -201,7 +201,14 @@ INTER_EXCHANGES_OBSOLETE_IN_MINUTES: int = 15  # The time in minutes since the l
 INTER_EXCHANGES_BEGIN_OBSOLETE_MINUTES: int = 2  # The time in minutes since the last update, after which the inter-exchange exchange becomes obsolete and is displayed on the page in gray.
 ALLOWED_PERCENTAGE: int = int(os.getenv('ALLOWED_PERCENTAGE', '0'))  # The maximum margin percentage above which data is considered invalid. (Due to an error in the crypto exchange data)
 MINIMUM_PERCENTAGE: int = -5
+
+# Update frequency
 UPDATE_RATE: tuple[int] = tuple(map(int, os.getenv('UPDATE_RATE', '0').replace(',', '').split()))  # Update frequency schedule.
+P2P_BINANCE_UPDATE_FREQUENCY: int = int(os.getenv('P2P_BINANCE_UPDATE_FREQUENCY', '0'))
+INTERNAL_BANKS_UPDATE_FREQUENCY: int = int(os.getenv('INTERNAL_BANKS_UPDATE_FREQUENCY', '0'))
+EXCHANGES_BINANCE_UPDATE_FREQUENCY: int = int(os.getenv('EXCHANGES_BINANCE_UPDATE_FREQUENCY', '0'))
+CARD_2_CRYPTO_BINANCE_UPDATE_FREQUENCY: int = int(os.getenv('CARD_2_CRYPTO_BINANCE_UPDATE_FREQUENCY', '0'))
+
 
 # Models
 FIAT_LENGTH: int = 3
@@ -210,6 +217,13 @@ TRADE_TYPE_LENGTH: int = 4
 NAME_LENGTH: int = 20
 CHANNEL_LENGTH: int = 30
 DIAGRAM_LENGTH: int = 100
+
+# Logger
+LOGLEVEL_PARSING_START: str = os.getenv('LOGLEVEL_PARSING_START', '')
+LOGLEVEL_PARSING_END: str = os.getenv('LOGLEVEL_PARSING_END', '')
+LOGLEVEL_CALCULATING_START: str = os.getenv('LOGLEVEL_CALCULATING_START', '')
+LOGLEVEL_CALCULATING_END: str = os.getenv('LOGLEVEL_CALCULATING_END', '')
+
 
 # Endpoints
 API_P2P_BINANCE: str = os.getenv('API_P2P_BINANCE', '')
@@ -262,49 +276,49 @@ CELERY_BEAT_SCHEDULE = {
         'options': {'queue': 'calculating'}
     },
     'get_simpl_binance_inter_exchanges_calculating': {
-        'task': 'core.tasks.get_simpl_binance_inter_exchanges_calculating',
+        'task': 'crypto_exchanges.tasks.get_simpl_binance_inter_exchanges_calculating',
         'schedule': timedelta(seconds=random.randint(20, 25)),
         'options': {'queue': 'calculating'},
         'args': (False,),
     },
     'get_simpl_binance_international_inter_exchanges_calculating': {
-        'task': 'core.tasks.get_simpl_binance_international_inter_exchanges_calculating',
+        'task': 'crypto_exchanges.tasks.get_simpl_binance_international_inter_exchanges_calculating',
         'schedule': timedelta(seconds=random.randint(20, 25)),
         'options': {'queue': 'calculating'},
         'args': (False,),
     },
     'get_complex_binance_inter_exchanges_calculating': {
-        'task': 'core.tasks.get_complex_binance_inter_exchanges_calculating',
+        'task': 'crypto_exchanges.tasks.get_complex_binance_inter_exchanges_calculating',
         'schedule': timedelta(seconds=random.randint(30, 35)),
         'options': {'queue': 'calculating'},
         'args': (False,),
     },
     'get_complex_binance_international_inter_exchanges_calculating': {
-        'task': 'core.tasks.get_complex_binance_international_inter_exchanges_calculating',
+        'task': 'crypto_exchanges.tasks.get_complex_binance_international_inter_exchanges_calculating',
         'schedule': timedelta(seconds=random.randint(30, 35)),
         'options': {'queue': 'calculating'},
         'args': (False,),
     },
     'get_simpl_full_update_binance_inter_exchanges_calculating': {
-        'task': 'core.tasks.get_simpl_binance_inter_exchanges_calculating',
+        'task': 'crypto_exchanges.tasks.get_simpl_binance_inter_exchanges_calculating',
         'schedule': timedelta(minutes=random.randint(15, 20)),
         'options': {'queue': 'calculating'},
         'args': (True,),
     },
     'get_simpl_full_update_binance_international_inter_exchanges_calculating': {
-        'task': 'core.tasks.get_simpl_binance_international_inter_exchanges_calculating',
+        'task': 'crypto_exchanges.tasks.get_simpl_binance_international_inter_exchanges_calculating',
         'schedule': timedelta(minutes=random.randint(15, 20)),
         'options': {'queue': 'calculating'},
         'args': (True,),
     },
     'get_complex_full_update_binance_inter_exchanges_calculating': {
-        'task': 'core.tasks.get_complex_binance_inter_exchanges_calculating',
+        'task': 'crypto_exchanges.tasks.get_complex_binance_inter_exchanges_calculating',
         'schedule': timedelta(minutes=random.randint(20, 25)),
         'options': {'queue': 'calculating'},
         'args': (True,),
     },
     'get_complex_full_update_binance_international_inter_exchanges_calculating': {
-        'task': 'core.tasks.get_complex_binance_international_inter_exchanges_calculating',
+        'task': 'crypto_exchanges.tasks.get_complex_binance_international_inter_exchanges_calculating',
         'schedule': timedelta(minutes=random.randint(20, 25)),
         'options': {'queue': 'calculating'},
         'args': (True,),
