@@ -16,6 +16,7 @@ class Tor:
     Attributes:
         TOR_HOSTNAME (str): Hostname docker container Tor.
     """
+    connection_time: float
     TOR_HOSTNAME: str = "tor_proxy"
 
     def __init__(self) -> None:
@@ -54,5 +55,6 @@ class Tor:
         with Controller.from_port(address=self.container_ip) as controller:
             controller.authenticate()
             controller.signal(Signal.NEWNYM)
-            sleep(controller.get_newnym_wait())
+            self.connection_time = controller.get_newnym_wait()
+            sleep(self.connection_time)
             self.session = self.__get_tor_session()
