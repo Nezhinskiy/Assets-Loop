@@ -8,6 +8,9 @@ from banks.banks_registration.tinkoff import TINKOFF_CURRENCIES
 from banks.banks_registration.wise import WISE_CURRENCIES
 from banks.banks_registration.yoomoney import YOOMONEY_CURRENCIES
 
+INTERNATIONAL_BANKS = ('Wise', 'Bank of Georgia', 'TBC', 'Credo')
+RUS_BANKS = ('Tinkoff', 'Sberbank', 'Raiffeisen', 'QIWI', 'Yoomoney')
+
 BANKS_CONFIG = {
     'Tinkoff': {
         'bank_parser': True,
@@ -107,5 +110,3 @@ BANKS_CONFIG = {
         'bank_invest_exchanges': ()
     }
 }
-
-INTERNATIONAL_BANKS = ('Wise', 'Bank of Georgia', 'TBC', 'Credo')
