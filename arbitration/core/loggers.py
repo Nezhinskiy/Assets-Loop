@@ -2,6 +2,10 @@ import logging
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, timezone
 
+from arbitration.settings import (LOGLEVEL_CALCULATING_END,
+                                  LOGLEVEL_CALCULATING_START,
+                                  LOGLEVEL_PARSING_END, LOGLEVEL_PARSING_START)
+
 
 class BaseLogger(ABC):
     """
@@ -15,11 +19,15 @@ class BaseLogger(ABC):
         count_updated_objects (int): The count of updated objects during the
         logger's operation.
         bank_name (str): The name of the bank related to the logger, if any.
+        loglevel_start (str): Log level for start.
+        loglevel_end (str): Log level for end.
     """
     duration: timedelta
     count_created_objects: int
     count_updated_objects: int
     bank_name = None
+    loglevel_start: str
+    loglevel_end: str
 
     def __init__(self) -> None:
         """
@@ -34,7 +42,7 @@ class BaseLogger(ABC):
         Logs a message with the start time of the logger.
         """
         message = f'Start {self.__class__.__name__} at {self.start_time}.'
-        self.logger.info(message)
+        getattr(self.logger, self.loglevel_start)(message)
 
     @abstractmethod
     def _get_count_created_objects(self) -> None:
@@ -75,7 +83,7 @@ class BaseLogger(ABC):
         message += f'{error}'
         self.logger.error(message)
 
-    def _logger_end(self) -> None:
+    def _logger_end(self, *args) -> None:
         """
         Logs the end of the logger.
         """
@@ -87,24 +95,49 @@ class BaseLogger(ABC):
         if self.count_created_objects + self.count_updated_objects > 0:
             message += f'Updated: {self.count_updated_objects}, '
             message += f'Created: {self.count_created_objects}. '
-            self.logger.error(message)
         else:
             message += (f'Has not been Created and updated: '
                         f'{self.count_updated_objects}. ')
-            self.logger.error(message)
+        for arg in args:
+            message += arg
+        getattr(self.logger, self.loglevel_end)(message)
 
 
 class ParsingLogger(BaseLogger, ABC):
     """
     Logger for parsing operations.
     """
-    pass
+    tor_parser: bool
+    connections_duration: float
+    loglevel_start: str = LOGLEVEL_PARSING_START
+    loglevel_end: str = LOGLEVEL_PARSING_END
+
+    def _logger_tor_connections_duration(self) -> str:
+        """
+        Adds a message to the logger about the duration of connection to the
+        Tor network.
+        """
+        message = ''
+        if self.tor_parser is True and self.connections_duration > 0:
+            message += (f'Duration of connections through Tor: '
+                        f'{self.connections_duration}. ')
+        return message
+
+    def _logger_end(self, *args) -> None:
+        """
+        Logs the end of the parsing logger.
+        """
+        message = self._logger_tor_connections_duration()
+        super()._logger_end(message)
 
 
 class CalculatingLogger(BaseLogger, ABC):
     """
     Logger for calculating operations.
     """
+    loglevel_start: str = LOGLEVEL_CALCULATING_START
+    loglevel_end: str = LOGLEVEL_CALCULATING_END
+
     def _logger_queue_overflowing(self):
         """
         Logs a message for a skipped task due to queue overflow.

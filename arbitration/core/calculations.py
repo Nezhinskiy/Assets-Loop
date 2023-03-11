@@ -12,7 +12,7 @@ from arbitration.settings import (ALLOWED_PERCENTAGE, BASE_ASSET,
                                   INTER_EXCHANGES_BEGIN_OBSOLETE_MINUTES,
                                   MINIMUM_PERCENTAGE)
 from banks.models import Banks, BanksExchangeRates
-from core.loggers import CalculatingLogger, ParsingLogger
+from core.loggers import CalculatingLogger
 from crypto_exchanges.models import (CryptoExchanges, CryptoExchangesRates,
                                      CryptoExchangesRatesUpdates,
                                      InterExchanges, InterExchangesUpdates,
@@ -767,12 +767,14 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
             self.new_update.save()
             self._logger_end()
         except Exception as error:
+            self.new_update.ended = True
+            self.new_update.save()
             self._logger_error(error)
             raise Exception
 
 
-class Card2Wallet2CryptoExchangesCalculating(BaseCalculating, ParsingLogger,
-                                             ABC):
+class Card2Wallet2CryptoExchangesCalculating(BaseCalculating,
+                                             CalculatingLogger, ABC):
     model = CryptoExchangesRates
     model_update = CryptoExchangesRatesUpdates
     payment_channel = 'Card2Wallet2CryptoExchange'
