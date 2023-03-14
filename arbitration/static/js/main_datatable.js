@@ -194,7 +194,7 @@ $(document).ready(function () {
             dataSrc: 'data',
         },
         "rowCallback": function( row, data, index ) {
-            $('body>.tooltip').remove();
+            $('body>.tooltip_table').remove();
             var updatedTime = updateTime(data.update.updated);
             if (updatedTime > 120) {
                 $('td', row).addClass('obsolete');
@@ -222,7 +222,7 @@ $(document).ready(function () {
             {
                 data:null,
                 render: function (data, type, row){
-                    return '<span class="d-inline-block" tabindex="0" data-placement="top" data-toggle="tooltip" title="Нажмите для подробной информации">' +
+                    return '<span class="d-inline-block" tabindex="0" data-placement="top" data-toggle="tooltip_table" title="Нажмите для подробной информации">' +
                              '<p type="button" data-toggle="modal" data-diagram="'+row.diagram+'" data-content="'+modalWrite(row)+'" data-target="#myModal">' +
                                '<span style="color:'+colorSelector(row.marginality_percentage)+'">'+row.marginality_percentage+'% </span>' +
                                '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16">' +
@@ -260,4 +260,9 @@ $("#myModal").on('show.bs.modal', function (e) {
     var content = triggerLink.data("content");
     $("#modalTitle").html('Инструкция к связке:<p><h5><b>'+diagram+'</h5></p>');
     $(this).find(".modal-body").html("<h5>"+content+"</h5>");
+});
+
+$( document ).ajaxComplete(function( event, request, settings ) {
+    $('[data-toggle="tooltip"],[data-toggle="tooltip_table"]').not( '[data-original-title]'
+    ).tooltip();
 });

@@ -28,6 +28,12 @@ BANK_EXCHANGE_CHOICES = (
     ('banks', 'Только через банковский обмен'),
     ('Tinkoff invest', 'Только через валютные биржи')
 )
+INTRA_CRYPTO_EXCHANGE_CHOICES = (
+    (0, 'Да'),
+    (1, 'Нет'),
+    ('one', 'Только c одной конвертацией'),
+    ('two', 'Только с двумя конвертациями')
+)
 
 
 class ExchangesFilter(django_filters.FilterSet):
@@ -100,11 +106,19 @@ class ExchangesFilter(django_filters.FilterSet):
     bank_exchange = django_filters.ChoiceFilter(
         choices=BANK_EXCHANGE_CHOICES, method='bank_exchange_filter',
         label='Конвертация внутри банка', empty_label='', help_text=(
-            '•Да - только связки с внутрибанковской конвертацией. '
-            '•Нет - только связки без внутрибанковской конвертации. '
+            '•Да - только связки с внутрибанковскими конвертациями. '
+            '•Нет - только связки без внутрибанковских конвертаций. '
             '*Внутрибанковская конвертация доступна не у всех банков. '
             '*Через валютные биржи можно обменивать только по рабочим дням '
             'с 7:00 до 19:00 по Мск, в остальное время этот фильтр недоступен'
+        )
+    )
+    intra_crypto_exchange = django_filters.ChoiceFilter(
+        choices=INTRA_CRYPTO_EXCHANGE_CHOICES,
+        method='intra_crypto_exchange_filter',
+        label='Конвертация внутри криптобиржи', empty_label='', help_text=(
+            '•Да - только связки с внутрибиржевыми конвертациями. '
+            '•Нет - только связки без внутрибиржевых конвертаций.'
         )
     )
 
@@ -150,10 +164,26 @@ class ExchangesFilter(django_filters.FilterSet):
             bank_exchange__currency_market__isnull=False
         )
 
+    @staticmethod
+    def intra_crypto_exchange_filter(queryset, _, values):
+        if values in ('1', '0'):
+            return queryset.filter(
+                interim_crypto_exchange__isnull=bool(int(values))
+            )
+        if values == 'one':
+            return queryset.filter(
+                interim_crypto_exchange__isnull=False,
+                second_interim_crypto_exchange__isnull=True
+            )
+        return queryset.filter(
+            interim_crypto_exchange__isnull=False,
+            second_interim_crypto_exchange__isnull=False
+        )
+
     class Meta:
         model = InterExchanges
-        fields = [
+        fields = (
             'gte', 'lte', 'input_bank', 'output_bank', 'fiats',
-            'bank_exchange', 'crypto_exchange', 'assets',
-            'input_payment_channel', 'output_payment_channel'
-        ]
+            'crypto_exchange', 'assets', 'input_payment_channel',
+            'output_payment_channel', 'bank_exchange', 'intra_crypto_exchange'
+        )
