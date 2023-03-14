@@ -2,8 +2,9 @@ from django.urls import path
 
 from arbitration.settings import (INFO_URL, REGISTRATION_URL, START_URL,
                                   STOP_URL)
-from core.views import (InfoLoopList, InterExchangesAPIView,
-                        InterExchangesListNew, registration, start, stop)
+from core.api_views import InterExchangesAPIView
+from core.views import (InfoLoopList, InterExchangesListNew, registration,
+                        start, stop)
 
 app_name = 'core'
 
