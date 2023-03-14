@@ -14,7 +14,7 @@
     <div class="row">
       <div class="col-sm-6">
         <p>
-          Число итераций: {{ loops_count }}
+          Число итераций: {{ object_list.count }}
         </p>
       </div>
       <div class="col-sm-6">
@@ -37,7 +37,7 @@
         <th scope="col">Duration</th>
       </tr>
     </thead>
-    {% for info_loop in info_loops %}
+    {% for info_loop in object_list %}
       <tr>
         <th scope="row">{{ forloop.counter }}</th>
         <td>{% if info_loop.value %}Started{% else %}Stopped{% endif %}</td>

@@ -12,6 +12,8 @@ class RoundingDecimalField(serializers.DecimalField):
     """
     Custom redefinition of the display of decimal numbers.
     """
+    MIN_NON_EMPTY_DECIMAL: int = 5
+
     def __init__(self, max_digits, decimal_places, percent=False, **kwargs):
         super().__init__(max_digits, decimal_places, **kwargs)
         self.percent = percent
@@ -23,22 +25,19 @@ class RoundingDecimalField(serializers.DecimalField):
         """
         Quantize the decimal value to the configured precision.
         """
+        if self.percent:
+            return round(value, self.decimal_places)
         integers, real_decimal_places = map(
             len, str(value).split('.'))
-        if self.percent is False:
-            max_decimal_places = self.max_digits - integers
-            if real_decimal_places > max_decimal_places:
-                self.decimal_places = max_decimal_places
-            else:
-                self.decimal_places = real_decimal_places
-            new_values = round(value, self.decimal_places)
-            real_decimal_places = len(str(new_values).split('.')[1])
-            self.decimal_places = real_decimal_places
-
-        if integers > self.max_digits:
+        max_decimal_places = self.max_digits - integers
+        if real_decimal_places > max_decimal_places:
+            self.decimal_places = max_decimal_places
+        if integers >= self.max_digits:
             self.decimal_places = 1
-            self.max_digits = integers + self.decimal_places
-        return round(value, self.decimal_places)
+        result = round(value, self.decimal_places)
+        if result == int(result):
+            return round(value, 1)
+        return result
 
 
 class CryptoExchangesSerializer(serializers.ModelSerializer):
@@ -69,7 +68,7 @@ class IntraCryptoExchangesRatesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = IntraCryptoExchangesRates
-        exclude = ['id', 'update', 'crypto_exchange']
+        exclude = ('id', 'update', 'crypto_exchange')
 
 
 class CryptoExchangesRatesSerializer(serializers.ModelSerializer):
@@ -83,9 +82,9 @@ class CryptoExchangesRatesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CryptoExchangesRates
-        exclude = [
+        exclude = (
             'id', 'update', 'trade_type', 'crypto_exchange', 'bank'
-        ]
+        )
 
 
 class CurrencyMarketsSerializer(serializers.ModelSerializer):
@@ -109,7 +108,7 @@ class BanksExchangeRatesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BanksExchangeRates
-        exclude = ['id', 'update']
+        exclude = ('id', 'update')
 
 
 class UpdateSerializer(serializers.ModelSerializer):
