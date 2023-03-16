@@ -4,6 +4,7 @@ from arbitration.settings import API_WISE
 from core.parsers import BankParser
 from crypto_exchanges.crypto_exchanges_registration.binance import (
     BinanceP2PParser)
+from crypto_exchanges.crypto_exchanges_registration.bybit import BybitP2PParser
 
 BANK_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
@@ -45,4 +46,8 @@ class WiseParser(BankParser):
 
 
 class WiseBinanceP2PParser(BinanceP2PParser):
+    bank_name: str = BANK_NAME
+
+
+class WiseBybitP2PParser(BybitP2PParser):
     bank_name: str = BANK_NAME
