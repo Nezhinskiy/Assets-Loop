@@ -18,6 +18,11 @@ class Banks(models.Model):
         null=True,
         blank=True
     )
+    bybit_name = models.CharField(
+        max_length=NAME_LENGTH,
+        null=True,
+        blank=True
+    )
 
 
 class CurrencyMarkets(models.Model):

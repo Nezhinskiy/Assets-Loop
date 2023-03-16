@@ -246,7 +246,7 @@ $(document).ready(function () {
                 render: function (data, type, row){
                     return `<p class="fw-light fs-15">< ${updateTime(row.update.updated)} cек.</p>`
                 },
-                orderable: true
+                orderable: false
             },
         ]
     });

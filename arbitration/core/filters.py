@@ -2,17 +2,17 @@ import django_filters
 from django_select2.forms import Select2MultipleWidget
 
 from banks.banks_config import BANKS_CONFIG
-from crypto_exchanges.crypto_exchanges_config import CRYPTO_EXCHANGES_CONFIG
+from crypto_exchanges.crypto_exchanges_config import (ALL_ASSETS, ALL_FIATS,
+                                                      CRYPTO_EXCHANGES_CONFIG)
 from crypto_exchanges.models import InterExchanges
 
 BANK_CHOICES = tuple((bank, bank) for bank in BANKS_CONFIG.keys())
 CRYPTO_EXCHANGE_CHOICES = tuple(
     (crypto_exchange, crypto_exchange)
-    for crypto_exchange in list(CRYPTO_EXCHANGES_CONFIG.keys())[1:]
+    for crypto_exchange in CRYPTO_EXCHANGES_CONFIG.keys()
 )
 CRYPTO_EXCHANGE_ASSET_CHOICES = tuple(
-    (asset, asset)
-    for asset in ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'SHIB', 'RUB', 'ADA')
+    (asset, asset) for asset in ALL_ASSETS
 )
 PAYMENT_CHANNEL_CHOICES = (
     ('P2P', 'P2P'),
@@ -20,7 +20,7 @@ PAYMENT_CHANNEL_CHOICES = (
     ('Card2Wallet2CryptoExchange', 'Card2Wallet2CryptoExchange')
 )
 ALL_FIAT_CHOICES = tuple(
-    (fiat, fiat) for fiat in CRYPTO_EXCHANGES_CONFIG['all_fiats']
+    (fiat, fiat) for fiat in ALL_FIATS
 )
 BANK_EXCHANGE_CHOICES = (
     (0, 'Да'),

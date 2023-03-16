@@ -10,7 +10,11 @@ def banks():
         if not Banks.objects.filter(name=bank_name).exists():
             bank_config = BANKS_CONFIG[bank_name]
             binance_name = bank_config['binance_name']
-            Banks.objects.create(name=bank_name, binance_name=binance_name)
+            bybit_name = bank_config['bybit_name']
+            Banks.objects.create(
+                name=bank_name, binance_name=binance_name,
+                bybit_name=bybit_name
+            )
 
 
 def currency_markets():
@@ -22,7 +26,7 @@ def currency_markets():
 def crypto_exchanges():
     from crypto_exchanges.crypto_exchanges_config import (
         CRYPTO_EXCHANGES_CONFIG)
-    for crypto_exchange_name in list(CRYPTO_EXCHANGES_CONFIG.keys())[1:]:
+    for crypto_exchange_name in CRYPTO_EXCHANGES_CONFIG.keys():
         if not CryptoExchanges.objects.filter(
                 name=crypto_exchange_name
         ).exists():
