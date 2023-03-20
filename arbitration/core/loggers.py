@@ -80,7 +80,7 @@ class BaseLogger(ABC):
         else:
             message += (f'Has not been created and updated: '
                         f'{self.count_updated_objects}. ')
-        message += f'{error}'
+        message += f'Error: {error}'
         self.logger.error(message)
 
     def _logger_end(self, *args) -> None:
@@ -108,11 +108,15 @@ class ParsingLogger(BaseLogger, ABC):
     Logger for parsing operations.
     """
     tor_parser: bool
-    connections_duration: float
     loglevel_start: str = LOGLEVEL_PARSING_START
     loglevel_end: str = LOGLEVEL_PARSING_END
 
-    def _logger_tor_connections_duration(self) -> str:
+    def __init__(self) -> None:
+        super().__init__()
+        self.connections_duration = 0
+        self.renew_connections_duration = 0
+
+    def __logger_tor_connections_duration(self) -> str:
         """
         Adds a message to the logger about the duration of connection to the
         Tor network.
@@ -123,12 +127,25 @@ class ParsingLogger(BaseLogger, ABC):
                         f'{self.connections_duration}. ')
         return message
 
+    def __logger_tor_renew_connections_duration(self) -> str:
+        """
+        Adds a message to the logger about the duration of renew connection to
+        the Tor network.
+        """
+        message = ''
+        if self.tor_parser is True and self.connections_duration > 0:
+            message += (f'Duration of renew connections through Tor: '
+                        f'{self.renew_connections_duration}. ')
+        return message
+
     def _logger_end(self, *args) -> None:
         """
         Logs the end of the parsing logger.
         """
-        message = self._logger_tor_connections_duration()
-        super()._logger_end(message)
+        super()._logger_end(
+            self.__logger_tor_connections_duration(),
+            self.__logger_tor_renew_connections_duration()
+        )
 
 
 class CalculatingLogger(BaseLogger, ABC):

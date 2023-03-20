@@ -1,5 +1,6 @@
 import re
 import subprocess
+from datetime import datetime, timezone
 from time import sleep
 
 import requests
@@ -17,6 +18,7 @@ class Tor:
         TOR_HOSTNAME (str): Hostname docker container Tor.
     """
     connection_time: float
+    renew_connection_time: float
     TOR_HOSTNAME: str = "tor_proxy"
 
     def __init__(self) -> None:
@@ -32,10 +34,13 @@ class Tor:
         Set up a proxy for http and https on the running Tor host: port 9050
         and initialize the request session.
         """
+        start_time = datetime.now(timezone.utc)
         with requests.session() as session:
             session.proxies = {'http': f'socks5h://{self.TOR_HOSTNAME}:9050',
                                'https': f'socks5h://{self.TOR_HOSTNAME}:9050'}
             session.headers = {'User-Agent': UserAgent().chrome}
+            self.connection_time = (datetime.now(timezone.utc) - start_time
+                                    ).seconds
             return session
 
     def __get_tor_ip(self) -> str:
@@ -55,6 +60,6 @@ class Tor:
         with Controller.from_port(address=self.container_ip) as controller:
             controller.authenticate()
             controller.signal(Signal.NEWNYM)
-            self.connection_time = controller.get_newnym_wait()
-            sleep(self.connection_time)
+            self.renew_connection_time = controller.get_newnym_wait()
+            sleep(self.renew_connection_time)
             self.session = self.__get_tor_session()
