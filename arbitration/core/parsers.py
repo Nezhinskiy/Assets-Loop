@@ -29,25 +29,113 @@ from crypto_exchanges.models import (CryptoExchanges, CryptoExchangesRates,
 
 class BaseParser(ParsingLogger, ABC):
     """
-    Base class for all parsers. Inherits from ParsingLogger and ABC classes.
+    Class for parsers that use the Tor network. Inherits from BaseParser and
+    ABC classes.
 
     Attributes:
         endpoint (str):  API endpoint URL
         updated_fields (List[str]):  List of fields to update
         bank_name (str): Placeholder for the bank name
+        connection (Tor | Proxy | Direct): Tor or Proxy or Direct object for
+            making connection.
+        count_try (int): Current count of tries.
+        LIMIT_TRY (int): Maximum number of tries to make a request.
         CURRENCY_PAIR: Representing the number of currencies to combine.
     """
     endpoint: str
     updated_fields: List[str]
-    bank_name = None
+    bank_name: str = None
+    connection_type: str
+    request_method: str = None
+    need_cookies: bool
+    cookies_names: Tuple[str] = None
+    cookie_spoiled: bool = True
+    user_agent_spoiled: bool = True
+    headers: Dict[str, Any] = None
+    custom_user_agent: Tuple[str] = [None]
+    user_agent_browser: str = 'chrome'
+    waiting_time: int = 0
+    fake_useragent: bool = True
+    content_type: str = 'application/json'
+    request_timeout: int = None
+    tart_time_send_request: datetime
+    LIMIT_TRY: int = 3
     CURRENCY_PAIR: int = 2
 
     def __init__(self) -> None:
-        from banks.banks_config import BANKS_CONFIG
         super().__init__()
+        from banks.banks_config import BANKS_CONFIG
         self.records_to_update = []
         self.records_to_create = []
+        self.first_request = True
         self.banks_config = BANKS_CONFIG
+        self.connection = self.__choose_connection_type()
+        self.cookie = Cookie(
+            self.endpoint, self.connection.session, self.cookies_names
+        ) if self.need_cookies else None
+        self.user_agent = UserAgent()
+        self.count_try = 0
+        self.request_value = {}
+
+    def __choose_connection_type(self) -> Union[Tor, Proxy, Direct]:
+        self.connection_type.capitalize()
+        if self.connection_type == 'Tor':
+            return Tor()
+        if self.connection_type == 'Proxy':
+            return Proxy()
+        if self.connection_type == 'Direct':
+            return Direct()
+        raise ValueError(f'Invalid connection type: {self.connection_type}')
+
+    def __choose_request_method(self, body=None, params=None) -> str:
+        if self.request_method is not None:
+            return self.request_method
+        if body is None:
+            return 'get'
+        if body is not None and params is None:
+            return 'post'
+        raise ValueError(
+            f'Invalid request method: body: {body}, params{params}')
+
+    def __create_request_value(self, body: dict, params: dict) -> None:
+        self.request_value = {
+            'timeout': self.request_timeout or self.connection.request_timeout
+        }
+        if self.request_method == 'get' or body is None:
+            self.request_value['params'] = params
+        else:
+            self.request_value['json'] = body
+
+    def __create_cookies(self) -> None:
+        Cookie(
+            self.endpoint, self.connection.session, self.cookies_names
+        ).add_cookies_to_headers()
+        self.cookie_spoiled = False
+
+    def __start_request_handler(self, body=None, params=None) -> None:
+        if self.first_request and self.connection_type.upper() != 'Direct':
+            self.count_try = -2
+            self.first_request = False
+        else:
+            self.count_try = 0
+        self._create_headers(body)
+        self.__create_request_value(body, params)
+        self.start_time_send_request = datetime.now(timezone.utc)
+        if self.need_cookies and self.cookie_spoiled:
+            self.__create_cookies()
+
+    def __renew_connection(self, body: dict | None) -> None:
+        start_time_renew_connection = datetime.now(timezone.utc)
+        self.connection.renew_connection()
+        renew_connections_duration = (
+            datetime.now(timezone.utc) - start_time_renew_connection
+        ).seconds
+        self.renew_connections_duration += round(
+            renew_connections_duration, 2)
+        self._create_headers(body)
+        self.cookie_spoiled = True
+        self.user_agent_spoiled = True
+        self.count_try += 1
 
     def _get_count_created_objects(self) -> None:
         """
@@ -61,6 +149,47 @@ class BaseParser(ParsingLogger, ABC):
         """
         self.count_updated_objects = len(self.records_to_update)
 
+    def _send_request(self, body=None, params=None) -> dict | bool:
+        """
+        Sends request with any methods to the specified API endpoint and
+        returns the response or False.
+        """
+        self.__start_request_handler(body, params)
+        while self.count_try < self.LIMIT_TRY:
+            try:
+                response = getattr(
+                    self.connection.session,
+                    self.__choose_request_method(body=body, params=params)
+                )(self.endpoint, **self.request_value)
+            except Exception as error:
+                self._unsuccessful_response_handler(error, body)
+                continue
+            finally:
+                self._finally_response_handler()
+            if response.status_code != HTTPStatus.OK:
+                mes = (
+                    f'url: {self.endpoint}, body: {body}, params: {params}, heders: {self.connection.session.headers}')
+                self.logger.error(mes)
+                self._negative_response_status_handler(response, body)
+                continue
+            self._successful_response_handler()
+            return response.json()
+        return False
+
+    def _create_headers(self, body=None) -> None:
+        """
+        Method that create headers for request.
+        """
+        self.headers = {'Content-Type': self.content_type}
+        if self.fake_useragent and self.user_agent_spoiled:
+            user_agent = random.choice(
+                self.custom_user_agent
+            ) or self.user_agent.__getattr__(self.user_agent_browser)
+            self.headers['User-Agent'] = user_agent
+        if body is not None and self.count_try <= 0:
+            self.headers['Content-Length'] = str(len(json.dumps(body)))
+        self.connection.session.headers.update(self.headers)
+
     def _successful_response_handler(self) -> None:
         """
         Logs a message when a response is successfully handled.
@@ -69,22 +198,35 @@ class BaseParser(ParsingLogger, ABC):
                    f'{self.__class__.__name__}')
         self.logger.info(message)
 
-    def _unsuccessful_response_handler(self, error: Exception) -> None:
+    def _unsuccessful_response_handler(self, error: Exception,
+                                       body: dict | None) -> None:
         """
         Logs an error message when a response cannot be handled.
         """
         message = (f'{error} with response, class: '
-                   f'{self.__class__.__name__}.')
+                   f'{self.__class__.__name__}, count try: {self.count_try}')
         self.logger.error(message)
+        self.__renew_connection(body)
 
-    def _negative_response_status_handler(self, response: requests.Response
-                                          ) -> None:
+    def _negative_response_status_handler(self, response: requests.Response,
+                                          body: dict | None) -> None:
         """
         Logs an error message when the response status code is not OK.
         """
-        message = (f'{response.status_code} with response, class: '
-                   f'{self.__class__.__name__}.')
+        message = (f'{response.status_code} status code with response, class: '
+                   f'{self.__class__.__name__}, count try: {self.count_try}')
         self.logger.error(message)
+        self.__renew_connection(body)
+
+    def _finally_response_handler(self) -> None:
+        """
+        Records the time spent connecting to API.
+        """
+        connections_duration = (
+            datetime.now(timezone.utc) - self.start_time_send_request
+        ).seconds
+        self.connections_duration += round(connections_duration, 2)
+        time.sleep(self.waiting_time)
 
     @abstractmethod
     def _get_all_api_answers(self) -> None:
@@ -120,185 +262,9 @@ class BaseParser(ParsingLogger, ABC):
             raise Exception
 
 
-class ParsingViaTorOrProxy(BaseParser, ABC):
+class CryptoParser(BaseParser, ABC):
     """
-    Class for parsers that use the Tor network. Inherits from BaseParser and
-    ABC classes.
-
-    Attributes:
-        LIMIT_TRY (int): Maximum number of tries to make a request.
-        connection (Tor | Proxy | Direct): Tor or Proxy or Direct object for
-            making connection.
-        count_try (int): Current count of tries.
-    """
-    connection_type: str
-    need_cookies: bool
-    cookies_names: Tuple[str] = None
-    cookie_spoiled: bool = True
-    first_request: bool = True
-    headers: Dict[str, Any] = None
-    custom_user_agent: Tuple[str] = [None]
-    user_agent_browser: str = 'chrome'
-    waiting_time: int = 0
-    LIMIT_TRY: int = 3
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.connection = self.__choose_connection_type()
-        self.cookie = Cookie(
-            self.endpoint, self.connection.session, self.cookies_names
-        ) if self.need_cookies else None
-        self.user_agent = UserAgent()
-        self.count_try = 0
-
-    def __choose_connection_type(self) -> Union[Tor, Proxy, Direct]:
-        self.connection_type.capitalize()
-        if self.connection_type == 'Tor':
-            return Tor()
-        if self.connection_type == 'Proxy':
-            return Proxy()
-        if self.connection_type == 'Direct':
-            return Direct()
-        raise ValueError("Invalid connection type: " + self.connection_type)
-
-    def __create_cookies(self) -> None:
-        Cookie(
-            self.endpoint, self.connection.session, self.cookies_names
-        ).add_cookies_to_headers()
-        self.cookie_spoiled = False
-
-    def __start_request_handler(self, body=None) -> None:
-        if self.first_request:
-            self.count_try = -2
-            self.first_request = False
-        else:
-            self.count_try = 0
-        if body is None:
-            self._create_get_headers()
-        else:
-            self._create_post_headers(body)
-        if self.need_cookies and self.cookie_spoiled:
-            self.__create_cookies()
-
-    def __renew_connection(self) -> None:
-        self.connection.renew_connection()
-        self.renew_connections_duration += round(
-            self.connection.renew_connection_time, 2)
-        self.cookie_spoiled = True
-        self.count_try += 1
-
-    def _get_api_answer_post(self, body: dict) -> dict | bool:
-        """
-        Sends a POST request to the specified API endpoint and returns
-        the response.
-        """
-        self.__start_request_handler(body)
-        while self.count_try < self.LIMIT_TRY:
-            try:
-                response = self.connection.session.post(
-                    self.endpoint, json=body,
-                    timeout=self.connection.request_timeout
-                )
-            except Exception as error:
-                self._unsuccessful_response_handler(error)
-                continue
-            finally:
-                self._finally_response_handler()
-            if response.status_code != HTTPStatus.OK:
-                self._negative_response_status_handler(response)
-                continue
-            self._successful_response_handler()
-            return response.json()
-        return False
-
-    def _get_api_answer_get(self, params=None) -> dict | bool:
-        """
-        Sends a GET request to the specified API endpoint and returns
-        the response.
-        """
-        self.__start_request_handler()
-        while self.count_try < self.LIMIT_TRY:
-            try:
-                response = self.connection.session.get(
-                    self.endpoint, params=params,
-                    timeout=self.connection.request_timeout
-                )
-            except Exception as error:
-                self._unsuccessful_response_handler(error)
-                continue
-            finally:
-                self._finally_response_handler()
-            if response.status_code != HTTPStatus.OK:
-                self._negative_response_status_handler(response)
-                continue
-            self._successful_response_handler()
-            return response.json()
-        return False
-
-    def _create_post_headers(self, body: dict) -> None:
-        """
-        Method that create headers for post request.
-        """
-        user_agent = random.choice(
-            self.custom_user_agent
-        ) or self.user_agent.__getattr__(self.user_agent_browser)
-        self.headers = {
-            'Content-Type': 'application/json',
-            'Content-Length': str(len(json.dumps(body))),
-            'User-Agent': user_agent,
-        }
-        self.connection.session.headers.update(self.headers)
-
-    def _create_get_headers(self) -> None:
-        """
-        Method that create headers for get request.
-        """
-        user_agent = random.choice(
-            self.custom_user_agent
-        ) or self.user_agent.__getattr__(self.user_agent_browser)
-        self.headers = {
-            'Content-Type': 'application/json',
-            'User-Agent': user_agent,
-        }
-        self.connection.session.headers.update(self.headers)
-
-    def _successful_response_handler(self) -> None:
-        """
-        Logs a message when a response is successfully handled.
-        """
-        self.connection.connection_time = 0
-        super()._successful_response_handler()
-
-    def _unsuccessful_response_handler(self, error: Exception) -> None:
-        """
-        Logs an error message when a response cannot be handled.
-        """
-        message = (f'{error} with response, class: '
-                   f'{self.__class__.__name__}, count try: {self.count_try}')
-        self.logger.error(message)
-        self.__renew_connection()
-
-    def _negative_response_status_handler(self, response: requests.Response
-                                          ) -> None:
-        """
-        Logs an error message when the response status code is not OK.
-        """
-        message = (f'{response.status_code} with response, class: '
-                   f'{self.__class__.__name__}, count try: {self.count_try}')
-        self.logger.error(message)
-        self.__renew_connection()
-
-    def _finally_response_handler(self) -> None:
-        """
-        Records the time spent connecting to the Tor network.
-        """
-        self.connections_duration += round(self.connection.connection_time, 2)
-        time.sleep(self.waiting_time)
-
-
-class CryptoParser(ParsingViaTorOrProxy, ABC):
-    """
-    This class is a subclass of ParsingViaTorOrProxy and ABC. It parses crypto
+    This class is a subclass of BaseParser and ABC. It parses crypto
     exchange data from API, creates the headers and gets the required assets.
 
     Attributes:
@@ -318,7 +284,7 @@ class CryptoParser(ParsingViaTorOrProxy, ABC):
             ALL_FIATS, CRYPTO_EXCHANGES_CONFIG, TRADE_TYPES)
         self.crypto_exchanges_configs = CRYPTO_EXCHANGES_CONFIG.get(
             self.crypto_exchange_name)
-        self.assets = set(self.crypto_exchanges_configs.get('assets'))
+        self.assets = self.crypto_exchanges_configs.get('assets')
         self.all_fiats = set(ALL_FIATS)
         self.crypto_exchange = CryptoExchanges.objects.get(
             name=self.crypto_exchange_name
@@ -326,9 +292,9 @@ class CryptoParser(ParsingViaTorOrProxy, ABC):
         self.trade_types = TRADE_TYPES
 
 
-class BankParser(ParsingViaTorOrProxy, ABC):
+class BankParser(BaseParser, ABC):
     """
-    This class is a subclass of ParsingViaTorOrProxy and ABC. It parses bank exchange
+    This class is a subclass of BaseParser and ABC. It parses bank exchange
     rates data from API, calculates the buy and sell data or the price data,
     and updates the database.
 
@@ -349,6 +315,7 @@ class BankParser(ParsingViaTorOrProxy, ABC):
     model = BanksExchangeRates
     model_update = BanksExchangeRatesUpdates
     updated_fields: List[str] = ['price', 'update']
+    request_method: str = 'get'
     bank_name: str
     buy_and_sell: bool
     all_values: bool = False
@@ -410,12 +377,12 @@ class BankParser(ParsingViaTorOrProxy, ABC):
                                       ) -> tuple[dict, dict] | None:
         """
         Calculates the buy and sell data for a given set of
-        parameters. It gets the API response using the _get_api_answer_get
+        parameters. It gets the API response using the _send_request
         method, extracts the buy and sell data using the
         _extract_buy_and_sell_from_json method, and returns a tuple of
         dictionaries containing the calculated buy and sell data.
         """
-        response_json = self._get_api_answer_get(params)
+        response_json = self._send_request(params=params)
         if response_json is False:
             return None
         buy_and_sell = self._extract_buy_and_sell_from_json(response_json)
@@ -435,11 +402,11 @@ class BankParser(ParsingViaTorOrProxy, ABC):
                                ) -> list[dict[str, Any]] | None:
         """
         Calculates the price data for a given set of parameters.
-        It gets the API response using the _get_api_answer_get method, extracts
+        It gets the API response using the _send_request method, extracts
         the price data using the _extract_price_from_json method, and returns a
         list of dictionaries containing the calculated price data.
         """
-        response_json = self._get_api_answer_get(params)
+        response_json = self._send_request(params=params)
         if response_json is False:
             return None
         price = self._extract_price_from_json(response_json)
@@ -453,19 +420,19 @@ class BankParser(ParsingViaTorOrProxy, ABC):
     def _calculates_all_values_data(self) -> List[dict[str, Any]] | None:
         """
         Calculates all values data. It gets the API response using the
-        _get_api_answer_get method, extracts all values data using the
+        _send_request method, extracts all values data using the
         _extract_all_values_from_json method, and returns a list of
         dictionaries containing the calculated data, or None if no data is
         available.
         """
-        response_json = self._get_api_answer_get()
+        response_json = self._send_request()
         if response_json is False:
             return None
         return self._extract_all_values_from_json(response_json)
 
     def _choice_buy_and_sell_or_price(
             self, params=None
-    ) -> tuple[dict, dict] | list[dict] | None:
+    ) -> Union[tuple[dict, dict], list[dict], None]:
         """
         Chooses whether to calculate buy and sell data, price data, or all
         values data, depending on the buy_and_sell and all_values attributes.
@@ -515,10 +482,10 @@ class BankParser(ParsingViaTorOrProxy, ABC):
                 self._add_to_bulk_update_or_create(value_dict, price)
 
 
-class BankInvestParser(ParsingViaTorOrProxy, ABC):
+class BankInvestParser(BaseParser, ABC):
     """
     This class parses exchange rates data from Bank Invest website and stores
-    it in the database. It inherits from `ParsingViaTorOrProxy` and `ABC`.
+    it in the database. It inherits from `BaseParser` and `ABC`.
 
     Attributes:
         model: The Django model to use for creating or updating exchange rates
@@ -534,6 +501,7 @@ class BankInvestParser(ParsingViaTorOrProxy, ABC):
     model = BanksExchangeRates
     model_update = BanksExchangeRatesUpdates
     updated_fields: List[str] = ['price', 'update']
+    request_method: str = 'get'
     currency_markets_name: str
     link_ends: str
 
@@ -545,13 +513,13 @@ class BankInvestParser(ParsingViaTorOrProxy, ABC):
             currency_market=self.currency_market
         )
 
-    def _get_api_answer(self, link_end: str) -> dict:
+    def _get_api_answer(self, link_end: str) -> dict | None:
         """
         Makes a GET request to the Bank Invest API and returns the response
         data as a dictionary.
         """
         self.endpoint = self.endpoint + link_end
-        return self._get_api_answer_get()
+        return self._send_request()
 
     @staticmethod
     @abstractmethod
@@ -646,6 +614,7 @@ class P2PParser(CryptoParser, ABC):
     model = CryptoExchangesRates
     model_update = CryptoExchangesRatesUpdates
     updated_fields: List[str] = ['price', 'update']
+    request_method: str = 'post'
     bank_name: str
     page: int
     rows: int
@@ -700,7 +669,7 @@ class P2PParser(CryptoParser, ABC):
         Fetches the API response for a given asset, trade type, and fiat.
         """
         body = self._create_body(asset, trade_type, fiat)
-        return self._get_api_answer_post(body)
+        return self._send_request(body=body)
 
     def _add_to_bulk_update_or_create(self, asset: str, trade_type: str,
                                       fiat: str, price: float) -> None:
@@ -755,7 +724,7 @@ class P2PParser(CryptoParser, ABC):
                 )
 
 
-class CryptoExchangesParser(BaseParser, ABC):
+class CryptoExchangesParser(CryptoParser, ABC):
     """
     A base parser class for extracting intra-exchange cryptocurrency rates data
     from different cryptocurrency exchanges.
@@ -766,32 +735,22 @@ class CryptoExchangesParser(BaseParser, ABC):
             the exchange rates.
         updated_fields (list): A list of fields to be updated in the model
             when new exchange rates are fetched.
-        crypto_exchange_name (str): Representing the name of the crypto
-            exchange.
         name_from (str): Representing the name of the params key.
     """
     model = IntraCryptoExchangesRates
     model_update = IntraCryptoExchangesRatesUpdates
     updated_fields: List[str] = ['price', 'update']
-    exceptions: tuple
-    crypto_exchange_name: str
+    request_method: str = 'get'
+    exceptions: tuple = tuple()
     name_from: str
     base_spot_fee: float
     zero_fees: dict
 
     def __init__(self) -> None:
         super().__init__()
-        from crypto_exchanges.crypto_exchanges_config import (
-            CRYPTO_EXCHANGES_CONFIG)
-        self.crypto_exchange = CryptoExchanges.objects.get(
-            name=self.crypto_exchange_name
-        )
         self.new_update = self.model_update.objects.create(
             crypto_exchange=self.crypto_exchange
         )
-        self.crypto_exchanges_configs = CRYPTO_EXCHANGES_CONFIG.get(
-            self.crypto_exchange_name)
-        self.assets = self.crypto_exchanges_configs.get('assets')
         self.crypto_fiats = self.crypto_exchanges_configs.get('crypto_fiats')
 
     def _create_params(self, assets_combinations: tuple
@@ -806,31 +765,19 @@ class CryptoExchangesParser(BaseParser, ABC):
             if ''.join([params[0], params[1]]) not in self.exceptions
         ]
 
-    def _get_api_answer(self, params: dict[str, str]
-                        ) -> tuple[dict[str, Any], dict[str, str]] | bool:
+    def _get_api_answer(
+            self, params: dict[str, str]
+    ) -> Union[tuple[Dict[str, Any], dict[str, str]], bool]:
         """
         Method that sends a request to the cryptocurrency exchange API
         endpoint and returns the response.
         """
-        try:
-            try:
-                with requests.session() as session:
-                    response = session.get(self.endpoint, params=params)
-            except Exception as error:
-                self._unsuccessful_response_handler(error)
-            if response.status_code != HTTPStatus.OK:
-                params = {
-                    self.name_from:
-                        params[self.name_from][4:] + params[self.name_from][:4]
-                }
-                time.sleep(1)
-                with requests.session() as session:
-                    response = session.get(self.endpoint, params=params)
-            self._successful_response_handler()
-            return response.json(), params
-        except Exception as error:
-            self._unsuccessful_response_handler(error)
+        response = self._send_request(params=params)
+        if not response:
+            message = f'Unsuccessful response with params: {params}'
+            self.logger.error(message)
             return False
+        return response, params
 
     @staticmethod
     @abstractmethod
@@ -965,6 +912,7 @@ class ListsFiatCryptoParser(CryptoParser, ABC):
     model = ListsFiatCrypto
     model_update = ListsFiatCryptoUpdates
     updated_fields: List[str] = ['list_fiat_crypto', 'update']
+    request_method: str = 'post'
     endpoint_sell: str
     endpoint_buy: str
 
@@ -1010,7 +958,7 @@ class ListsFiatCryptoParser(CryptoParser, ABC):
         else:  # if fiat
             body = self._create_body_buy(fiat)
             self.endpoint = self.endpoint_buy
-        return self._get_api_answer_post(body)
+        return self._send_request(body=body)
 
     def _add_to_update_or_create(self, list_fiat_crypto: dict, trade_type: str
                                  ) -> None:
@@ -1158,10 +1106,10 @@ class Card2CryptoExchangesParser(CryptoParser, ABC):
         if self.trade_type == 'SELL':
             body = self._create_body_sell(fiat, asset, amount)
             self.endpoint = self.endpoint_sell
-            return self._get_api_answer_post(body)
+            return self._send_request(body=body)
         params = self._create_params_buy(fiat, asset)
         self.endpoint = self.endpoint_buy
-        return self._get_api_answer_get(params)
+        return self._send_request(params=params)
 
     def __check_p2p_exchange_is_better(self, asset: str, fiat: str,
                                        price: float, bank: Banks) -> bool:

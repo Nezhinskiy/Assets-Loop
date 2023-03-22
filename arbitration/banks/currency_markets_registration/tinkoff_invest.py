@@ -19,7 +19,8 @@ class TinkoffCurrencyMarketParser(BankInvestParser):
     # 'CHFRUB', 'JPYRUB',
     connection_type: str = 'Direct'
     need_cookies: bool = False
-    waiting_time: str = 5
+    waiting_time: int = 5
+    fake_useragent: bool = False
     LIMIT_TRY: int = 6
 
     @staticmethod

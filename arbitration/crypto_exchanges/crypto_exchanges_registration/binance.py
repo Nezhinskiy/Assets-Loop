@@ -2,25 +2,21 @@ from __future__ import annotations
 
 import os
 from abc import ABC
-from http import HTTPStatus
-from time import sleep
+from itertools import combinations
 from typing import List, Tuple
-
-import requests
 
 from arbitration.settings import (API_BINANCE_CARD_2_CRYPTO_BUY,
                                   API_BINANCE_CARD_2_CRYPTO_SELL,
                                   API_BINANCE_CRYPTO,
                                   API_BINANCE_LIST_FIAT_BUY,
                                   API_BINANCE_LIST_FIAT_SELL, API_P2P_BINANCE)
-from core.calculations import (Card2Wallet2CryptoExchangesCalculating,
-                               InterExchangesCalculating)
+from core.calculations import Card2Wallet2CryptoExchangesCalculating
 from core.parsers import (Card2CryptoExchangesParser, CryptoExchangesParser,
                           ListsFiatCryptoParser, P2PParser)
 
 CRYPTO_EXCHANGES_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 
-BINANCE_ASSETS = ('ADA', 'BNB', 'ETH', 'BTC', 'BUSD', 'USDT', 'SHIB')  # 'DAI',
+BINANCE_ASSETS = ('ADA', 'BNB', 'ETH', 'BTC', 'SHIB', 'BUSD', 'USDT')  # 'DAI',
 BINANCE_ASSETS_FOR_FIAT = {
     'all': ('USDT', 'BTC', 'BUSD', 'ETH'),
     'RUB': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'SHIB', 'RUB'),
@@ -32,31 +28,26 @@ BINANCE_ASSETS_FOR_FIAT = {
     'AUD': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH', 'SHIB', 'ADA'),
     'GEL': ('USDT', 'BTC', 'BUSD', 'BNB', 'ETH')
 }
-INVALID_PARAMS_LIST = (
+BINANCE_INVALID_PARAMS_LIST = (
     ('DAI', 'AUD'), ('DAI', 'BRL'), ('DAI', 'EUR'), ('DAI', 'GBP'),
     ('DAI', 'RUB'), ('DAI', 'TRY'), ('DAI', 'UAH'), ('BNB', 'SHIB'),
     ('ETH', 'SHIB'), ('BTC', 'SHIB'), ('DAI', 'SHIB'), ('ADA', 'DAI'),
     ('ADA', 'SHIB'), ('ADA', 'UAH')
 )
-BINANCE_TRADE_TYPES = ('BUY', 'SELL')
-BINANCE_FIATS = ('RUB', 'USD', 'EUR')
 BINANCE_CRYPTO_FIATS = ('AUD', 'BRL', 'EUR', 'GBP', 'RUB', 'TRY', 'UAH')
-DEPOSIT_FIATS = {
+BINANCE_DEPOSIT_FIATS = {
     'UAH': (('SettlePay (Visa/MC)', 1.5),),
     'EUR': (('Bank Card (Visa/MC)', 1.8),),
     'GBP': (('Bank Card (Visa/MC)', 1.8),),
     'TRY': (('Turkish Bank Transfer', 0),),
 }
-WITHDRAW_FIATS = {
+BINANCE_WITHDRAW_FIATS = {
     'UAH': (('SettlePay (Visa/MC)', 1),),
     'EUR': (('Bank Card (Visa)', 1.8),),
     'GBP': (('Bank Card (Visa)', 1.8),),
     'TRY': (('Turkish Bank Transfer', 0),),
 }
-CRYPTO_FIATS = (
-    'AUD', 'BRL', 'EUR', 'GBP', 'RUB', 'TRY', 'UAH'
-)
-SPOT_ZERO_FEES = {
+BINANCE_SPOT_ZERO_FEES = {
     'BTC': [
         'AUD', 'BIDR', 'BRL', 'BUSD', 'EUR', 'GBP', 'RUB', 'TRY', 'TUSD',
         'UAH', 'USDC', 'USDP', 'USDT'
@@ -67,8 +58,11 @@ SPOT_ZERO_FEES = {
 class BinanceP2PParser(P2PParser, ABC):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
     endpoint: str = API_P2P_BINANCE
+    connection_type: str = 'Proxy'
+    need_cookies: bool = False
     page: int = 1
     rows: int = 1
+    # custom_settings
     exception_fiats: Tuple[str] = ('USD', 'EUR')
 
     def _check_supports_fiat(self, fiat: str) -> bool:
@@ -101,89 +95,50 @@ class BinanceP2PParser(P2PParser, ABC):
 class BinanceCryptoParser(CryptoExchangesParser):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
     endpoint: str = API_BINANCE_CRYPTO
+    connection_type: str = 'Direct'
+    need_cookies: bool = False
+    fake_useragent: bool = False
     exceptions: tuple = ('SHIBRUB', 'RUBSHIB', 'SHIBGBP', 'GBPSHIB')
-    name_from: int = 'symbol'
-    zero_fees = SPOT_ZERO_FEES
-
-    def _get_api_answer(self, params):
-        """Делает запрос к эндпоинту API Tinfoff."""
-        try:
-            try:
-                with requests.session() as session:
-                    response = session.get(self.endpoint, params=params)
-            except Exception as error:
-                self._unsuccessful_response_handler(error)
-            if response.status_code != HTTPStatus.OK:
-                params = {
-                    self.name_from:
-                        params[self.name_from][4:] + params[self.name_from][:4]
-                }
-                sleep(1)
-                with requests.session() as session:
-                    response = session.get(self.endpoint, params=params)
-            self._successful_response_handler()
-            return response.json(), params
-        except Exception as error:
-            self._unsuccessful_response_handler(error)
-            return False
+    name_from: str = 'symbol'
+    base_spot_fee: float = 0.1
+    zero_fees: dict = BINANCE_SPOT_ZERO_FEES
+    # custom_settings
+    stablecoins: Tuple[str] = ('USDT', 'BUSD')
 
     @staticmethod
     def _extract_price_from_json(json_data: dict) -> float:
         return float(json_data['price'])
 
-    def _create_params(self, assets_combinations: tuple
-                       ) -> list[dict[int, str]]:
-        return [
-            dict([(self.name_from, ''.join([params[0], params[1]]))])
-            for params in assets_combinations
-            if ''.join([params[0], params[1]]) not in self.exceptions
-        ]
-
-    def _calculates_spot_fee(self, from_asset, to_asset) -> int | float:
-        from_asset_fee_list = self.zero_fees.get(from_asset)
-        if from_asset_fee_list is not None:
-            if to_asset in from_asset_fee_list:
-                return 0
-        to_asset_fee_list = self.zero_fees.get(to_asset)
-        if to_asset_fee_list is not None:
-            if from_asset in to_asset_fee_list:
-                return 0
-        return 0.1
-
-    def _calculates_buy_and_sell_data(self, params
-                                      ) -> tuple[dict, dict] | None:
-        answer = self._get_api_answer(params)
-        if not answer:
-            return None
-        json_data, valid_params = answer
-        price = self._extract_price_from_json(json_data)
-        for from_asset in self.assets + self.crypto_fiats:
-            if from_asset in valid_params['symbol'][0:4]:
-                for to_asset in self.assets + self.crypto_fiats:
-                    if to_asset in valid_params['symbol'][-4:]:
-                        spot_fee = self._calculates_spot_fee(from_asset,
-                                                             to_asset)
-                        buy_data = {
-                            'from_asset': from_asset,
-                            'to_asset': to_asset,
-                            'price': price - price / 100 * spot_fee,
-                            'spot_fee': spot_fee
-                        }
-                        sell_data = {
-                            'from_asset': to_asset,
-                            'to_asset': from_asset,
-                            'price': (
-                                1.0 / price - (1.0 / price) / 100 * spot_fee
-                            ),
-                            'spot_fee': spot_fee
-                        }
-                        return buy_data, sell_data
+    def _generate_unique_params(self) -> List[dict[str, str]]:
+        """
+        Method that generates unique parameters for the cryptocurrency exchange
+        API endpoint.
+        """
+        currencies_combinations = list(combinations(self.assets,
+                                                    self.CURRENCY_PAIR))
+        invalid_params_list = self.crypto_exchanges_configs.get(
+            'invalid_params_list')
+        for crypto_fiat in self.crypto_fiats:
+            for asset in self.assets:
+                if asset in self.stablecoins and crypto_fiat in (
+                        'EUR', 'GBP', 'AUD'):
+                    currencies_combinations.append((crypto_fiat, asset))
+                else:
+                    currencies_combinations.append((asset, crypto_fiat))
+        currencies_combinations = tuple(
+            currencies_combination for currencies_combination
+            in currencies_combinations
+            if currencies_combination not in invalid_params_list
+        )
+        return self._create_params(currencies_combinations)
 
 
 class BinanceCard2CryptoExchangesParser(Card2CryptoExchangesParser):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
     endpoint_sell: str = API_BINANCE_CARD_2_CRYPTO_SELL
     endpoint_buy: str = API_BINANCE_CARD_2_CRYPTO_BUY
+    connection_type: str = 'Proxy'
+    need_cookies: bool = False
 
     @staticmethod
     def _create_body_sell(fiat: str, asset: str, amount: int) -> dict:
@@ -243,6 +198,10 @@ class BinanceListsFiatCryptoParser(ListsFiatCryptoParser):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
     endpoint_sell: str = API_BINANCE_LIST_FIAT_SELL
     endpoint_buy: str = API_BINANCE_LIST_FIAT_BUY
+    connection_type: str = 'Direct'
+    need_cookies: bool = False
+    waiting_time: int = 5
+    fake_useragent: bool = False
 
     @staticmethod
     def _create_body_sell(asset: str) -> dict:
@@ -279,31 +238,3 @@ class BinanceCard2Wallet2CryptoExchangesCalculating(
     Card2Wallet2CryptoExchangesCalculating
 ):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
-
-
-class SimplBinanceInterExchangesCalculating(InterExchangesCalculating):
-    crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
-    simpl: bool = True
-    international: bool = False
-
-
-class SimplBinanceInternationalInterExchangesCalculating(
-    InterExchangesCalculating
-):
-    crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
-    simpl: bool = True
-    international: bool = True
-
-
-class ComplexBinanceInterExchangesCalculating(InterExchangesCalculating):
-    crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
-    simpl: bool = False
-    international: bool = False
-
-
-class ComplexBinanceInternationalInterExchangesCalculating(
-    InterExchangesCalculating
-):
-    crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
-    simpl: bool = False
-    international: bool = True
