@@ -15,9 +15,9 @@ class BaseLogger(ABC):
     Attributes:
         duration (timedelta): The duration of the logger's operation.
         count_created_objects (int): The count of created objects during the
-        logger's operation.
+            logger's operation.
         count_updated_objects (int): The count of updated objects during the
-        logger's operation.
+            logger's operation.
         bank_name (str): The name of the bank related to the logger, if any.
         loglevel_start (str): Log level for start.
         loglevel_end (str): Log level for end.
@@ -88,18 +88,21 @@ class BaseLogger(ABC):
         Logs the end of the logger.
         """
         self._get_all_objects()
-        message = (f'Finish {self.__class__.__name__} at '
-                   f'{self.duration}. ')
+        message = (
+            f'Finish {self.__class__.__name__} at {self.duration}. '
+        )
         if self.bank_name is not None:
             message += f'Bank name: {self.bank_name}. '
+        for arg in args:
+            message += arg
         if self.count_created_objects + self.count_updated_objects > 0:
             message += f'Updated: {self.count_updated_objects}, '
             message += f'Created: {self.count_created_objects}. '
         else:
             message += (f'Has not been Created and updated: '
                         f'{self.count_updated_objects}. ')
-        for arg in args:
-            message += arg
+            self.logger.error(message)
+            return
         getattr(self.logger, self.loglevel_end)(message)
 
 
@@ -107,7 +110,7 @@ class ParsingLogger(BaseLogger, ABC):
     """
     Logger for parsing operations.
     """
-    tor_parser: bool
+    connection_type: str
     loglevel_start: str = LOGLEVEL_PARSING_START
     loglevel_end: str = LOGLEVEL_PARSING_END
 
@@ -116,25 +119,26 @@ class ParsingLogger(BaseLogger, ABC):
         self.connections_duration = 0
         self.renew_connections_duration = 0
 
-    def __logger_tor_connections_duration(self) -> str:
+    def __logger_connection_type(self) -> str:
+        return f'Connection type: {self.connection_type}. '
+
+    def __logger_connections_duration(self) -> str:
         """
-        Adds a message to the logger about the duration of connection to the
-        Tor network.
+        Adds a message to the logger about the duration of connection.
         """
         message = ''
-        if self.tor_parser is True and self.connections_duration > 0:
-            message += (f'Duration of connections through Tor: '
+        if self.connections_duration > 0:
+            message += (f'Duration of connections: '
                         f'{self.connections_duration}. ')
         return message
 
-    def __logger_tor_renew_connections_duration(self) -> str:
+    def __logger_renew_connections_duration(self) -> str:
         """
-        Adds a message to the logger about the duration of renew connection to
-        the Tor network.
+        Adds a message to the logger about the duration of renew connection.
         """
         message = ''
-        if self.tor_parser is True and self.connections_duration > 0:
-            message += (f'Duration of renew connections through Tor: '
+        if self.renew_connections_duration > 0:
+            message += (f'Duration of renew connections: '
                         f'{self.renew_connections_duration}. ')
         return message
 
@@ -143,8 +147,9 @@ class ParsingLogger(BaseLogger, ABC):
         Logs the end of the parsing logger.
         """
         super()._logger_end(
-            self.__logger_tor_connections_duration(),
-            self.__logger_tor_renew_connections_duration()
+            self.__logger_connection_type(),
+            self.__logger_connections_duration(),
+            self.__logger_renew_connections_duration()
         )
 
 

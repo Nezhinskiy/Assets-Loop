@@ -1,11 +1,11 @@
 import re
 import subprocess
-from datetime import datetime, timezone
 from time import sleep
 
 import requests
 from stem import Signal
 from stem.control import Controller
+from stem.util import log
 
 
 class Tor:
@@ -17,15 +17,14 @@ class Tor:
         TOR_HOSTNAME (str): Hostname docker container Tor.
     """
     request_timeout: int = 15
-    connection_time: float
-    renew_connection_time: float
-    TOR_HOSTNAME: str = "tor_proxy"
+    TOR_HOSTNAME: str = 'tor_proxy'
 
     def __init__(self) -> None:
         """
         Initializes the Tor class by setting the container IP address and
         creating a new Tor session.
         """
+        log.get_logger().propagate = False
         self.container_ip: str = self.__get_tor_ip()
         self.session: requests.sessions.Session = self.__set_tor_session()
 
@@ -34,12 +33,9 @@ class Tor:
         Set up a proxy for http and https on the running Tor host: port 9050
         and initialize the request session.
         """
-        start_time = datetime.now(timezone.utc)
         with requests.session() as session:
             session.proxies = {'http': f'socks5h://{self.TOR_HOSTNAME}:9050',
                                'https': f'socks5h://{self.TOR_HOSTNAME}:9050'}
-            self.connection_time = (datetime.now(timezone.utc) - start_time
-                                    ).seconds
             return session
 
     def __get_tor_ip(self) -> str:
@@ -59,6 +55,5 @@ class Tor:
         with Controller.from_port(address=self.container_ip) as controller:
             controller.authenticate()
             controller.signal(Signal.NEWNYM)
-            self.renew_connection_time = controller.get_newnym_wait()
-            sleep(self.renew_connection_time)
+            sleep(controller.get_newnym_wait())
             self.session = self.__set_tor_session()
