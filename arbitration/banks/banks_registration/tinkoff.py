@@ -20,6 +20,8 @@ class TinkoffParser(BankParser):
     buy_and_sell: bool = True
     name_from: str = 'from'
     name_to: str = 'to'
+    connection_type: str = 'Tor'
+    need_cookies: bool = False
 
     def _create_params(self, fiats_combinations):
         params = [

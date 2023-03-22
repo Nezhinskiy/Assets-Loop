@@ -18,6 +18,9 @@ class RaiffeisenParser(BankParser):
     bank_name: str = BANK_NAME
     endpoint: str = API_RAIFFEISEN
     all_values: bool = True
+    connection_type: str = 'Proxy'
+    need_cookies: bool = False
+    LIMIT_TRY: int = 6
 
     def _extract_all_values_from_json(self, json_data: dict
                                       ) -> Optional[List[Dict[str, Any]]]:

@@ -17,6 +17,10 @@ class TinkoffCurrencyMarketParser(BankInvestParser):
     link_ends = ('USDRUB', 'EURRUB')
     # 'GBPRUB', 'HKDRUB', 'TRYRUB', 'KZTRUB_TOM', 'BYNRUB_TOM', 'AMDRUB_TOM',
     # 'CHFRUB', 'JPYRUB',
+    connection_type: str = 'Direct'
+    need_cookies: bool = False
+    waiting_time: str = 5
+    LIMIT_TRY: int = 6
 
     @staticmethod
     def _get_utc_work_time() -> bool:

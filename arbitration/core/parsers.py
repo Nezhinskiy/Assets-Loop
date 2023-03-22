@@ -1,19 +1,25 @@
 from __future__ import annotations
 
+import json
+import random
+import time
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from itertools import combinations, permutations, product
-from sys import getsizeof
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import requests
+from fake_useragent import UserAgent
 
 from arbitration.settings import DATA_OBSOLETE_IN_MINUTES
 from banks.models import (Banks, BanksExchangeRates, BanksExchangeRatesUpdates,
                           CurrencyMarkets)
+from core.connection_types.direct import Direct
+from core.connection_types.proxy import Proxy
+from core.connection_types.tor import Tor
+from core.cookies import Cookie
 from core.loggers import ParsingLogger
-from core.tor import Tor
 from crypto_exchanges.models import (CryptoExchanges, CryptoExchangesRates,
                                      CryptoExchangesRatesUpdates,
                                      IntraCryptoExchangesRates,
@@ -34,7 +40,6 @@ class BaseParser(ParsingLogger, ABC):
     endpoint: str
     updated_fields: List[str]
     bank_name = None
-    tor_parser: bool = False
     CURRENCY_PAIR: int = 2
 
     def __init__(self) -> None:
@@ -115,42 +120,90 @@ class BaseParser(ParsingLogger, ABC):
             raise Exception
 
 
-class ParsingViaTor(BaseParser, ABC):
+class ParsingViaTorOrProxy(BaseParser, ABC):
     """
     Class for parsers that use the Tor network. Inherits from BaseParser and
     ABC classes.
 
     Attributes:
-        LIMIT_TRY (int): Maximum number of tries to make a request
-        tor (Tor): Tor object for making requests
-        count_try (int): Current count of tries
+        LIMIT_TRY (int): Maximum number of tries to make a request.
+        connection (Tor | Proxy | Direct): Tor or Proxy or Direct object for
+            making connection.
+        count_try (int): Current count of tries.
     """
-    tor_parser: bool = True
+    connection_type: str
+    need_cookies: bool
+    cookies_names: Tuple[str] = None
+    cookie_spoiled: bool = True
+    first_request: bool = True
+    headers: Dict[str, Any] = None
+    custom_user_agent: Tuple[str] = [None]
+    user_agent_browser: str = 'chrome'
+    waiting_time: int = 0
     LIMIT_TRY: int = 3
 
     def __init__(self) -> None:
         super().__init__()
-        self.tor = Tor()
+        self.connection = self.__choose_connection_type()
+        self.cookie = Cookie(
+            self.endpoint, self.connection.session, self.cookies_names
+        ) if self.need_cookies else None
+        self.user_agent = UserAgent()
         self.count_try = 0
-        self.connections_duration = 0
 
-    def _get_api_answer_post(self, body: dict, headers: dict, endpoint=None
-                             ) -> dict | bool:
+    def __choose_connection_type(self) -> Union[Tor, Proxy, Direct]:
+        self.connection_type.capitalize()
+        if self.connection_type == 'Tor':
+            return Tor()
+        if self.connection_type == 'Proxy':
+            return Proxy()
+        if self.connection_type == 'Direct':
+            return Direct()
+        raise ValueError("Invalid connection type: " + self.connection_type)
+
+    def __create_cookies(self) -> None:
+        Cookie(
+            self.endpoint, self.connection.session, self.cookies_names
+        ).add_cookies_to_headers()
+        self.cookie_spoiled = False
+
+    def __start_request_handler(self, body=None) -> None:
+        if self.first_request:
+            self.count_try = -2
+            self.first_request = False
+        else:
+            self.count_try = 0
+        if body is None:
+            self._create_get_headers()
+        else:
+            self._create_post_headers(body)
+        if self.need_cookies and self.cookie_spoiled:
+            self.__create_cookies()
+
+    def __renew_connection(self) -> None:
+        self.connection.renew_connection()
+        self.renew_connections_duration += round(
+            self.connection.renew_connection_time, 2)
+        self.cookie_spoiled = True
+        self.count_try += 1
+
+    def _get_api_answer_post(self, body: dict) -> dict | bool:
         """
         Sends a POST request to the specified API endpoint and returns
         the response.
         """
-        self.count_try = 0
-        if endpoint is None:
-            endpoint = self.endpoint
+        self.__start_request_handler(body)
         while self.count_try < self.LIMIT_TRY:
             try:
-                response = self.tor.session.post(
-                    endpoint, headers=headers, json=body
+                response = self.connection.session.post(
+                    self.endpoint, json=body,
+                    timeout=self.connection.request_timeout
                 )
             except Exception as error:
                 self._unsuccessful_response_handler(error)
                 continue
+            finally:
+                self._finally_response_handler()
             if response.status_code != HTTPStatus.OK:
                 self._negative_response_status_handler(response)
                 continue
@@ -158,26 +211,63 @@ class ParsingViaTor(BaseParser, ABC):
             return response.json()
         return False
 
-    def _get_api_answer_get(self, params=None, endpoint=None) -> dict | bool:
+    def _get_api_answer_get(self, params=None) -> dict | bool:
         """
         Sends a GET request to the specified API endpoint and returns
         the response.
         """
-        self.count_try = 0
-        if endpoint is None:
-            endpoint = self.endpoint
+        self.__start_request_handler()
         while self.count_try < self.LIMIT_TRY:
             try:
-                response = self.tor.session.get(endpoint, params=params)
+                response = self.connection.session.get(
+                    self.endpoint, params=params,
+                    timeout=self.connection.request_timeout
+                )
             except Exception as error:
                 self._unsuccessful_response_handler(error)
                 continue
+            finally:
+                self._finally_response_handler()
             if response.status_code != HTTPStatus.OK:
                 self._negative_response_status_handler(response)
                 continue
             self._successful_response_handler()
             return response.json()
         return False
+
+    def _create_post_headers(self, body: dict) -> None:
+        """
+        Method that create headers for post request.
+        """
+        user_agent = random.choice(
+            self.custom_user_agent
+        ) or self.user_agent.__getattr__(self.user_agent_browser)
+        self.headers = {
+            'Content-Type': 'application/json',
+            'Content-Length': str(len(json.dumps(body))),
+            'User-Agent': user_agent,
+        }
+        self.connection.session.headers.update(self.headers)
+
+    def _create_get_headers(self) -> None:
+        """
+        Method that create headers for get request.
+        """
+        user_agent = random.choice(
+            self.custom_user_agent
+        ) or self.user_agent.__getattr__(self.user_agent_browser)
+        self.headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': user_agent,
+        }
+        self.connection.session.headers.update(self.headers)
+
+    def _successful_response_handler(self) -> None:
+        """
+        Logs a message when a response is successfully handled.
+        """
+        self.connection.connection_time = 0
+        super()._successful_response_handler()
 
     def _unsuccessful_response_handler(self, error: Exception) -> None:
         """
@@ -186,8 +276,7 @@ class ParsingViaTor(BaseParser, ABC):
         message = (f'{error} with response, class: '
                    f'{self.__class__.__name__}, count try: {self.count_try}')
         self.logger.error(message)
-        self.tor.renew_connection()
-        self.count_try += 1
+        self.__renew_connection()
 
     def _negative_response_status_handler(self, response: requests.Response
                                           ) -> None:
@@ -197,14 +286,19 @@ class ParsingViaTor(BaseParser, ABC):
         message = (f'{response.status_code} with response, class: '
                    f'{self.__class__.__name__}, count try: {self.count_try}')
         self.logger.error(message)
-        self.tor.renew_connection()
-        self.connections_duration += self.tor.connection_time
-        self.count_try += 1
+        self.__renew_connection()
+
+    def _finally_response_handler(self) -> None:
+        """
+        Records the time spent connecting to the Tor network.
+        """
+        self.connections_duration += round(self.connection.connection_time, 2)
+        time.sleep(self.waiting_time)
 
 
-class CryptoParser(ParsingViaTor, ABC):
+class CryptoParser(ParsingViaTorOrProxy, ABC):
     """
-    This class is a subclass of ParsingViaTor and ABC. It parses crypto
+    This class is a subclass of ParsingViaTorOrProxy and ABC. It parses crypto
     exchange data from API, creates the headers and gets the required assets.
 
     Attributes:
@@ -221,30 +315,20 @@ class CryptoParser(ParsingViaTor, ABC):
     def __init__(self) -> None:
         super().__init__()
         from crypto_exchanges.crypto_exchanges_config import (
-            CRYPTO_EXCHANGES_CONFIG)
+            ALL_FIATS, CRYPTO_EXCHANGES_CONFIG, TRADE_TYPES)
         self.crypto_exchanges_configs = CRYPTO_EXCHANGES_CONFIG.get(
             self.crypto_exchange_name)
         self.assets = set(self.crypto_exchanges_configs.get('assets'))
-        self.all_fiats = set(CRYPTO_EXCHANGES_CONFIG.get('all_fiats'))
+        self.all_fiats = set(ALL_FIATS)
         self.crypto_exchange = CryptoExchanges.objects.get(
             name=self.crypto_exchange_name
         )
-
-    @staticmethod
-    def _create_headers(body: dict) -> dict:
-        """
-        A static method that takes the request body as a parameter and returns
-        a header with the calculated content length.
-        """
-        return {
-            'Content-Type': 'application/json',
-            'Content-Length': str(getsizeof(body))
-        }
+        self.trade_types = TRADE_TYPES
 
 
-class BankParser(ParsingViaTor, ABC):
+class BankParser(ParsingViaTorOrProxy, ABC):
     """
-    This class is a subclass of ParsingViaTor and ABC. It parses bank exchange
+    This class is a subclass of ParsingViaTorOrProxy and ABC. It parses bank exchange
     rates data from API, calculates the buy and sell data or the price data,
     and updates the database.
 
@@ -283,7 +367,7 @@ class BankParser(ParsingViaTor, ABC):
         """
         pass
 
-    def _generate_unique_params(self) -> list[dict[str]]:
+    def _generate_unique_params(self) -> List[Dict[str]]:
         """
         Generates a list of unique parameters to send to the API.
         """
@@ -322,7 +406,7 @@ class BankParser(ParsingViaTor, ABC):
         """
         pass
 
-    def _calculates_buy_and_sell_data(self, params: dict
+    def _calculates_buy_and_sell_data(self, params: Dict[str]
                                       ) -> tuple[dict, dict] | None:
         """
         Calculates the buy and sell data for a given set of
@@ -347,7 +431,8 @@ class BankParser(ParsingViaTor, ABC):
         }
         return buy_data, sell_data
 
-    def _calculates_price_data(self, params: dict) -> list[dict] | None:
+    def _calculates_price_data(self, params: Dict[str]
+                               ) -> list[dict[str, Any]] | None:
         """
         Calculates the price data for a given set of parameters.
         It gets the API response using the _get_api_answer_get method, extracts
@@ -365,7 +450,7 @@ class BankParser(ParsingViaTor, ABC):
         }
         return [price_data]
 
-    def _calculates_all_values_data(self) -> list[dict[str, Any]] | None:
+    def _calculates_all_values_data(self) -> List[dict[str, Any]] | None:
         """
         Calculates all values data. It gets the API response using the
         _get_api_answer_get method, extracts all values data using the
@@ -430,10 +515,10 @@ class BankParser(ParsingViaTor, ABC):
                 self._add_to_bulk_update_or_create(value_dict, price)
 
 
-class BankInvestParser(ParsingViaTor, ABC):
+class BankInvestParser(ParsingViaTorOrProxy, ABC):
     """
     This class parses exchange rates data from Bank Invest website and stores
-    it in the database. It inherits from `ParsingViaTor` and `ABC`.
+    it in the database. It inherits from `ParsingViaTorOrProxy` and `ABC`.
 
     Attributes:
         model: The Django model to use for creating or updating exchange rates
@@ -465,8 +550,8 @@ class BankInvestParser(ParsingViaTor, ABC):
         Makes a GET request to the Bank Invest API and returns the response
         data as a dictionary.
         """
-        endpoint = self.endpoint + link_end
-        return self._get_api_answer_get(endpoint=endpoint)
+        self.endpoint = self.endpoint + link_end
+        return self._get_api_answer_get()
 
     @staticmethod
     @abstractmethod
@@ -573,11 +658,12 @@ class P2PParser(CryptoParser, ABC):
             crypto_exchange=self.crypto_exchange, bank=self.bank,
             payment_channel=self.payment_channel
         )
-        self.trade_types = self.crypto_exchanges_configs.get('trade_types')
         self.banks_configs = self.banks_config[self.bank_name]
         self.fiats = set(self.banks_configs['currencies'])
         self.if_no_objects = self.model.objects.filter(
-            payment_channel=self.payment_channel).count() == 0
+            crypto_exchange=self.crypto_exchange,
+            payment_channel=self.payment_channel
+        ).count() == 0
         self.if_new_hour = datetime.now(
             timezone.utc
         ).time().minute < self.model_update.objects.last().updated.time(
@@ -614,8 +700,7 @@ class P2PParser(CryptoParser, ABC):
         Fetches the API response for a given asset, trade type, and fiat.
         """
         body = self._create_body(asset, trade_type, fiat)
-        headers = self._create_headers(body)
-        return self._get_api_answer_post(body, headers)
+        return self._get_api_answer_post(body)
 
     def _add_to_bulk_update_or_create(self, asset: str, trade_type: str,
                                       fiat: str, price: float) -> None:
@@ -688,8 +773,11 @@ class CryptoExchangesParser(BaseParser, ABC):
     model = IntraCryptoExchangesRates
     model_update = IntraCryptoExchangesRatesUpdates
     updated_fields: List[str] = ['price', 'update']
+    exceptions: tuple
     crypto_exchange_name: str
     name_from: str
+    base_spot_fee: float
+    zero_fees: dict
 
     def __init__(self) -> None:
         super().__init__()
@@ -706,21 +794,43 @@ class CryptoExchangesParser(BaseParser, ABC):
         self.assets = self.crypto_exchanges_configs.get('assets')
         self.crypto_fiats = self.crypto_exchanges_configs.get('crypto_fiats')
 
-    @abstractmethod
-    def _create_params(self, fiats_combinations: tuple) -> list[dict[str]]:
+    def _create_params(self, assets_combinations: tuple
+                       ) -> List[dict[str, str]]:
         """
-        Abstract method that creates parameters for the cryptocurrency exchange
-        API endpoint.
+        Method that creates parameters for the cryptocurrency exchange API
+        endpoint.
         """
-        pass
+        return [
+            dict([(self.name_from, ''.join([params[0], params[1]]))])
+            for params in assets_combinations
+            if ''.join([params[0], params[1]]) not in self.exceptions
+        ]
 
-    @abstractmethod
-    def _get_api_answer(self, params: dict) -> dict:
+    def _get_api_answer(self, params: dict[str, str]
+                        ) -> tuple[dict[str, Any], dict[str, str]] | bool:
         """
-        Abstract method that sends a request to the cryptocurrency exchange API
+        Method that sends a request to the cryptocurrency exchange API
         endpoint and returns the response.
         """
-        pass
+        try:
+            try:
+                with requests.session() as session:
+                    response = session.get(self.endpoint, params=params)
+            except Exception as error:
+                self._unsuccessful_response_handler(error)
+            if response.status_code != HTTPStatus.OK:
+                params = {
+                    self.name_from:
+                        params[self.name_from][4:] + params[self.name_from][:4]
+                }
+                time.sleep(1)
+                with requests.session() as session:
+                    response = session.get(self.endpoint, params=params)
+            self._successful_response_handler()
+            return response.json(), params
+        except Exception as error:
+            self._unsuccessful_response_handler(error)
+            return False
 
     @staticmethod
     @abstractmethod
@@ -731,16 +841,52 @@ class CryptoExchangesParser(BaseParser, ABC):
         """
         pass
 
-    @abstractmethod
-    def _calculates_buy_and_sell_data(self, params
+    def _calculates_buy_and_sell_data(self, params: dict[str, str]
                                       ) -> tuple[dict, dict] | None:
         """
-        Abstract method that calculates the buy and sell data for each
-        cryptocurrency asset pair.
+        Method that calculates the buy and sell data for each cryptocurrency
+        asset pair.
         """
-        pass
+        answer = self._get_api_answer(params)
+        if not answer:
+            return None
+        json_data, valid_params = answer
+        price = self._extract_price_from_json(json_data)
+        for from_asset in self.assets + self.crypto_fiats:
+            if from_asset in valid_params['symbol'][0:4]:
+                for to_asset in self.assets + self.crypto_fiats:
+                    if to_asset in valid_params['symbol'][-4:]:
+                        spot_fee = self._calculates_spot_fee(from_asset,
+                                                             to_asset)
+                        buy_data = {
+                            'from_asset': from_asset,
+                            'to_asset': to_asset,
+                            'price': price - price / 100 * spot_fee,
+                            'spot_fee': spot_fee
+                        }
+                        sell_data = {
+                            'from_asset': to_asset,
+                            'to_asset': from_asset,
+                            'price': (
+                                1.0 / price - (1.0 / price) / 100 * spot_fee
+                            ),
+                            'spot_fee': spot_fee
+                        }
+                        return buy_data, sell_data
 
-    def _generate_unique_params(self) -> list[dict[str]]:
+    def _calculates_spot_fee(self, from_asset: str, to_asset: str
+                             ) -> int | float:
+        from_asset_fee_list = self.zero_fees.get(from_asset)
+        if from_asset_fee_list is not None:
+            if to_asset in from_asset_fee_list:
+                return 0
+        to_asset_fee_list = self.zero_fees.get(to_asset)
+        if to_asset_fee_list is not None:
+            if from_asset in to_asset_fee_list:
+                return 0
+        return self.base_spot_fee
+
+    def _generate_unique_params(self) -> List[dict[str, str]]:
         """
         Method that generates unique parameters for the cryptocurrency exchange
         API endpoint.
@@ -860,12 +1006,11 @@ class ListsFiatCryptoParser(CryptoParser, ABC):
         """
         if asset:
             body = self._create_body_sell(asset)
-            endpoint = self.endpoint_sell
+            self.endpoint = self.endpoint_sell
         else:  # if fiat
             body = self._create_body_buy(fiat)
-            endpoint = self.endpoint_buy
-        headers = self._create_headers(body)
-        return self._get_api_answer_post(body, headers, endpoint=endpoint)
+            self.endpoint = self.endpoint_buy
+        return self._get_api_answer_post(body)
 
     def _add_to_update_or_create(self, list_fiat_crypto: dict, trade_type: str
                                  ) -> None:
@@ -961,7 +1106,9 @@ class Card2CryptoExchangesParser(CryptoParser, ABC):
         )
         self.trade_type = trade_type
         self.if_no_objects = self.model.objects.filter(
-            payment_channel=self.payment_channel).count() == 0
+            crypto_exchange=self.crypto_exchange,
+            payment_channel=self.payment_channel
+        ).count() == 0
         self.if_new_hour = datetime.now(
             timezone.utc
         ).time().minute < self.model_update.objects.last().updated.time(
@@ -1010,12 +1157,11 @@ class Card2CryptoExchangesParser(CryptoParser, ABC):
         """
         if self.trade_type == 'SELL':
             body = self._create_body_sell(fiat, asset, amount)
-            headers = self._create_headers(body)
-            return self._get_api_answer_post(
-                body, headers, endpoint=self.endpoint_sell
-            )
+            self.endpoint = self.endpoint_sell
+            return self._get_api_answer_post(body)
         params = self._create_params_buy(fiat, asset)
-        return self._get_api_answer_get(params, endpoint=self.endpoint_buy)
+        self.endpoint = self.endpoint_buy
+        return self._get_api_answer_get(params)
 
     def __check_p2p_exchange_is_better(self, asset: str, fiat: str,
                                        price: float, bank: Banks) -> bool:
