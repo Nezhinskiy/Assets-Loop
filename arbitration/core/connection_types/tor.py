@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 from time import sleep
 
 import requests
-from fake_useragent import UserAgent
 from stem import Signal
 from stem.control import Controller
 
@@ -17,6 +16,7 @@ class Tor:
     Attributes:
         TOR_HOSTNAME (str): Hostname docker container Tor.
     """
+    request_timeout: int = 15
     connection_time: float
     renew_connection_time: float
     TOR_HOSTNAME: str = "tor_proxy"
@@ -27,9 +27,9 @@ class Tor:
         creating a new Tor session.
         """
         self.container_ip: str = self.__get_tor_ip()
-        self.session: requests.sessions.Session = self.__get_tor_session()
+        self.session: requests.sessions.Session = self.__set_tor_session()
 
-    def __get_tor_session(self) -> requests.sessions.Session:
+    def __set_tor_session(self) -> requests.sessions.Session:
         """
         Set up a proxy for http and https on the running Tor host: port 9050
         and initialize the request session.
@@ -38,7 +38,6 @@ class Tor:
         with requests.session() as session:
             session.proxies = {'http': f'socks5h://{self.TOR_HOSTNAME}:9050',
                                'https': f'socks5h://{self.TOR_HOSTNAME}:9050'}
-            session.headers = {'User-Agent': UserAgent().chrome}
             self.connection_time = (datetime.now(timezone.utc) - start_time
                                     ).seconds
             return session
@@ -62,4 +61,4 @@ class Tor:
             controller.signal(Signal.NEWNYM)
             self.renew_connection_time = controller.get_newnym_wait()
             sleep(self.renew_connection_time)
-            self.session = self.__get_tor_session()
+            self.session = self.__set_tor_session()
