@@ -25,13 +25,10 @@ class BaseCalculating(ABC):
     inherited.
 
     Attributes:
-        crypto_exchange_name (str): Representing the name of the crypto
-            exchange.
         data_obsolete_in_minutes (int): The time in minutes since the last
             update, after which the data is considered out of date and does not
             participate in calculations.
     """
-    crypto_exchange_name: str
     data_obsolete_in_minutes: int = DATA_OBSOLETE_IN_MINUTES
 
     def __init__(self):
@@ -40,9 +37,6 @@ class BaseCalculating(ABC):
         self.records_to_create = []
         self.records_to_update = []
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.crypto_exchange = CryptoExchanges.objects.get(
-            name=self.crypto_exchange_name
-        )
         self.banks_config = BANKS_CONFIG
         self.international_banks = INTERNATIONAL_BANKS
         self.update_time = datetime.now(timezone.utc) - timedelta(
@@ -102,8 +96,13 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
     output_crypto_exchanges: CryptoExchangesRates
     allowed_percentage: int = ALLOWED_PERCENTAGE
 
-    def __init__(self, bank_name: str, full_update: bool) -> None:
+    def __init__(self, crypto_exchange_name: str, bank_name: str,
+                 full_update: bool) -> None:
         super().__init__()
+        self.crypto_exchange_name = crypto_exchange_name
+        self.crypto_exchange = CryptoExchanges.objects.get(
+            name=self.crypto_exchange_name
+        )
         self.bank_name = bank_name
         self.bank = Banks.objects.get(name=self.bank_name)
         self.banks = self.banks_config.keys()
@@ -777,6 +776,7 @@ class Card2Wallet2CryptoExchangesCalculating(BaseCalculating,
                                              CalculatingLogger, ABC):
     model = CryptoExchangesRates
     model_update = CryptoExchangesRatesUpdates
+    crypto_exchange_name: str
     payment_channel = 'Card2Wallet2CryptoExchange'
     updated_fields: List[str] = ['price', 'update', 'transaction_fee']
     data_obsolete_in_minutes: int = DATA_OBSOLETE_IN_MINUTES
@@ -785,6 +785,9 @@ class Card2Wallet2CryptoExchangesCalculating(BaseCalculating,
         super().__init__()
         from crypto_exchanges.crypto_exchanges_config import (
             CRYPTO_EXCHANGES_CONFIG)
+        self.crypto_exchange = CryptoExchanges.objects.get(
+            name=self.crypto_exchange_name
+        )
         self.new_update = self.model_update.objects.create(
             crypto_exchange=self.crypto_exchange,
             payment_channel=self.payment_channel
@@ -985,3 +988,27 @@ class Card2Wallet2CryptoExchangesCalculating(BaseCalculating,
         except Exception as error:
             self._logger_error(error)
             raise Exception
+
+
+class SimplInterExchangesCalculating(InterExchangesCalculating):
+    simpl: bool = True
+    international: bool = False
+
+
+class SimplInternationalInterExchangesCalculating(
+    InterExchangesCalculating
+):
+    simpl: bool = True
+    international: bool = True
+
+
+class ComplexInterExchangesCalculating(InterExchangesCalculating):
+    simpl: bool = False
+    international: bool = False
+
+
+class ComplexInternationalInterExchangesCalculating(
+    InterExchangesCalculating
+):
+    simpl: bool = False
+    international: bool = True

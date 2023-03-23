@@ -17,6 +17,7 @@ BANKS_CONFIG = {
         'currencies': TINKOFF_CURRENCIES,
         'crypto_exchanges': ('Binance',),
         'binance_name': 'TinkoffNew',
+        'bybit_name': '75',
         'payment_channels': ('P2P',),
         'transaction_methods': (),
         'bank_invest_exchanges': ['Tinkoff invest']
@@ -26,6 +27,7 @@ BANKS_CONFIG = {
         'currencies': SBERBANK_CURRENCIES,
         'crypto_exchanges': ('Binance',),
         'binance_name': 'RosBankNew',
+        'bybit_name': '185',
         'payment_channels': ('P2P',),
         'transaction_methods': (),
         'bank_invest_exchanges': []
@@ -35,6 +37,7 @@ BANKS_CONFIG = {
         'currencies': RAIFFEISEN_CURRENCIES,
         'crypto_exchanges': ('Binance',),
         'binance_name': 'RaiffeisenBank',
+        'bybit_name': '64',
         'payment_channels': ('P2P',),
         'transaction_methods': (),
         'bank_invest_exchanges': ()
@@ -44,6 +47,7 @@ BANKS_CONFIG = {
         'currencies': QIWI_CURRENCIES,
         'crypto_exchanges': ('Binance',),
         'binance_name': 'QIWI',
+        'bybit_name': '62',
         'payment_channels': ('P2P',),
         'transaction_methods': (),
         'bank_invest_exchanges': ()
@@ -53,6 +57,7 @@ BANKS_CONFIG = {
         'currencies': YOOMONEY_CURRENCIES,
         'crypto_exchanges': ('Binance',),
         'binance_name': 'YandexMoneyNew',
+        'bybit_name': '274',
         'payment_channels': ('P2P',),
         'transaction_methods': (),
         'bank_invest_exchanges': ()
@@ -62,6 +67,7 @@ BANKS_CONFIG = {
         'currencies': BOG_CURRENCIES,
         'crypto_exchanges': ('Binance',),
         'binance_name': 'BankofGeorgia',
+        'bybit_name': '11',
         'payment_channels': (
             'Card2CryptoExchange', 'P2P'
         ),
@@ -75,6 +81,7 @@ BANKS_CONFIG = {
         'currencies': TBC_CURRENCIES,
         'crypto_exchanges': ('Binance',),
         'binance_name': 'TBCbank',
+        'bybit_name': '165',
         'payment_channels': (
             'Card2CryptoExchange', 'P2P'
         ),
@@ -88,6 +95,7 @@ BANKS_CONFIG = {
         'currencies': CREDO_CURRENCIES,
         'crypto_exchanges': ('Binance',),
         'binance_name': 'CREDOBANK',
+        'bybit_name': '359',
         'payment_channels': (
             'Card2CryptoExchange', 'P2P'
         ),
@@ -101,6 +109,7 @@ BANKS_CONFIG = {
         'currencies': WISE_CURRENCIES,
         'crypto_exchanges': ('Binance',),
         'binance_name': 'Wise',
+        'bybit_name': '78',
         'payment_channels': (
             'Card2CryptoExchange', 'Card2Wallet2CryptoExchange', 'P2P'
         ),
