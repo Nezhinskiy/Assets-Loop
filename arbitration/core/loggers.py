@@ -101,25 +101,36 @@ class BaseLogger(ABC):
         else:
             message += (f'Has not been Created and updated: '
                         f'{self.count_updated_objects}. ')
-            self.logger.error(message)
-            return
         getattr(self.logger, self.loglevel_end)(message)
 
 
 class ParsingLogger(BaseLogger, ABC):
     """
     Logger for parsing operations.
+
+    Attributes:
+        loglevel_start (str): Log level for start.
+        loglevel_end (str): Log level for end.
+        connection_type(str): The type of the connection. Either Tor, Proxy
+            or Direct.
     """
-    connection_type: str
     loglevel_start: str = LOGLEVEL_PARSING_START
     loglevel_end: str = LOGLEVEL_PARSING_END
+    connection_type: str
 
     def __init__(self) -> None:
+        """
+        Initializes the ParsingLogger with connections_duration and
+        renew_connections_duration.
+        """
         super().__init__()
         self.connections_duration = 0
         self.renew_connections_duration = 0
 
     def __logger_connection_type(self) -> str:
+        """
+        Adds a message to the logger about the type of connection.
+        """
         return f'Connection type: {self.connection_type}. '
 
     def __logger_connections_duration(self) -> str:
@@ -156,6 +167,10 @@ class ParsingLogger(BaseLogger, ABC):
 class CalculatingLogger(BaseLogger, ABC):
     """
     Logger for calculating operations.
+
+    Attributes:
+        loglevel_start (str): Log level for start.
+        loglevel_end (str): Log level for end.
     """
     loglevel_start: str = LOGLEVEL_CALCULATING_START
     loglevel_end: str = LOGLEVEL_CALCULATING_END

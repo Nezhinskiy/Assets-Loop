@@ -18,7 +18,7 @@ from banks.models import (Banks, BanksExchangeRates, BanksExchangeRatesUpdates,
 from core.connection_types.direct import Direct
 from core.connection_types.proxy import Proxy
 from core.connection_types.tor import Tor
-from core.cookies import Cookie
+from core.cookie import Cookie
 from core.loggers import ParsingLogger
 from crypto_exchanges.models import (CryptoExchanges, CryptoExchangesRates,
                                      CryptoExchangesRatesUpdates,
@@ -29,16 +29,33 @@ from crypto_exchanges.models import (CryptoExchanges, CryptoExchangesRates,
 
 class BaseParser(ParsingLogger, ABC):
     """
-    Class for parsers that use the Tor network. Inherits from BaseParser and
-    ABC classes.
+    This is the base class for all parsers. BaseParser inherits from
+    ParsingLogger and is an abstract class. It allows you to make requests to
+    the API through the Tor network, Proxy or directly. Child classes can be
+    flexibly configured through its public interfaces.
 
     Attributes:
         endpoint (str):  API endpoint URL
         updated_fields (List[str]):  List of fields to update
         bank_name (str): Placeholder for the bank name
-        connection (Tor | Proxy | Direct): Tor or Proxy or Direct object for
-            making connection.
-        count_try (int): Current count of tries.
+        connection_type (str): The type of the connection. Either Tor, Proxy
+            or Direct.
+        request_method (str): The type of the request method. POST or GET.
+        need_cookies (bool): A boolean indicating if cookies are needed.
+        cookies_names (Tuple[str]): A tuple of cookie names.
+        cookie_spoiled (bool): A boolean indicating if the cookie is corrupted.
+        user_agent_spoiled (bool): A boolean indicating if the user agent is
+            corrupted.
+        headers (Dict[str, Any]): A dictionary containing the headers.
+        custom_user_agent (Tuple[str]): A tuple of custom user agent strings.
+        user_agent_browser (str): The browser to use for fake user agent.
+        waiting_time (int): The amount of time to wait.
+        fake_useragent (bool): A boolean indicating if a fake user agent is
+            needed.
+        content_type (str): The content type.
+        request_timeout (int): The request timeout.
+        connection_start_time (datetime): Time to start connecting to the API.
+
         LIMIT_TRY (int): Maximum number of tries to make a request.
         CURRENCY_PAIR: Representing the number of currencies to combine.
     """
@@ -58,7 +75,7 @@ class BaseParser(ParsingLogger, ABC):
     fake_useragent: bool = True
     content_type: str = 'application/json'
     request_timeout: int = None
-    tart_time_send_request: datetime
+    connection_start_time: datetime
     LIMIT_TRY: int = 3
     CURRENCY_PAIR: int = 2
 
@@ -78,6 +95,11 @@ class BaseParser(ParsingLogger, ABC):
         self.request_value = {}
 
     def __choose_connection_type(self) -> Union[Tor, Proxy, Direct]:
+        """
+        This private method creates an instance of the class to connect to the
+        request session via: Tor network or Proxy or Direct, depending on the
+        connection_type setting declared in the child class.
+        """
         self.connection_type.capitalize()
         if self.connection_type == 'Tor':
             return Tor()
@@ -88,6 +110,11 @@ class BaseParser(ParsingLogger, ABC):
         raise ValueError(f'Invalid connection type: {self.connection_type}')
 
     def __choose_request_method(self, body=None, params=None) -> str:
+        """
+        This private method returns the HTTP string name of the request,
+        depending on the request_method setting in the child class or the
+        passed body or params declared.
+        """
         if self.request_method is not None:
             return self.request_method
         if body is None:
@@ -98,6 +125,11 @@ class BaseParser(ParsingLogger, ABC):
             f'Invalid request method: body: {body}, params{params}')
 
     def __create_request_value(self, body: dict, params: dict) -> None:
+        """
+        This private method creates a dictionary of values, based on the passed
+        body or params, to be sent by the HTTP method via an instance of the
+        requests.sessions.Session class.
+        """
         self.request_value = {
             'timeout': self.request_timeout or self.connection.request_timeout
         }
@@ -107,24 +139,44 @@ class BaseParser(ParsingLogger, ABC):
             self.request_value['json'] = body
 
     def __create_cookies(self) -> None:
+        """
+        This private method creates an instance of the Cookie class and uses
+        its add_cookies_to_headers method to add them to the current request
+        headers. And marks cookies as relevant.
+        """
         Cookie(
             self.endpoint, self.connection.session, self.cookies_names
         ).add_cookies_to_headers()
         self.cookie_spoiled = False
 
-    def __start_request_handler(self, body=None, params=None) -> None:
+    def __give_more_tries_if_first_request(self) -> None:
+        """
+        This private method adds two additional retries for the first
+        connection to the API if the connection is made through the Tor network
+        or Proxy.
+        """
         if self.first_request and self.connection_type.upper() != 'Direct':
             self.count_try = -2
             self.first_request = False
         else:
             self.count_try = 0
+
+    def __start_request_handler(self, body=None, params=None) -> None:
+        """
+        This private method runs all the methods required before sending the
+        API request so as not to overload the _send_request method.
+        """
+        self.__give_more_tries_if_first_request()
         self._create_headers(body)
         self.__create_request_value(body, params)
-        self.start_time_send_request = datetime.now(timezone.utc)
+        self.connection_start_time = datetime.now(timezone.utc)
         if self.need_cookies and self.cookie_spoiled:
             self.__create_cookies()
 
     def __renew_connection(self, body: dict | None) -> None:
+        """
+        This private method runs all the necessary methods to renew connect.
+        """
         start_time_renew_connection = datetime.now(timezone.utc)
         self.connection.renew_connection()
         renew_connections_duration = (
@@ -167,9 +219,6 @@ class BaseParser(ParsingLogger, ABC):
             finally:
                 self._finally_response_handler()
             if response.status_code != HTTPStatus.OK:
-                mes = (
-                    f'url: {self.endpoint}, body: {body}, params: {params}, heders: {self.connection.session.headers}')
-                self.logger.error(mes)
                 self._negative_response_status_handler(response, body)
                 continue
             self._successful_response_handler()
@@ -223,7 +272,7 @@ class BaseParser(ParsingLogger, ABC):
         Records the time spent connecting to API.
         """
         connections_duration = (
-            datetime.now(timezone.utc) - self.start_time_send_request
+            datetime.now(timezone.utc) - self.connection_start_time
         ).seconds
         self.connections_duration += round(connections_duration, 2)
         time.sleep(self.waiting_time)
@@ -262,10 +311,10 @@ class BaseParser(ParsingLogger, ABC):
             raise Exception
 
 
-class CryptoParser(BaseParser, ABC):
+class BaseCryptoParser(BaseParser, ABC):
     """
-    This class is a subclass of BaseParser and ABC. It parses crypto
-    exchange data from API, creates the headers and gets the required assets.
+    This abstract class is a subclass of BaseParser. It extends the class
+    initialization required for all crypto-parsers.
 
     Attributes:
         crypto_exchange_name (str): Representing the name of the crypto
@@ -304,6 +353,7 @@ class BankParser(BaseParser, ABC):
             exchange rates.
         updated_fields (list): A list of strings representing the
             fields to update in the model.
+        request_method (str): The type of the request method.
         bank_name (str): Representing the name of the bank.
         buy_and_sell (bool): Indicating whether the API should return buy
             and sell data or not.
@@ -493,6 +543,7 @@ class BankInvestParser(BaseParser, ABC):
         model_update: The Django model to use for creating update objects.
         updated_fields (list): The fields to update when updating exchange
             rates data.
+        request_method (str): The type of the request method.
         currency_markets_name (str): The name of the currency market to use
             when creating or updating exchange rates data.
         link_ends (str): The string of link ends to use when constructing the
@@ -594,10 +645,10 @@ class BankInvestParser(BaseParser, ABC):
                 self._add_to_bulk_update_or_create(buy_or_sell_data)
 
 
-class P2PParser(CryptoParser, ABC):
+class P2PParser(BaseCryptoParser, ABC):
     """
-    This class is a subclass of the CryptoParser class and represents a parser
-    for peer-to-peer exchanges rates. It has the following attributes.
+    This class is a subclass of the BaseCryptoParser class and represents a
+    parser for peer-to-peer exchanges rates. It has the following attributes.
 
     Attributes:
         model: A Django model representing the exchange rates to be parsed.
@@ -605,6 +656,7 @@ class P2PParser(CryptoParser, ABC):
             the exchange rates.
         updated_fields (list): A list of fields to be updated in the model
             when new exchange rates are fetched.
+        request_method (str): The type of the request method.
         bank_name (str): Representing the name of the bank to be parsed.
         page (int): Representing the page number to be parsed.
         rows (int): Representing the number of rows to be parsed.
@@ -724,7 +776,7 @@ class P2PParser(CryptoParser, ABC):
                 )
 
 
-class CryptoExchangesParser(CryptoParser, ABC):
+class CryptoExchangesParser(BaseCryptoParser, ABC):
     """
     A base parser class for extracting intra-exchange cryptocurrency rates data
     from different cryptocurrency exchanges.
@@ -735,7 +787,12 @@ class CryptoExchangesParser(CryptoParser, ABC):
             the exchange rates.
         updated_fields (list): A list of fields to be updated in the model
             when new exchange rates are fetched.
+        request_method (str): The type of the request method.
         name_from (str): Representing the name of the params key.
+        base_spot_fee (float): The exchange's base commission for buying and
+            selling.
+        zero_fees (dict): Dictionary of our assets pairs in which the
+            commission is zero.
     """
     model = IntraCryptoExchangesRates
     model_update = IntraCryptoExchangesRatesUpdates
@@ -744,7 +801,7 @@ class CryptoExchangesParser(CryptoParser, ABC):
     exceptions: tuple = tuple()
     name_from: str
     base_spot_fee: float
-    zero_fees: dict
+    zero_fees: Dict[str, Tuple[str]]
 
     def __init__(self) -> None:
         super().__init__()
@@ -823,6 +880,10 @@ class CryptoExchangesParser(CryptoParser, ABC):
 
     def _calculates_spot_fee(self, from_asset: str, to_asset: str
                              ) -> int | float:
+        """
+        This method calculates the commission for the exchange within the
+        crypto exchange.
+        """
         from_asset_fee_list = self.zero_fees.get(from_asset)
         if from_asset_fee_list is not None:
             if to_asset in from_asset_fee_list:
@@ -893,9 +954,9 @@ class CryptoExchangesParser(CryptoParser, ABC):
                 self._add_to_bulk_update_or_create(value_dict, price)
 
 
-class ListsFiatCryptoParser(CryptoParser, ABC):
+class ListsFiatCryptoParser(BaseCryptoParser, ABC):
     """
-    This class is a subclass of CryptoParser abstract class. Represents a
+    This class is a subclass of BaseCryptoParser abstract class. Represents a
     parser for parsing exchange rates from a specific API. The exchange rates
     are related to the list of fiat and cryptocurrencies supported by a
     specific exchange.
@@ -906,6 +967,7 @@ class ListsFiatCryptoParser(CryptoParser, ABC):
             the exchange rates.
         updated_fields (list): A list of fields to be updated in the model
             when new exchange rates are fetched.
+        request_method (str): The type of the request method.
         endpoint_sell (str): the API endpoint for fetching the sell rates.
         endpoint_buy (str): the API endpoint for fetching the buy rates.
     """
@@ -1013,9 +1075,9 @@ class ListsFiatCryptoParser(CryptoParser, ABC):
         self._add_to_update_or_create(buy_dict, trade_type='BUY')
 
 
-class Card2CryptoExchangesParser(CryptoParser, ABC):
+class Card2CryptoExchangesParser(BaseCryptoParser, ABC):
     """
-    This class is derived from CryptoParser class and inherits all of its
+    This class is derived from BaseCryptoParser class and inherits all of its
     attributes and methods. The purpose of this class is to parse exchange
     rates from a Card to Crypto exchange.
 

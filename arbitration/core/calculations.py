@@ -991,24 +991,40 @@ class Card2Wallet2CryptoExchangesCalculating(BaseCalculating,
 
 
 class SimplInterExchangesCalculating(InterExchangesCalculating):
+    """
+    Child class of the InterExchangesCalculating class. To generate and
+    calculate all arbitrated chains of transactions in which there is no
+    intra-bank exchange and Russian banks stand at the end of the exchange.
+    """
     simpl: bool = True
     international: bool = False
 
 
-class SimplInternationalInterExchangesCalculating(
-    InterExchangesCalculating
-):
+class SimplInternationalInterExchangesCalculating(InterExchangesCalculating):
+    """
+    Child class of the InterExchangesCalculating class. To generate and
+    calculate all arbitrated chains of transactions in which there is no
+    intra-bank exchange and non-Russian banks stand at the end of the exchange.
+    """
     simpl: bool = True
     international: bool = True
 
 
 class ComplexInterExchangesCalculating(InterExchangesCalculating):
+    """
+    Child class of the InterExchangesCalculating class. To generate and
+    calculate all arbitrated chains of transactions in which there is an
+    intra-bank exchange and Russian banks are at the end of the exchange.
+    """
     simpl: bool = False
     international: bool = False
 
 
-class ComplexInternationalInterExchangesCalculating(
-    InterExchangesCalculating
-):
+class ComplexInternationalInterExchangesCalculating(InterExchangesCalculating):
+    """
+    Child class of the InterExchangesCalculating class. To generate and
+    calculate all arbitrated chains of transactions in which there is an
+    intra-bank exchange and non-Russian banks are at the end of the exchange.
+    """
     simpl: bool = False
     international: bool = True

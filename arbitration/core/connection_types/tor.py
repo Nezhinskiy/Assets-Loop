@@ -14,6 +14,7 @@ class Tor:
     request session with the proxy.
 
     Attributes:
+        request_timeout (int): The timeout value for HTTP requests.
         TOR_HOSTNAME (str): Hostname docker container Tor.
     """
     request_timeout: int = 15
@@ -24,7 +25,7 @@ class Tor:
         Initializes the Tor class by setting the container IP address and
         creating a new Tor session.
         """
-        log.get_logger().propagate = False
+        log.get_logger().propagate = False  # Disable Tor's redundant logging.
         self.container_ip: str = self.__get_tor_ip()
         self.session: requests.sessions.Session = self.__set_tor_session()
 
