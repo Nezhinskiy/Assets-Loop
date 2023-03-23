@@ -23,7 +23,7 @@ class WiseParser(BankParser):
     # custom_settings
     source_amount: int = 10000
     profile_country: str = 'RU'
-    connection_type: str = 'Tor'
+    connection_type: str = 'Proxy'
     need_cookies: bool = False
 
     def _create_params(self, fiats_combinations):
