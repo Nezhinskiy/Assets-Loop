@@ -4,6 +4,7 @@ import random
 import sys
 from datetime import timedelta, timezone
 from pathlib import Path
+from typing import List
 
 from celery.schedules import crontab
 from django.core.management.utils import get_random_secret_key
@@ -201,12 +202,15 @@ INTER_EXCHANGES_OBSOLETE_IN_MINUTES: int = 15  # The time in minutes since the l
 INTER_EXCHANGES_BEGIN_OBSOLETE_MINUTES: int = 2  # The time in minutes since the last update, after which the inter-exchange exchange becomes obsolete and is displayed on the page in gray.
 ALLOWED_PERCENTAGE: int = int(os.getenv('ALLOWED_PERCENTAGE', '0'))  # The maximum margin percentage above which data is considered invalid. (Due to an error in the crypto exchange data)
 MINIMUM_PERCENTAGE: int = -5
+COUNTRIES_NEAR_SERVER: List[str] = os.getenv('COUNTRIES_NEAR_SERVER', '0').split()
 
 # Update frequency
 UPDATE_RATE: tuple[int] = tuple(map(int, os.getenv('UPDATE_RATE', '0').replace(',', '').split()))  # Update frequency schedule.
 P2P_BINANCE_UPDATE_FREQUENCY: int = int(os.getenv('P2P_BINANCE_UPDATE_FREQUENCY', '0'))
+P2P_BYBIT_UPDATE_FREQUENCY: int = int(os.getenv('P2P_BYBIT_UPDATE_FREQUENCY', '0'))
 INTERNAL_BANKS_UPDATE_FREQUENCY: int = int(os.getenv('INTERNAL_BANKS_UPDATE_FREQUENCY', '0'))
 EXCHANGES_BINANCE_UPDATE_FREQUENCY: int = int(os.getenv('EXCHANGES_BINANCE_UPDATE_FREQUENCY', '0'))
+EXCHANGES_BYBIT_UPDATE_FREQUENCY: int = int(os.getenv('EXCHANGES_BYBIT_UPDATE_FREQUENCY', '0'))
 CARD_2_CRYPTO_BINANCE_UPDATE_FREQUENCY: int = int(os.getenv('CARD_2_CRYPTO_BINANCE_UPDATE_FREQUENCY', '0'))
 
 
@@ -227,11 +231,13 @@ LOGLEVEL_CALCULATING_END: str = os.getenv('LOGLEVEL_CALCULATING_END', '')
 
 # Endpoints
 API_P2P_BINANCE: str = os.getenv('API_P2P_BINANCE', '')
+API_P2P_BYBIT: str = os.getenv('API_P2P_BYBIT', '')
 API_BINANCE_CARD_2_CRYPTO_SELL: str = os.getenv('API_BINANCE_CARD_2_CRYPTO_SELL', '')
 API_BINANCE_CARD_2_CRYPTO_BUY: str = os.getenv('API_BINANCE_CARD_2_CRYPTO_BUY', '')
 API_BINANCE_LIST_FIAT_SELL: str = os.getenv('API_BINANCE_LIST_FIAT_SELL', '')
 API_BINANCE_LIST_FIAT_BUY: str = os.getenv('API_BINANCE_LIST_FIAT_BUY', '')
 API_BINANCE_CRYPTO: str = os.getenv('API_BINANCE_CRYPTO', '')
+API_BYBIT_CRYPTO: str = os.getenv('API_BYBIT_CRYPTO', '')
 API_WISE: str = os.getenv('API_WISE', '')
 API_RAIFFEISEN: str = os.getenv('API_RAIFFEISEN', '')
 API_TINKOFF: str = os.getenv('API_TINKOFF', '')
@@ -275,55 +281,56 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': timedelta(seconds=random.randint(45, 50)),
         'options': {'queue': 'calculating'}
     },
-    'get_simpl_binance_inter_exchanges_calculating': {
-        'task': 'crypto_exchanges.tasks.get_simpl_binance_inter_exchanges_calculating',
+    'get_simpl_inter_exchanges_calculating': {
+        'task': 'core.tasks.get_simpl_inter_exchanges_calculating',
         'schedule': timedelta(seconds=random.randint(20, 25)),
         'options': {'queue': 'calculating'},
         'args': (False,),
     },
-    'get_simpl_binance_international_inter_exchanges_calculating': {
-        'task': 'crypto_exchanges.tasks.get_simpl_binance_international_inter_exchanges_calculating',
+    'get_simpl_international_inter_exchanges_calculating': {
+        'task': 'core.tasks.get_simpl_international_inter_exchanges_calculating',
         'schedule': timedelta(seconds=random.randint(20, 25)),
         'options': {'queue': 'calculating'},
         'args': (False,),
     },
-    'get_complex_binance_inter_exchanges_calculating': {
-        'task': 'crypto_exchanges.tasks.get_complex_binance_inter_exchanges_calculating',
+    'get_complex_inter_exchanges_calculating': {
+        'task': 'core.tasks.get_complex_inter_exchanges_calculating',
         'schedule': timedelta(seconds=random.randint(30, 35)),
         'options': {'queue': 'calculating'},
         'args': (False,),
     },
-    'get_complex_binance_international_inter_exchanges_calculating': {
-        'task': 'crypto_exchanges.tasks.get_complex_binance_international_inter_exchanges_calculating',
+    'get_complex_international_inter_exchanges_calculating': {
+        'task': 'core.tasks.get_complex_international_inter_exchanges_calculating',
         'schedule': timedelta(seconds=random.randint(30, 35)),
         'options': {'queue': 'calculating'},
         'args': (False,),
     },
-    'get_simpl_full_update_binance_inter_exchanges_calculating': {
-        'task': 'crypto_exchanges.tasks.get_simpl_binance_inter_exchanges_calculating',
+    'get_simpl_full_update_inter_exchanges_calculating': {
+        'task': 'core.tasks.get_simpl_inter_exchanges_calculating',
         'schedule': timedelta(minutes=random.randint(15, 20)),
         'options': {'queue': 'calculating'},
         'args': (True,),
     },
-    'get_simpl_full_update_binance_international_inter_exchanges_calculating': {
-        'task': 'crypto_exchanges.tasks.get_simpl_binance_international_inter_exchanges_calculating',
+    'get_simpl_full_update_international_inter_exchanges_calculating': {
+        'task': 'core.tasks.get_simpl_international_inter_exchanges_calculating',
         'schedule': timedelta(minutes=random.randint(15, 20)),
         'options': {'queue': 'calculating'},
         'args': (True,),
     },
-    'get_complex_full_update_binance_inter_exchanges_calculating': {
-        'task': 'crypto_exchanges.tasks.get_complex_binance_inter_exchanges_calculating',
+    'get_complex_full_update_inter_exchanges_calculating': {
+        'task': 'core.tasks.get_complex_inter_exchanges_calculating',
         'schedule': timedelta(minutes=random.randint(20, 25)),
         'options': {'queue': 'calculating'},
         'args': (True,),
     },
-    'get_complex_full_update_binance_international_inter_exchanges_calculating': {
-        'task': 'crypto_exchanges.tasks.get_complex_binance_international_inter_exchanges_calculating',
+    'get_complex_full_update_international_inter_exchanges_calculating': {
+        'task': 'core.tasks.get_complex_international_inter_exchanges_calculating',
         'schedule': timedelta(minutes=random.randint(20, 25)),
         'options': {'queue': 'calculating'},
         'args': (True,),
     },
 }
+
 # Tell select2 which cache configuration to use:
 
 CACHES = {
