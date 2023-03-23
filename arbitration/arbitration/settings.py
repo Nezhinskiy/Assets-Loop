@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'crypto_exchanges',
     'banks',
     'core',
+    'parsers',
 ]
 
 MIDDLEWARE = [

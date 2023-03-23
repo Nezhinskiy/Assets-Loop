@@ -12,11 +12,11 @@ from arbitration.settings import (ALLOWED_PERCENTAGE, BASE_ASSET,
                                   INTER_EXCHANGES_BEGIN_OBSOLETE_MINUTES,
                                   MINIMUM_PERCENTAGE)
 from banks.models import Banks, BanksExchangeRates
-from core.loggers import CalculatingLogger
 from crypto_exchanges.models import (CryptoExchanges, CryptoExchangesRates,
                                      CryptoExchangesRatesUpdates,
                                      InterExchanges, InterExchangesUpdates,
                                      IntraCryptoExchangesRates)
+from parsers.loggers import CalculatingLogger
 
 
 class BaseCalculating(ABC):

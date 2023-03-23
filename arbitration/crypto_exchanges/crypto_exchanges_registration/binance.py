@@ -10,9 +10,9 @@ from arbitration.settings import (API_BINANCE_CARD_2_CRYPTO_BUY,
                                   API_BINANCE_CRYPTO,
                                   API_BINANCE_LIST_FIAT_BUY,
                                   API_BINANCE_LIST_FIAT_SELL, API_P2P_BINANCE)
-from core.calculations import Card2Wallet2CryptoExchangesCalculating
-from core.parsers import (Card2CryptoExchangesParser, CryptoExchangesParser,
-                          ListsFiatCryptoParser, P2PParser)
+from parsers.calculations import Card2Wallet2CryptoExchangesCalculating
+from parsers.parsers import (Card2CryptoExchangesParser, CryptoExchangesParser,
+                             ListsFiatCryptoParser, P2PParser)
 
 CRYPTO_EXCHANGES_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 

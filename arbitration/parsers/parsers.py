@@ -15,16 +15,16 @@ from fake_useragent import UserAgent
 from arbitration.settings import DATA_OBSOLETE_IN_MINUTES
 from banks.models import (Banks, BanksExchangeRates, BanksExchangeRatesUpdates,
                           CurrencyMarkets)
-from core.connection_types.direct import Direct
-from core.connection_types.proxy import Proxy
-from core.connection_types.tor import Tor
-from core.cookie import Cookie
-from core.loggers import ParsingLogger
 from crypto_exchanges.models import (CryptoExchanges, CryptoExchangesRates,
                                      CryptoExchangesRatesUpdates,
                                      IntraCryptoExchangesRates,
                                      IntraCryptoExchangesRatesUpdates,
                                      ListsFiatCrypto, ListsFiatCryptoUpdates)
+from parsers.connection_types.direct import Direct
+from parsers.connection_types.proxy import Proxy
+from parsers.connection_types.tor import Tor
+from parsers.cookie import Cookie
+from parsers.loggers import ParsingLogger
 
 
 class BaseParser(ParsingLogger, ABC):

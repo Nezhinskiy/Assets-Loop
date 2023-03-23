@@ -4,7 +4,7 @@ from typing import Tuple
 
 from arbitration.settings import API_BYBIT_CRYPTO, API_P2P_BYBIT
 from banks.models import BanksExchangeRates
-from core.parsers import CryptoExchangesParser, P2PParser
+from parsers.parsers import CryptoExchangesParser, P2PParser
 
 CRYPTO_EXCHANGES_NAME = os.path.basename(__file__).split('.')[0].capitalize()
 

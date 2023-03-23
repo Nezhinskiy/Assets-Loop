@@ -5,7 +5,7 @@ import pytz
 from _decimal import Decimal
 
 from arbitration.settings import API_TINKOFF_INVEST
-from core.parsers import BankInvestParser
+from parsers.parsers import BankInvestParser
 
 CURRENCY_MARKET_NAME = (
     os.path.basename(__file__).split('.')[0].capitalize().replace('_', ' '))

@@ -27,10 +27,6 @@ from banks.tasks import (get_bog_p2p_binance_exchanges,
                          parse_internal_raiffeisen_rates,
                          parse_internal_tinkoff_rates,
                          parse_internal_wise_rates)
-from core.calculations import (ComplexInterExchangesCalculating,
-                               ComplexInternationalInterExchangesCalculating,
-                               SimplInterExchangesCalculating,
-                               SimplInternationalInterExchangesCalculating)
 from core.models import InfoLoop
 from core.registration import all_registration
 from crypto_exchanges.models import InterExchangesUpdates
@@ -39,6 +35,11 @@ from crypto_exchanges.tasks import (get_all_binance_crypto_exchanges,
                                     get_binance_card_2_crypto_exchanges_buy,
                                     get_binance_card_2_crypto_exchanges_sell,
                                     get_start_binance_fiat_crypto_list)
+from parsers.calculations import (
+    ComplexInterExchangesCalculating,
+    ComplexInternationalInterExchangesCalculating,
+    SimplInterExchangesCalculating,
+    SimplInternationalInterExchangesCalculating)
 
 logger = logging.getLogger(__name__)
 
