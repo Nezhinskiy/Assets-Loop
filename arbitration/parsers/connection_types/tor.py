@@ -17,7 +17,7 @@ class Tor:
         request_timeout (int): The timeout value for HTTP requests.
         TOR_HOSTNAME (str): Hostname docker container Tor.
     """
-    request_timeout: int = 15
+    request_timeout: int = 40
     TOR_HOSTNAME: str = 'tor_proxy'
 
     def __init__(self) -> None:
