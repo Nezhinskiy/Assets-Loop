@@ -17,10 +17,9 @@ class TinkoffCurrencyMarketParser(BankInvestParser):
     link_ends = ('USDRUB', 'EURRUB')
     # 'GBPRUB', 'HKDRUB', 'TRYRUB', 'KZTRUB_TOM', 'BYNRUB_TOM', 'AMDRUB_TOM',
     # 'CHFRUB', 'JPYRUB',
-    connection_type: str = 'Direct'
+    connection_type: str = 'Tor'
     need_cookies: bool = False
-    waiting_time: int = 5
-    fake_useragent: bool = False
+    fake_useragent: bool = True
     LIMIT_TRY: int = 6
 
     @staticmethod

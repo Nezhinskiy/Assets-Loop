@@ -218,13 +218,23 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
         This method checks if there are errors in the crypto asset transaction
         chain, if so, returns True and creates a log entry about it.
         """
+        message = (
+            f'{self.__class__.__name__}, input bank: {self.bank_name}, '
+            f'output bank: {output_crypto_exchange.bank.name}, crypto '
+            f'exchange: {input_crypto_exchange.crypto_exchange.name}. '
+        )
         if interim_exchange is None and interim_second_exchange is None:
             if input_crypto_exchange.asset != output_crypto_exchange.asset:
-                self.logger.error('Invalid asset chain without interim '
-                                  'exchange.')
+                message += (
+                    f'Invalid asset chain without interim exchange. '
+                    f'input crypto exchange asset: '
+                    f'{input_crypto_exchange.asset}, output crypto exchange '
+                    f'asset: {output_crypto_exchange.asset}'
+                )
+                self.logger.error(message)
                 return True
         elif interim_second_exchange is None:
-            message = 'Invalid asset chain with one interim exchange. '
+            message += 'Invalid asset chain with one interim exchange. '
             if input_crypto_exchange.asset != interim_exchange.from_asset:
                 message += (
                     f'input_crypto_exchange.asset: '
@@ -242,7 +252,7 @@ class InterExchangesCalculating(BaseCalculating, CalculatingLogger, ABC):
                 self.logger.error(message)
                 return True
         else:
-            message = 'Invalid asset chain with two interim exchanges. '
+            message += 'Invalid asset chain with two interim exchanges. '
             if input_crypto_exchange.asset != interim_exchange.from_asset:
                 message += (
                     f'input_crypto_exchange.asset: '

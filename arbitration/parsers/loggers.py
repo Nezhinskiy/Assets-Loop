@@ -171,15 +171,24 @@ class CalculatingLogger(BaseLogger, ABC):
     Attributes:
         loglevel_start (str): Log level for start.
         loglevel_end (str): Log level for end.
+        simpl (bool): Determines whether the calculations will be simple or
+            complex.
+        international (bool): Specifies the list of output banks, only
+            international or only local.
     """
     loglevel_start: str = LOGLEVEL_CALCULATING_START
     loglevel_end: str = LOGLEVEL_CALCULATING_END
+    simpl: bool
+    international: bool
 
     def _logger_queue_overflowing(self):
         """
         Logs a message for a skipped task due to queue overflow.
         """
-        message = (f'The task was skipped due to the accumulation of '
-                   f'identical tasks in the queue. '
-                   f'{self.__class__.__name__}, Bank name: {self.bank_name}.')
+        message = (
+            f'The task was skipped due to the accumulation of identical tasks '
+            f'in the queue. {self.__class__.__name__}, Bank name: '
+            f'{self.bank_name}. simpl: {self.simpl}, international: '
+            f'{self.international}. '
+        )
         self.logger.error(message)

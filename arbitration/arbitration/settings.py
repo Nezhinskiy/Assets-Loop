@@ -269,7 +269,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'parse_currency_market_tinkoff_rates': {
         'task': 'banks.tasks.parse_currency_market_tinkoff_rates',
-        'schedule': crontab(minute='*/2', hour='4-15', day_of_week='1-5'),
+        'schedule': crontab(minute='*/3', hour='4-15', day_of_week='1-5'),
         'options': {'queue': 'parsing'}
     },
     'get_all_card_2_wallet_2_crypto_exchanges_buy': {
@@ -308,25 +308,25 @@ CELERY_BEAT_SCHEDULE = {
     },
     'get_simpl_full_update_inter_exchanges_calculating': {
         'task': 'core.tasks.get_simpl_inter_exchanges_calculating',
-        'schedule': timedelta(minutes=random.randint(15, 20)),
+        'schedule': timedelta(minutes=random.randint(10, 15)),
         'options': {'queue': 'calculating'},
         'args': (True,),
     },
     'get_simpl_full_update_international_inter_exchanges_calculating': {
         'task': 'core.tasks.get_simpl_international_inter_exchanges_calculating',
-        'schedule': timedelta(minutes=random.randint(15, 20)),
+        'schedule': timedelta(minutes=random.randint(10, 15)),
         'options': {'queue': 'calculating'},
         'args': (True,),
     },
     'get_complex_full_update_inter_exchanges_calculating': {
         'task': 'core.tasks.get_complex_inter_exchanges_calculating',
-        'schedule': timedelta(minutes=random.randint(20, 25)),
+        'schedule': timedelta(minutes=random.randint(15, 20)),
         'options': {'queue': 'calculating'},
         'args': (True,),
     },
     'get_complex_full_update_international_inter_exchanges_calculating': {
         'task': 'core.tasks.get_complex_international_inter_exchanges_calculating',
-        'schedule': timedelta(minutes=random.randint(20, 25)),
+        'schedule': timedelta(minutes=random.randint(15, 20)),
         'options': {'queue': 'calculating'},
         'args': (True,),
     },
