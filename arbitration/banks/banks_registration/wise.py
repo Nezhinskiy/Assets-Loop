@@ -1,6 +1,6 @@
 import os
 
-from arbitration.settings import API_WISE
+from arbitration.settings import API_WISE, CONNECTION_TYPE_WISE
 from crypto_exchanges.crypto_exchanges_registration.binance import (
     BinanceP2PParser)
 from crypto_exchanges.crypto_exchanges_registration.bybit import BybitP2PParser
@@ -23,7 +23,7 @@ class WiseParser(BankParser):
     # custom_settings
     source_amount: int = 10000
     profile_country: str = 'RU'
-    connection_type: str = 'Proxy'
+    connection_type: str = CONNECTION_TYPE_WISE
     need_cookies: bool = False
 
     def _create_params(self, fiats_combinations):

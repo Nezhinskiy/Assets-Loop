@@ -4,7 +4,8 @@ from datetime import datetime, time
 import pytz
 from _decimal import Decimal
 
-from arbitration.settings import API_TINKOFF_INVEST
+from arbitration.settings import (API_TINKOFF_INVEST,
+                                  CONNECTION_TYPE_TINKOFF_INVEST)
 from parsers.parsers import BankInvestParser
 
 CURRENCY_MARKET_NAME = (
@@ -17,9 +18,9 @@ class TinkoffCurrencyMarketParser(BankInvestParser):
     link_ends = ('USDRUB', 'EURRUB')
     # 'GBPRUB', 'HKDRUB', 'TRYRUB', 'KZTRUB_TOM', 'BYNRUB_TOM', 'AMDRUB_TOM',
     # 'CHFRUB', 'JPYRUB',
-    connection_type: str = 'Tor'
+    connection_type: str = CONNECTION_TYPE_TINKOFF_INVEST
     need_cookies: bool = False
-    fake_useragent: bool = True
+    fake_useragent: bool = False
     LIMIT_TRY: int = 6
 
     @staticmethod

@@ -1,3 +1,5 @@
+import time
+
 import requests
 
 
@@ -8,7 +10,7 @@ class Direct:
     Attributes:
         request_timeout (int): The timeout value for HTTP requests.
     """
-    request_timeout: int = 2
+    request_timeout: int = 5
 
     def __init__(self) -> None:
         """
@@ -28,4 +30,4 @@ class Direct:
         """
         Placeholder method that will be used to renew the HTTP connection.
         """
-        pass
+        time.sleep(2)

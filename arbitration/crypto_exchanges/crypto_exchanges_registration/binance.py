@@ -9,7 +9,11 @@ from arbitration.settings import (API_BINANCE_CARD_2_CRYPTO_BUY,
                                   API_BINANCE_CARD_2_CRYPTO_SELL,
                                   API_BINANCE_CRYPTO,
                                   API_BINANCE_LIST_FIAT_BUY,
-                                  API_BINANCE_LIST_FIAT_SELL, API_P2P_BINANCE)
+                                  API_BINANCE_LIST_FIAT_SELL, API_P2P_BINANCE,
+                                  CONNECTION_TYPE_BINANCE_CARD_2_CRYPTO,
+                                  CONNECTION_TYPE_BINANCE_CRYPTO,
+                                  CONNECTION_TYPE_BINANCE_LIST_FIAT,
+                                  CONNECTION_TYPE_P2P_BINANCE)
 from parsers.calculations import Card2Wallet2CryptoExchangesCalculating
 from parsers.parsers import (Card2CryptoExchangesParser, CryptoExchangesParser,
                              ListsFiatCryptoParser, P2PParser)
@@ -58,7 +62,7 @@ BINANCE_SPOT_ZERO_FEES = {
 class BinanceP2PParser(P2PParser, ABC):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
     endpoint: str = API_P2P_BINANCE
-    connection_type: str = 'Proxy'
+    connection_type: str = CONNECTION_TYPE_P2P_BINANCE
     need_cookies: bool = False
     page: int = 1
     rows: int = 1
@@ -95,7 +99,7 @@ class BinanceP2PParser(P2PParser, ABC):
 class BinanceCryptoParser(CryptoExchangesParser):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
     endpoint: str = API_BINANCE_CRYPTO
-    connection_type: str = 'Direct'
+    connection_type: str = CONNECTION_TYPE_BINANCE_CRYPTO
     need_cookies: bool = False
     fake_useragent: bool = False
     exceptions: tuple = ('SHIBRUB', 'RUBSHIB', 'SHIBGBP', 'GBPSHIB')
@@ -137,7 +141,7 @@ class BinanceCard2CryptoExchangesParser(Card2CryptoExchangesParser):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
     endpoint_sell: str = API_BINANCE_CARD_2_CRYPTO_SELL
     endpoint_buy: str = API_BINANCE_CARD_2_CRYPTO_BUY
-    connection_type: str = 'Proxy'
+    connection_type: str = CONNECTION_TYPE_BINANCE_CARD_2_CRYPTO
     need_cookies: bool = False
 
     @staticmethod
@@ -198,10 +202,8 @@ class BinanceListsFiatCryptoParser(ListsFiatCryptoParser):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
     endpoint_sell: str = API_BINANCE_LIST_FIAT_SELL
     endpoint_buy: str = API_BINANCE_LIST_FIAT_BUY
-    connection_type: str = 'Direct'
+    connection_type: str = CONNECTION_TYPE_BINANCE_LIST_FIAT
     need_cookies: bool = False
-    waiting_time: int = 5
-    fake_useragent: bool = False
 
     @staticmethod
     def _create_body_sell(asset: str) -> dict:

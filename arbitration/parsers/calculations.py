@@ -920,8 +920,6 @@ class Card2Wallet2CryptoExchangesCalculating(BaseCalculating,
                 payment_channel=self.payment_channel
             )
             if self.__check_p2p_exchange_is_better(value_dict, price, bank):
-                if target_object.exists():
-                    target_object.delete()
                 return
             if target_object.exists():
                 updated_object = target_object.get()

@@ -201,7 +201,8 @@ class BaseParser(ParsingLogger, ABC):
         """
         self.count_updated_objects = len(self.records_to_update)
 
-    def _send_request(self, body=None, params=None) -> dict | bool:
+    def _send_request(self, body=None, params=None, link_end=''
+                      ) -> dict | bool:
         """
         Sends request with any methods to the specified API endpoint and
         returns the response or False.
@@ -212,7 +213,7 @@ class BaseParser(ParsingLogger, ABC):
                 response = getattr(
                     self.connection.session,
                     self.__choose_request_method(body=body, params=params)
-                )(self.endpoint, **self.request_value)
+                )(self.endpoint + link_end, **self.request_value)
             except Exception as error:
                 self._unsuccessful_response_handler(error, body)
                 continue
@@ -569,8 +570,7 @@ class BankInvestParser(BaseParser, ABC):
         Makes a GET request to the Bank Invest API and returns the response
         data as a dictionary.
         """
-        self.endpoint = self.endpoint + link_end
-        return self._send_request()
+        return self._send_request(link_end=link_end)
 
     @staticmethod
     @abstractmethod
@@ -1214,8 +1214,6 @@ class Card2CryptoExchangesParser(BaseCryptoParser, ABC):
                 payment_channel=self.payment_channel
             )
             if self.__check_p2p_exchange_is_better(asset, fiat, price, bank):
-                if target_object.exists():
-                    target_object.delete()
                 return
             if target_object.exists():
                 updated_object = target_object.get()

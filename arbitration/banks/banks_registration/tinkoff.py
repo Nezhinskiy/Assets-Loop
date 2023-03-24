@@ -1,6 +1,6 @@
 import os
 
-from arbitration.settings import API_TINKOFF
+from arbitration.settings import API_TINKOFF, CONNECTION_TYPE_TINKOFF
 from crypto_exchanges.crypto_exchanges_registration.binance import (
     BinanceP2PParser)
 from crypto_exchanges.crypto_exchanges_registration.bybit import BybitP2PParser
@@ -20,7 +20,7 @@ class TinkoffParser(BankParser):
     buy_and_sell: bool = True
     name_from: str = 'from'
     name_to: str = 'to'
-    connection_type: str = 'Tor'
+    connection_type: str = CONNECTION_TYPE_TINKOFF
     need_cookies: bool = False
 
     def _create_params(self, fiats_combinations):

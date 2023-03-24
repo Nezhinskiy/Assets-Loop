@@ -2,7 +2,9 @@ import os
 from abc import ABC
 from typing import Tuple
 
-from arbitration.settings import API_BYBIT_CRYPTO, API_P2P_BYBIT
+from arbitration.settings import (API_BYBIT_CRYPTO, API_P2P_BYBIT,
+                                  CONNECTION_TYPE_BYBIT_CRYPTO,
+                                  CONNECTION_TYPE_P2P_BYBIT)
 from banks.models import BanksExchangeRates
 from parsers.parsers import CryptoExchangesParser, P2PParser
 
@@ -30,7 +32,7 @@ class BybitP2PParser(P2PParser, ABC):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
     endpoint: str = API_P2P_BYBIT
     user_agent_browser: str = 'safari'
-    connection_type: str = 'Proxy'
+    connection_type: str = CONNECTION_TYPE_P2P_BYBIT
     need_cookies: bool = True
     cookies_names: Tuple[str] = None
     page: int = 1
@@ -90,7 +92,7 @@ class BybitP2PParser(P2PParser, ABC):
 class BybitCryptoParser(CryptoExchangesParser):
     crypto_exchange_name: str = CRYPTO_EXCHANGES_NAME
     endpoint: str = API_BYBIT_CRYPTO
-    connection_type: str = 'Direct'
+    connection_type: str = CONNECTION_TYPE_BYBIT_CRYPTO
     need_cookies: bool = False
     fake_useragent: bool = False
     name_from: str = 'symbol'

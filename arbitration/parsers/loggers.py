@@ -180,6 +180,7 @@ class CalculatingLogger(BaseLogger, ABC):
     loglevel_end: str = LOGLEVEL_CALCULATING_END
     simpl: bool
     international: bool
+    full_update: bool
 
     def _logger_queue_overflowing(self):
         """
@@ -189,6 +190,6 @@ class CalculatingLogger(BaseLogger, ABC):
             f'The task was skipped due to the accumulation of identical tasks '
             f'in the queue. {self.__class__.__name__}, Bank name: '
             f'{self.bank_name}. simpl: {self.simpl}, international: '
-            f'{self.international}. '
+            f'{self.international}, full_update: {self.full_update}. '
         )
         self.logger.error(message)

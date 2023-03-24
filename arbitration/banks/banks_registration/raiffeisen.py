@@ -1,7 +1,7 @@
 import os
 from typing import Any, Dict, List, Optional
 
-from arbitration.settings import API_RAIFFEISEN
+from arbitration.settings import API_RAIFFEISEN, CONNECTION_TYPE_RAIFFEISEN
 from crypto_exchanges.crypto_exchanges_registration.binance import (
     BinanceP2PParser)
 from crypto_exchanges.crypto_exchanges_registration.bybit import BybitP2PParser
@@ -18,7 +18,7 @@ class RaiffeisenParser(BankParser):
     bank_name: str = BANK_NAME
     endpoint: str = API_RAIFFEISEN
     all_values: bool = True
-    connection_type: str = 'Proxy'
+    connection_type: str = CONNECTION_TYPE_RAIFFEISEN
     need_cookies: bool = False
     LIMIT_TRY: int = 6
 
