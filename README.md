@@ -1,41 +1,79 @@
-# Assets-Loop - Arbitration Web Application Project
+# Assets-Loop - https://assetsloop.com
 
 ![example workflow](https://github.com/Nezhinskiy/Assets-Loop/actions/workflows/arbitration_workflow.yml/badge.svg)
 
-https://assetsloop.com
+## Structure:
+<pre>
+.
+├── <a href=".github/workflows">.github/workflows</a> ─ Workflow for Git Actions CI
+├── <a href="arbitration">arbitration</a> ─ Django project
+│   ├── <a href="arbitration/arbitration">arbitration</a> ─ Django settings module
+│   ├── <a href="arbitration/banks">banks</a> ─ Banks & Currency Markets creation module
+│   ├── <a href="arbitration/core">core</a> ─ View module
+│   ├── <a href="arbitration/crypto_exchanges">crypto_exchanges</a> ─ Crypto Exchanges creation module
+│   ├── <a href="arbitration/parsers">parsers</a> ─ <b>Business logic module</b>
+│   ├── <a href="arbitration/static">static</a> ─ css, javascript, favicon
+│   └── <a href="arbitration/templates">templates</a> ─ HTML pages
+└── <a href="infra">infra</a> ─ Project infrastructure setup
+</pre>
 
 ## Description:
-Assets Loop is a free open-source web application (built with Python + JavaScript) designed to assist in trading across cryptocurrency exchanges, forex markets, and banks using an arbitrage strategy. It is intended to search for all possible transaction chains and display them on the website's homepage. Currency exchange rates are continuously and concurrently parsed through a network of open and closed APIs using Tor network, proxys and direct, ensuring the rates are always up-to-date.
-### Supported Crypto Exchanges:
-- [X] [Binance](https://www.binance.com/)
-- [X] [Bybit](https://www.bybit.com/)
+Assets Loop is a free Open Source web application (built with Python + JavaScript) designed to assist in trading across cryptocurrency exchanges, forex markets, and banks using an arbitrage strategy. It is intended to search for all possible transaction chains and display them on the website's homepage. Currency exchange rates are continuously and concurrently parsed through a network of open and closed APIs using Tor network, proxys and direct, ensuring the rates are always up-to-date.
+<div>
+  <h3>Supported Crypto Exchanges:</h3>
+  <ul>
+    <li><input type="checkbox" checked disabled> <a href="https://www.binance.com/">Binance</a></li>
+    <li><input type="checkbox" checked disabled> <a href="https://www.bybit.com/">Bybit</a></li>
+  </ul>
+  <h4>Crypto Exchanges supported input/output methods between crypto assets and fiat currencies:</h4>
+  <div style="display:flex">
+    <div style="flex:1">
+      <h4>Binance:</h4>
+      <ul>
+        <li><input type="checkbox" checked disabled> <a href="https://p2p.binance.com/">P2P</a></li>
+        <li><input type="checkbox" checked disabled> <a href="https://www.binance.com/ru/buy-sell-crypto/">Card2CryptoExchange</a></li>
+        <li><input type="checkbox" checked disabled> <a href="https://www.binance.com/ru/fiat/deposit/">Card2Wallet2CryptoExchange</a></li>
+      </ul>
+    </div>
+    <div style="flex:1">
+      <h4>Bybit:</h4>
+      <ul>
+        <li><input type="checkbox" checked disabled> <a href="https://www.bybit.com/fiat/trade/otc/">P2P</a></li>
+        <li><input type="checkbox" disabled> <a href="https://www.bybit.com/fiat/trade/express/home/">Card2CryptoExchange</a></li>
+        <li><input type="checkbox" disabled> <a href="https://www.bybit.com/fiat/trade/deposit/home/">Card2Wallet2CryptoExchange</a></li>
+      </ul>
+    </div>
+  </div>
 
-#### Binance-supported input/output methods between crypto assets and fiat currencies:
-- [X] [P2P](https://p2p.binance.com/)
-- [X] [Card2CryptoExchange](https://www.binance.com/ru/buy-sell-crypto/)
-- [X] [Card2Wallet2CryptoExchange](https://www.binance.com/ru/fiat/deposit/)
-
-#### Bybit-supported input/output methods between crypto assets and fiat currencies:
-- [X] [P2P](https://www.bybit.com/fiat/trade/otc/)
-
-### Supported Banks:
-- [X] [Wise](https://wise.com/)
-- [X] [Bank of Georgia](https://bankofgeorgia.ge/)
-- [X] [TBC Bank](https://www.tbcbank.ge/)
-- [X] [Credo Bank](https://credobank.ge/)
-- [X] [Tinkoff](https://www.tinkoff.ru/)
-- [X] [Sberbank](http://www.sberbank.ru/)
-- [X] [Raiffeisen Bank](https://www.raiffeisen.ru/)
-- [X] [Yoomoney](https://yoomoney.ru/)
-- [X] [QIWI](https://qiwi.com/)
-
-#### Banks supporting currency conversion within the bank:
-- [X] [Wise](https://wise.com/)
-- [X] [Tinkoff](https://www.tinkoff.ru/)
-- [X] [Raiffeisen Bank](https://www.raiffeisen.ru/)
-
-### Supported currency exchanges:
-- [X] [Tinkoff Invest](https://www.tinkoff.ru/invest/)
+  <div style="display:flex">
+    <div style="flex:1">
+      <h3>Supported Banks:</h3>
+      <div style="display:flex">
+        <div style="flex:1">
+          <h4>Added support for currency conversion within the bank:</h4>
+          <li><input type="checkbox" checked disabled> <a href="https://wise.com/">Wise</a></li>
+          <li><input type="checkbox" checked disabled> <a href="https://www.tinkoff.ru/">Tinkoff</a></li>
+          <li><input type="checkbox" checked disabled> <a href="https://www.raiffeisen.ru/">Raiffeisen Bank</a></li>
+        </div>
+        <div style="flex:1">
+          <h4>Support for currency conversion within the bank has not been added:</h4>
+          <li><input type="checkbox" checked disabled> <a href="https://bankofgeorgia.ge/">Bank of Georgia</a></li>
+          <li><input type="checkbox" checked disabled> <a href="https://www.tbcbank.ge/">TBC Bank</a></li>
+          <li><input type="checkbox" checked disabled> <a href="https://credobank.ge/">Credo Bank</a></li>
+          <li><input type="checkbox" checked disabled> <a href="http://www.sberbank.ru/">Sberbank</a></li>
+          <li><input type="checkbox" checked disabled> <a href="https://yoomoney.ru/">Yoomoney</a></li>
+          <li><input type="checkbox" checked disabled> <a href="https://qiwi.com/">QIWI</a></li>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1">
+      <h3>Supported currency exchanges:</h3>
+      <ul>
+        <li><input type="checkbox" checked disabled> <a href="https://www.tinkoff.ru/invest/">Tinkoff Invest</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
 
 ## Technologies:
 This is a web application project using Docker Compose for containerization. The project includes several services such as a Tor proxy to bypass parsing locks, Redis, PostgreSQL database, Nginx web server, Certbot for SSL certification, and Celery workflows for parsing, parsing and computing data. These services are connected to the user's network.
