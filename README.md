@@ -2,7 +2,7 @@
 
 ![example workflow](https://github.com/Nezhinskiy/Assets-Loop/actions/workflows/arbitration_workflow.yml/badge.svg)
 
-Assets Loop is a free Open Source web application (built with Python + JavaScript) designed to assist in trading across cryptocurrency exchanges, forex markets, and banks using an arbitrage strategy. It is intended to search for all possible transaction chains and display them on the website's homepage. Currency exchange rates are continuously and concurrently parsed through a network of open and closed APIs using Tor network, proxys and direct, ensuring the rates are always up-to-date.
+Assets Loop is a free Open Source web application (built with Python + JavaScript) designed to assist in trading across cryptocurrency exchanges, currency markets, and banks using an arbitrage strategy. It is intended to search for all possible transaction chains and display them on the website's homepage. Currency exchange rates are continuously and concurrently parsed through a network of open and closed APIs using Tor network, proxys and direct, ensuring the rates are always up-to-date.
 
 ---
 
@@ -38,60 +38,38 @@ Assets Loop is not supported by any company and is developed in my spare time, a
 
 ## Supported Exchange marketplaces
 
-<div>
-  <h3>Supported crypto exchanges and supported deposit/withdrawal methods between crypto assets and fiat currencies:</h3>
-  <div style="display:flex">
-    <div style="flex:1">
-      <h4><input type="checkbox" checked disabled> <a href="https://www.binance.com/ru/activity/referral-entry/CPA?fromActivityPage=true&ref=CPA_00ALEQ9QW0">Binance:</a></h4>
-      <ul>
-        <li><input type="checkbox" checked disabled> <a href="https://p2p.binance.com/">P2P</a></li>
-        <li><input type="checkbox" checked disabled> <a href="https://www.binance.com/ru/buy-sell-crypto/">Card2CryptoExchange</a></li>
-        <li><input type="checkbox" checked disabled> <a href="https://www.binance.com/ru/fiat/deposit/">Card2Wallet2CryptoExchange</a></li>
-      </ul>
-    </div>
-    <div style="flex:1">
-      <h4><input type="checkbox" checked disabled> <a href="https://www.bybit.com/">Bybit:</a></h4>
-      <ul>
-        <li><input type="checkbox" checked disabled> <a href="https://www.bybit.com/fiat/trade/otc/">P2P</a></li>
-        <li><input type="checkbox" disabled> <a href="https://www.bybit.com/fiat/trade/express/home/">Card2CryptoExchange</a></li>
-        <li><input type="checkbox" disabled> <a href="https://www.bybit.com/fiat/trade/deposit/home/">Card2Wallet2CryptoExchange</a></li>
-      </ul>
-    </div>
-  </div>
+### Supported crypto exchanges and supported deposit/withdrawal methods between crypto assets and fiat currencies:
 
-  <div style="display:flex">
-    <div style="flex:1">
-      <h3>Supported Banks:</h3>
-      <div style="display:flex">
-        <div style="flex:1">
-          <h4>Banks supporting currency conversion within the bank:</h4>
-          <ul>
-            <li><input type="checkbox" checked disabled> <a href="https://wise.com/invite/ih/mikhailn114/">Wise</a></li>
-            <li><input type="checkbox" checked disabled> <a href="https://www.tinkoff.ru/baf/3l3TWVUF9i3/">Tinkoff</a></li>
-            <li><input type="checkbox" checked disabled> <a href="https://www.raiffeisen.ru/">Raiffeisen Bank</a></li>
-          </ul>
-        </div>
-        <div style="flex:1">
-          <h4>Other supported banks:</h4>
-          <ul>
-            <li><input type="checkbox" checked disabled> <a href="https://bankofgeorgia.ge/">Bank of Georgia</a></li>
-            <li><input type="checkbox" checked disabled> <a href="https://www.tbcbank.ge/">TBC Bank</a></li>
-            <li><input type="checkbox" checked disabled> <a href="https://credobank.ge/">Credo Bank</a></li>
-            <li><input type="checkbox" checked disabled> <a href="http://www.sberbank.ru/">Sberbank</a></li>
-            <li><input type="checkbox" checked disabled> <a href="https://yoomoney.ru/">Yoomoney</a></li>
-            <li><input type="checkbox" checked disabled> <a href="https://qiwi.com/">QIWI</a></li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div>
-    <h3>Supported currency markets:</h3>
-    <ul>
-      <li><input type="checkbox" checked disabled> <a href="https://www.tinkoff.ru/invest/">Tinkoff Invest</a></li>
-    </ul>
-  </div>
-</div>
+- [x] [Binance](https://www.binance.com/ru/activity/referral-entry/CPA?fromActivityPage=true&ref=CPA_00ALEQ9QW0):
+  - [x] [P2P](https://p2p.binance.com/)
+  - [x] [Card2CryptoExchange](https://www.binance.com/ru/buy-sell-crypto/)
+  - [x] [Card2Wallet2CryptoExchange](https://www.binance.com/ru/fiat/deposit/)
+
+- [x] [Bybit](https://www.bybit.com/):
+  - [x] [P2P](https://www.bybit.com/fiat/trade/otc/)
+  - [ ] [Card2CryptoExchange](https://www.bybit.com/fiat/trade/express/home/)
+  - [ ] [Card2Wallet2CryptoExchange](https://www.bybit.com/fiat/trade/deposit/home/)
+
+### Supported Banks:
+
+#### Banks supporting currency conversion within the bank:
+
+- [x] [Wise](https://wise.com/invite/ih/mikhailn114/)
+- [x] [Tinkoff](https://www.tinkoff.ru/)
+- [x] [Raiffeisen Bank](https://www.raiffeisen.ru/)
+
+#### Other supported banks:
+
+- [x] [Bank of Georgia](https://bankofgeorgia.ge/)
+- [x] [TBC Bank](https://www.tbcbank.ge/)
+- [x] [Credo Bank](https://credobank.ge/)
+- [x] [Sberbank](http://www.sberbank.ru/)
+- [x] [Yoomoney](https://yoomoney.ru/)
+- [x] [QIWI](https://qiwi.com/)
+
+### Supported currency markets:
+
+- [x] [Tinkoff Invest](https://www.tinkoff.ru/invest/)
 
 ## Technologies
 
@@ -261,8 +239,7 @@ AND ALL AFFILIATES ASSUME NO RESPONSIBILITY FOR YOUR TRADING RESULTS.
 
 ## License
 
-MIT license
-([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
 
 ## Author
 
