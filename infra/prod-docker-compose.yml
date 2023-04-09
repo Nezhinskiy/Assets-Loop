@@ -52,7 +52,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/prod_default.conf:/etc/nginx/conf.d/prod_default.conf
       - static_value:/var/html/static/
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
@@ -83,7 +83,6 @@ services:
   celery-parsing:
     restart: always
     image: nezhinsky/arbitration:latest
-    container_name: celery-parsing
     entrypoint: celery
     command:  -A arbitration worker --loglevel=ERROR -Q parsing -c 8 -n parsing_worker
     env_file:
@@ -101,7 +100,7 @@ services:
     image: nezhinsky/arbitration:latest
     container_name: celery-calculating
     entrypoint: celery
-    command:  -A arbitration worker --loglevel=ERROR -Q calculating -c 2 -n calculating_worker
+    command:  -A arbitration worker --loglevel=ERROR -Q calculating -c 3 -n calculating_worker
     env_file:
       - .env
     networks:

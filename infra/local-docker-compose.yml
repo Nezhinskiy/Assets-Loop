@@ -1,0 +1,128 @@
+version: '3.9'
+services:
+
+  tor_proxy:
+    image: dockage/tor-privoxy:latest
+    container_name: tor_proxy
+    hostname: tor_proxy
+    restart: always
+    ports:
+      - "9050:9050"
+      - "9051:9051"
+      - "8118:8118"
+    networks:
+      - arbitration_web
+
+  redis:
+    restart: always
+    image: redis:latest
+    container_name: redis
+    networks:
+      - arbitration_web
+
+  db:
+    image: postgres:15.2-alpine
+    container_name: db
+    restart: always
+    volumes:
+      - db_arbitration:/var/lib/postgresql/data
+    env_file:
+      - .env
+    networks:
+      - arbitration_web
+
+  arbitration:
+    build:
+      context: ../arbitration
+    container_name: arbitration
+    restart: always
+    volumes:
+      - static_value:/arbitration/static/
+    depends_on:
+      - db
+    env_file:
+      - .env
+    networks:
+      - arbitration_web
+
+  nginx:
+    image: nginx:1.23.3-alpine
+    container_name: nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/local_default.conf:/etc/nginx/conf.d/local_default.conf
+      - static_value:/var/html/static/
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    env_file:
+      - .env
+    depends_on:
+      - arbitration
+    networks:
+      - arbitration_web
+
+  celery-parsing:
+    restart: always
+    build:
+      context: ../arbitration
+    entrypoint: celery
+    command:  -A arbitration worker --loglevel=ERROR -Q parsing -c 8 -n parsing_worker
+    env_file:
+      - .env
+    networks:
+      - arbitration_web
+    links:
+      - redis
+    depends_on:
+      - arbitration
+      - redis
+
+  celery-calculating:
+    restart: always
+    build:
+      context: ../arbitration
+    container_name: celery-calculating
+    entrypoint: celery
+    command:  -A arbitration worker --loglevel=ERROR -Q calculating -c 3 -n calculating_worker
+    env_file:
+      - .env
+    networks:
+      - arbitration_web
+    links:
+      - redis
+    depends_on:
+      - arbitration
+      - redis
+
+  celery-beat:
+    restart: always
+    build:
+      context: ../arbitration
+    container_name: celery-beat
+    entrypoint: celery
+    command: -A arbitration beat --loglevel=ERROR
+    env_file:
+      - .env
+    networks:
+      - arbitration_web
+    links:
+      - celery-parsing
+      - celery-calculating
+      - redis
+    depends_on:
+      - celery-parsing
+      - celery-calculating
+      - redis
+      - tor_proxy
+      - nginx
+
+networks:
+  arbitration_web:
+    driver: bridge
+
+volumes:
+  db_arbitration:
+  static_value:
