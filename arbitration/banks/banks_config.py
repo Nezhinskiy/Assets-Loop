@@ -18,8 +18,12 @@ BANKS_CONFIG = {
         'crypto_exchanges': ('Binance',),
         'binance_name': 'TinkoffNew',
         'bybit_name': '75',
-        'payment_channels': ('P2P',),
-        'transaction_methods': (),
+        'payment_channels': (
+            'Card2CryptoExchange', 'Card2Wallet2CryptoExchange', 'P2P'
+        ),
+        'transaction_methods': (
+            'Bank Card (Visa/MC)', 'Bank Card (Visa)'
+        ),
         'bank_invest_exchanges': ['Tinkoff invest']
     },
     'Sberbank': {
@@ -28,8 +32,12 @@ BANKS_CONFIG = {
         'crypto_exchanges': ('Binance',),
         'binance_name': 'RosBankNew',
         'bybit_name': '185',
-        'payment_channels': ('P2P',),
-        'transaction_methods': (),
+        'payment_channels': (
+            'Card2CryptoExchange', 'Card2Wallet2CryptoExchange', 'P2P'
+        ),
+        'transaction_methods': (
+            'Bank Card (Visa/MC)', 'Bank Card (Visa)'
+        ),
         'bank_invest_exchanges': []
     },
     'Raiffeisen': {
@@ -38,8 +46,12 @@ BANKS_CONFIG = {
         'crypto_exchanges': ('Binance',),
         'binance_name': 'RaiffeisenBank',
         'bybit_name': '64',
-        'payment_channels': ('P2P',),
-        'transaction_methods': (),
+        'payment_channels': (
+            'Card2CryptoExchange', 'Card2Wallet2CryptoExchange', 'P2P'
+        ),
+        'transaction_methods': (
+            'Bank Card (Visa/MC)', 'Bank Card (Visa)'
+        ),
         'bank_invest_exchanges': ()
     },
     'QIWI': {
@@ -48,8 +60,12 @@ BANKS_CONFIG = {
         'crypto_exchanges': ('Binance',),
         'binance_name': 'QIWI',
         'bybit_name': '62',
-        'payment_channels': ('P2P',),
-        'transaction_methods': (),
+        'payment_channels': (
+            'Card2CryptoExchange', 'Card2Wallet2CryptoExchange', 'P2P'
+        ),
+        'transaction_methods': (
+            'Bank Card (Visa/MC)', 'Bank Card (Visa)'
+        ),
         'bank_invest_exchanges': ()
     },
     'Yoomoney': {
@@ -58,8 +74,12 @@ BANKS_CONFIG = {
         'crypto_exchanges': ('Binance',),
         'binance_name': 'YandexMoneyNew',
         'bybit_name': '274',
-        'payment_channels': ('P2P',),
-        'transaction_methods': (),
+        'payment_channels': (
+            'Card2CryptoExchange', 'Card2Wallet2CryptoExchange', 'P2P'
+        ),
+        'transaction_methods': (
+            'Bank Card (Visa/MC)', 'Bank Card (Visa)'
+        ),
         'bank_invest_exchanges': ()
     },
     'Bank of Georgia': {

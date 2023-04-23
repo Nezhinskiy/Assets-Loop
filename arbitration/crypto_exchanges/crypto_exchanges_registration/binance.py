@@ -40,12 +40,14 @@ BINANCE_INVALID_PARAMS_LIST = (
 )
 BINANCE_CRYPTO_FIATS = ('AUD', 'BRL', 'EUR', 'GBP', 'RUB', 'TRY', 'UAH')
 BINANCE_DEPOSIT_FIATS = {
+    'RUB': (('Bank Card (Visa/MS/МИР)', 1.2),),
     'UAH': (('SettlePay (Visa/MC)', 1.5),),
     'EUR': (('Bank Card (Visa/MC)', 1.8),),
     'GBP': (('Bank Card (Visa/MC)', 1.8),),
     'TRY': (('Turkish Bank Transfer', 0),),
 }
 BINANCE_WITHDRAW_FIATS = {
+    'RUB': (('Bank Card (Visa/MS/МИР)', 0),),
     'UAH': (('SettlePay (Visa/MC)', 1),),
     'EUR': (('Bank Card (Visa)', 1.8),),
     'GBP': (('Bank Card (Visa)', 1.8),),
