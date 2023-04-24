@@ -202,7 +202,7 @@ DATA_OBSOLETE_IN_MINUTES: int = 10  # The time in minutes since the last update,
 INTER_EXCHANGES_OBSOLETE_IN_MINUTES: int = 15  # The time in minutes since the last update, after which the interexchange exchange is considered obsolete and is not displayed on the page.
 INTER_EXCHANGES_BEGIN_OBSOLETE_MINUTES: int = 2  # The time in minutes since the last update, after which the inter-exchange exchange becomes obsolete and is displayed on the page in gray.
 ALLOWED_PERCENTAGE: int = int(os.getenv('ALLOWED_PERCENTAGE', '0'))  # The maximum margin percentage above which data is considered invalid. (Due to an error in the crypto exchange data)
-MINIMUM_PERCENTAGE: int = -5
+MINIMUM_PERCENTAGE: int = int(os.getenv('MINIMUM_PERCENTAGE', '-3'))
 COUNTRIES_NEAR_SERVER: List[str] = os.getenv('COUNTRIES_NEAR_SERVER', '0').split()
 
 # Update frequency
